@@ -22,7 +22,7 @@
 					<div class="left">
 						<span>昨日收益</span> + {{walletNum.new_profit}}
 					</div>
-					<div class="left">
+					<div class="left" @click="$router.push('/shouyiList')">
 						<span>累积收益</span> + {{walletNum.all_profit}}
 					</div>
 				</div>
