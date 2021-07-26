@@ -68,6 +68,7 @@
 			};
 		},
 		mounted() {
+			// 监听返回事件
 			window.leftBack = this.leftBack;
 			
 			this.userWallet(); // 账户管家资产和收益
