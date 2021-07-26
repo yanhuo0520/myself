@@ -1,0 +1,45 @@
+import CryptoJS from 'crypto-js';
+ 
+export default {
+    //随机生成指定数量的16进制key
+    generatekey(num) {
+        let library = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let key = "";
+        for (var i = 0; i < num; i++) {
+            let randomPoz = Math.floor(Math.random() * library.length);
+            key += library.substring(randomPoz, randomPoz + 1);
+        }
+        return key;
+    },
+    
+    //加密
+    encrypt(word, keyStr) {
+        keyStr = keyStr ? keyStr : 'AJQXBhVIrnvASSF/huVwB5YK1juKkqTw0YEuBKJJr30='; //判断是否存在ksy，不存在就用定义好的key
+        var key = CryptoJS.enc.Utf8.parse(keyStr);
+        var srcs = CryptoJS.enc.Utf8.parse(word);
+
+        var wordArray = CryptoJS.enc.Utf8.parse(keyStr);
+        var base64 = CryptoJS.enc.Base64.stringify(wordArray);
+        console.log('encrypted:', base64);
+
+
+        var encrypted = CryptoJS.AES.encrypt(srcs, key, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 });
+        // return encrypted.toString();
+        return base64;
+    },
+    //解密
+    decrypt(word, keyStr) {
+        keyStr = keyStr ? keyStr : 'AJQXBhVIrnvASSF/huVwB5YK1juKkqTw0YEuBKJJr30=';
+        var key = CryptoJS.enc.Utf8.parse(keyStr);
+
+
+        var parsedWordArray = CryptoJS.enc.Base64.parse(base64);
+        var parsedStr = parsedWordArray.toString(CryptoJS.enc.Utf8);
+        console.log("parsed:",parsedStr);
+
+
+        var decrypt = CryptoJS.AES.decrypt(word, key, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 });
+        return CryptoJS.enc.Utf8.stringify(decrypt).toString();
+    }
+ 
+}

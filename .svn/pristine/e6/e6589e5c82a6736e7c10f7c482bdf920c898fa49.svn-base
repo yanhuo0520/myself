@@ -1,0 +1,643 @@
+<template>
+	<div class="login">
+		<img src="../images/logo1.png" alt="" class="logoImg" />
+		<img src="../images/logoBg1.png" v-if="hidshowFooter" alt="" class="logoBg" />
+		<div class="loginGroup">
+			<p class="title">手机号</p>
+			<!-- fsdfsdfsdfsdf sdf sadf sd  -->
+			<van-field v-model="phone" type="number" :class="ifInPhone? 'ifInPhone' : ''" clearable
+				:right-icon="require('../images/phone.png')" placeholder="请输入手机号" @input="blurInput" @clear="clearPhone"
+				@blur="ifInPhone = false" />
+			<p class="ms-tip">未注册的手机号验证后自动创建账户</p>
+			<p class="title yzTil">{{ifTitle}}</p>
+			<van-field v-model="yzCodePw" @input="filterSpaces(1)" clearable :placeholder="ifPlaceholder">
+				<!-- 发送验证码/  忘记密码 -->
+				<template v-if="showCodeBtn" #right-icon>
+					<p @click="getCode(1)">{{ifBtnTitle}}</p>
+				</template>
+				<template v-else #right-icon>
+					<p>{{times}}秒</p>
+				</template>
+				<template #button>
+					<img src="../images/yzm.png" alt="" class="iconImg" />
+				</template>
+			</van-field>
+			<van-checkbox v-if="showRember" class="remCont" v-model="ifRemember" shape="square" checked-color="#3b6af1" icon-size="10px">记住密码</van-checkbox>
+			
+
+		</div>
+		<!-- <template v-if="hidshowFooter"> -->
+		<template>
+			<p class="loginBtn" @click.stop="login()">
+				<template v-if="ifNewUser && !isnoPawUser">
+					一键注册
+				</template>
+				<template v-else-if="!ifNewUser && isnoPawUser">
+					验证码登录
+				</template>
+				<template v-else>
+					手机号登录
+				</template>
+			</p>
+			<p class="loginBtnWx" @click.stop="WxLogin()">微信登录</p>
+		</template>
+		
+
+
+		<!-- 绑定手机号弹框 -->
+		<van-popup v-model="bandPhone" class="tipCont">
+			<img src="../images/loginTip1.png" class="IMg" />
+			<div class="content">
+				<img src="../images/loginTip2.png" class="titleIMg" />
+			</div>
+			<div class="inCont">
+				<van-field v-model="phoneBand" type="number" clearable placeholder="请输入手机号" />
+				<van-field v-model="yzmBand" type="number" clearable placeholder="请输入手机验证码" class="yzmCell">
+					<template v-if="showBandBtn" #right-icon>
+						<p @click="getCode(2)">发送验证码</p>
+					</template>
+					<template v-else #right-icon>
+						<p>{{bandTimes}}</p>
+					</template>
+				</van-field>
+				<p class="btn" @click="wxBindPho()">立即绑定</p>
+			</div>
+
+			<img src="../images/close.png" @click="bandPhone = false" class="closeIMg" />
+		</van-popup>
+
+		<!-- 设置密码弹框 -->
+		<van-popup v-model="setPassword" class="tipCont">
+			<img src="../images/suo.png" class="IMg" />
+			<div class="content">
+				<img src="../images/setpassTitle.png" class="titleIMg" />
+			</div>
+			<div class="inCont">
+				<van-field v-model="setPassword1" @input="filterSpaces(2)" clearable placeholder="请输入密码" />
+				<van-field v-model="setPassword2" @input="filterSpaces(3)" clearable placeholder="请再次输入密码" />
+				<p class="btn" @click="goSetPasswrord()">立即设置</p>
+			</div>
+
+			<img src="../images/close.png" @click="setPassword = false" class="closeIMg" />
+		</van-popup>
+	</div>
+</template>
+<script>
+	export default {
+		name: "login",
+		data() {
+			return {
+				ifInPhone: false,
+				phone: '',
+				yzCodePw: '',
+
+				ifNewUser: false, //默认不是新用户
+				isnoPawUser: false,
+				ifTitle: '验证码',
+				ifPlaceholder: '请输入验证码',
+				ifBtnTitle: '发送验证码',
+				times: 180,
+				showCodeBtn: true,
+
+				bind_user_id: '', // 登录后需绑定微信的加密后用户id（手机号登录过来绑定微信）
+				lock_wx_id: '', // 加密后的微信信息id
+
+				bandPhone: false,
+				phoneBand: '',
+				yzmBand: '',
+				showBandBtn: true,
+				bandTimes: 180,
+
+				setPassword: false,
+				setPassword1: '',
+				setPassword2: '',
+
+				infoDetail: '',
+				
+				showRember: false,
+				ifRemember: false,
+				ifForget: false,
+
+				docmHeight: document.documentElement.clientHeight, //默认屏幕高度
+				showHeight: "0", //实时屏幕高度
+				hidshowFooter: true, //显示或者隐藏footer,
+			};
+		},
+		mounted() {
+			// 微信成功授权并返回用户信息
+			window.onWxLogin = this.onWxLogin
+			window.onWxLoginFail = this.onWxLoginFail
+			window.onresize = () => { // 实时屏幕高度
+				this.showHeight = document.body.clientHeight;
+			};
+		},
+		methods: {
+			// 过滤空格
+			filterSpaces(id){
+				if(id == 1){
+					this.yzCodePw = this.yzCodePw.replace(/ /g,'')
+				}else if(id == 2){
+					this.setPassword1 = this.setPassword1.replace(/ /g,'')
+				}else if(id == 3){
+					this.setPassword2 = this.setPassword2.replace(/ /g,'')
+				}
+				
+			},
+			// 根据输入手机号，实时调取接口判断是否已注册
+			blurInput() {
+				this.ifInPhone = true
+				if (this.phone.trim().length == 0) {
+					this.ifNewUser = false
+					this.ifTitle = "验证码"
+					this.ifBtnTitle = "发送验证码"
+					this.ifPlaceholder = "请输入验证码"
+					return
+				}
+				if (this.$validatePhone(this.phone) == true) { // 正确的手机号才进行验证
+					this.$api.front_check_pwd({
+						phone: this.phone
+					}).then(res => {
+						// 0设置过密码，使用密码登录，1账号不存在，2没有设置过密码，使用验证码登录
+						if (res.errno == 0) { // 设置过密码
+							this.ifNewUser = false
+							this.isnoPawUser = false
+							this.showRember = true
+							this.ifForget = true
+							this.ifTitle = "密码"
+							this.ifBtnTitle = "忘记密码"
+							this.ifPlaceholder = "请输入密码"
+						} else if (res.errno == 1) { // 账号不存在,, 有设置过密码，使用验证码登录
+							this.ifNewUser = true
+							this.isnoPawUser = false
+							this.showRember = false
+							this.ifForget = false
+							this.ifTitle = "验证码"
+							this.ifBtnTitle = "发送验证码"
+							this.ifPlaceholder = "请输入验证码"
+						} else if(res.errno == 2){
+							this.ifNewUser = false
+							this.isnoPawUser = true
+							this.showRember = false
+							this.ifForget = false
+							this.ifTitle = "验证码"
+							this.ifBtnTitle = "发送验证码"
+							this.ifPlaceholder = "请输入验证码"
+						}else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				}
+			},
+
+			// 清空手机号输入框
+			clearPhone() {
+				this.yzCodePw = ''
+				this.ifNewUser = false
+				this.isnoPawUser = false
+				this.showRember = false
+				this.ifTitle = "验证码"
+				this.ifBtnTitle = "发送验证码"
+				this.ifPlaceholder = "请输入验证码"
+			},
+
+			// 获取验证码倒计时
+			getCode(id) {
+				if (this.ifForget) { // 忘记密码
+					this.$router.push('/forgetPasw')
+					return
+				}
+				let data = {}
+				if (id == 1) { // 登录获取验证码
+					if (this.$validatePhone(this.phone) != true) {
+						this.$toast(this.$validatePhone(this.phone))
+						return
+					}
+					data.phone = this.phone
+				} else if (id == 2) { // 绑定手机号获取验证
+					if (this.$validatePhone(this.phoneBand) != true) {
+						this.$toast(this.$validatePhone(this.phoneBand))
+						return
+					}
+					data.phone = this.phoneBand
+				}
+				this.$api.get_code(data).then(res => {
+					if (res.errno == 0) { // 启用倒计时
+						this.$toast("已发送")
+						if (id == 1) {
+							this.showCodeBtn = false
+							this.timer = setInterval(() => {
+								this.times--
+								if (this.times === 0) {
+									this.times = 180
+									this.showCodeBtn = true
+									clearInterval(this.timer)
+								}
+							}, 1000)
+						} else if (id == 2) {
+							this.showBandBtn = false
+							this.timer = setInterval(() => {
+								this.bandTimes--
+								if (this.bandTimes === 0) {
+									this.bandTimes = 180
+									this.showBandBtn = true
+									clearInterval(this.timer)
+								}
+							}, 1000)
+						}
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+
+			WxLogin() {
+				this.phoneBand = ''
+				this.yzmBand = ''
+				if (this.$isAndroid()) { // 调用Android方法唤起微信登录
+					android.loginWX()
+					return
+				} else if (!this.$isAndroid()) {
+					this.$toast("请用手机端登录")
+					return
+				}
+			},
+			// 微信成功授权并返回用户信息
+			onWxLogin(info) {
+				this.$toast.loading({
+					message: '登录中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				if(info){
+					this.$toast('获取微信授权成功')
+					this.$api.wechatLogin({
+						wx_json: JSON.stringify(info),
+						bind_user_id: this.bind_user_id
+					}).then(res => {
+						this.$toast.clear()
+						if (res.errno == 0) {
+							localStorage.setItem('token', res.token)
+							this.$Cookies.set('token', res.token, {expires: 30,path: ''})
+							this.$Cookies.set('userName', res.name, {expires: 30,path: ''})
+							this.$Cookies.set('phone', res.phone, {expires: 30,path: ''})
+							if(this.isnoPawUser){
+								this.setPassword = true
+							}else{
+								this.$router.replace('/')
+							}
+						} else if (res.errno == 1001) { // 去绑定手机号
+							this.lock_wx_id = res.lock_wx_id
+							this.bandPhone = true
+						} else {
+							this.$toast(res.errmsg)
+						}
+
+					}).catch(err => {
+						this.$toast.clear()
+					})
+				}else{
+					this.$toast.clear()
+					this.$toast('获取微信授权信息失败')
+				}
+				
+			},
+			wxBindPho() {
+				// 绑定手机号
+				if (this.$validatePhone(this.phoneBand) != true) {
+					this.$toast(this.$validatePhone(this.phoneBand))
+					return
+				}
+				this.$api.wx_bind_phone({
+					phone: this.phoneBand,
+					code: this.yzmBand,
+					lock_wx_id: this.lock_wx_id
+				}).then(res => {
+					if (res.errno == 0) {
+						localStorage.setItem('token', res.token) // 跳转供销商场的时候cookies会丢失，增加localStorage缓存方式
+						this.$Cookies.set('token', res.token, {expires: 30,path: ''})
+						this.$Cookies.set('userName', res.name, {expires: 30,path: ''})
+						this.$Cookies.set('phone', res.phone, {expires: 30,path: ''})
+						if(this.isnoPawUser){
+							this.setPassword = true
+						}else{
+							this.$router.replace('/')
+						}
+					} else if (res.errno == 1001) { // 去绑定手机号
+						this.lock_wx_id = res.lock_wx_id
+						this.wxBindPho()
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+
+				})
+			},
+			login() {
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				if (this.$validatePassword(this.yzCodePw) != true && this.showRember) {
+					this.$toast(this.$validatePassword(this.yzCodePw))
+					return
+				}
+				if (!this.ifNewUser && !this.isnoPawUser) { // 密码登录 
+					this.$api.login({
+						uname: this.phone,
+						password: this.$md5(this.yzCodePw)
+					}).then(res => {
+						if (res.errno == 0) {
+							this.$router.replace('/')
+							// 存cookie set方法支持的属性有 ：
+							// expires->过期时间  eg: 17天
+							// path->设置为指定页面创建cookie
+							localStorage.setItem('token', res.token)
+							this.$Cookies.set('token', res.token, {expires: 30,path: ''})
+							this.$Cookies.set('userName', res.name, {expires: 30,path: ''})
+							this.$Cookies.set('phone', res.phone, {expires: 30,path: ''})
+							if(this.ifRemember){
+								this.$Cookies.set('loginPhone', this.phone, {expires: 30,path: ''})
+								this.$Cookies.set('loginPas', this.$Base64.encode(this.yzCodePw), {expires: 30,path: ''})
+							}else{
+								this.$Cookies.remove('loginPhone');
+								this.$Cookies.remove('loginPas');
+							}
+						} else if (res.errno == 1002) { //去绑定微信，调起授权
+							this.bind_user_id = res.bind_user_id
+							if (this.$isAndroid()) {
+								android.loginWX() // 调用Android方法唤起微信登录
+							}
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+						
+					})
+				} else { // 验证码登录
+					this.$api.login_code({
+						phone: this.phone,
+						code: this.yzCodePw
+					}).then(res => {
+						if (res.errno == 0) {
+							localStorage.setItem('token', res.token)
+							this.$Cookies.set('token', res.token, {expires: 30,path: ''})
+							this.$Cookies.set('userName', res.name, {expires: 30,path: ''})
+							this.$Cookies.set('phone', res.phone, {expires: 30,path: ''})
+							if(this.isnoPawUser){
+								this.setPassword = true
+							}else{
+								this.$router.replace('/')
+							}
+							
+						} else if (res.errno == 1002) { // //去绑定微信，调起授权
+							this.bind_user_id = res.bind_user_id
+							if (this.$isAndroid()) {
+								android.loginWX() // 调用Android方法唤起微信登录
+							}
+
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				}
+			},
+
+			// 设置密码
+			goSetPasswrord() {
+				let data = {}
+				data.password = this.$md5(this.setPassword1)
+				data.confirm_password = this.$md5(this.setPassword2)
+				this.$api.user_set_pwd(data).then(res => {
+					if (res.errno == 0) {
+						this.setPassword = false
+						this.$router.replace('/')
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+
+				})
+			},
+			onWxLoginFail() {
+				this.$toast("获取微信授权失败")
+			}
+
+		},
+		watch: {
+			showHeight: function() {
+				if (this.docmHeight > this.showHeight) {
+					this.hidshowFooter = false;
+				} else {
+					this.hidshowFooter = true;
+				}
+			}
+		},
+		created(){
+			let cookPhone = this.$Cookies.get('loginPhone')
+			let cookPass = this.$Cookies.get('loginPas')
+			if(cookPhone){
+				this.phone = cookPhone
+				this.yzCodePw = this.$Base64.decode(cookPass)
+				this.ifRemember = true
+				this.showRember = true
+			}
+		}
+
+
+	}
+</script>
+<style lang="less">
+	.login {
+		background: url(../images/bgHeader4.png) no-repeat;
+		background-size: 100% 280px;
+		min-height: 100%;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.logoImg {
+			width: 230px;
+			margin: 40px calc(50% - 115px) 20px;
+		}
+
+		.logoBg {
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			width: 120px;
+		}
+
+		.loginGroup {
+			margin: 30px 20px 50px 20px;
+
+			input:-ms-input-placeholder {
+				color: #444444;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+			}
+
+			.title {
+				margin-left: 15px;
+				color: #9AA8B6;
+
+				&.yzTil {
+					margin-top: 25px;
+				}
+			}
+
+			.ms-tip {
+				margin: 6px 16px 0 16px;
+				color: #9AA8B6;
+			}
+
+			.van-cell {
+				background: transparent;
+
+				&.ifInPhone {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+			.remCont{
+				float: right;
+				margin: 5px 15px 0 0;
+				.van-checkbox__label{
+					color: #9AA8B6;
+					margin-left: 5px;
+				}
+				.van-checkbox__icon{
+					margin-top: -1.5px;
+						.van-icon{
+						line-height: 1;
+					}
+				}
+				
+			}
+		}
+
+		.loginBtn {
+			margin: 0 30px;
+			border-radius: 40px;
+			font-size: 15px;
+			line-height: 40px;
+			text-align: center;
+			background: #3b6af1;
+			color: #FFFFFF;
+		}
+
+		.loginBtnWx {
+			margin: 10px 30px;
+			font-size: 15px;
+			line-height: 40px;
+			text-align: center;
+			color: #9AA8B6;
+		}
+
+		.tipCont {
+			width: calc(100% - 60px);
+			max-width: 510px;
+			border-radius: 10px;
+			background: transparent;
+			text-align: center;
+			font-size: 15px;
+			color: #444444;
+
+			.IMg {
+				width: 45px;
+				margin-left: calc(50% + 20px);
+			}
+
+			.content {
+				margin-top: -30px;
+				text-align: center;
+				background: #ffffff;
+				border-radius: 10px 10px 0 0;
+			}
+
+			.inCont {
+				padding: 20px 10px;
+				background: #ffffff;
+				margin-top: -1px;
+				border-radius: 0 0 10px 10px;
+
+				.van-cell {
+					background-color: #F0F6FC;
+					border-radius: 30px;
+					padding: 5px 16px;
+					margin-top: 10px;
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.yzmCell {
+					.van-button {
+						height: auto;
+						background: transparent;
+						border: none;
+						color: #3B6AF1;
+					}
+				}
+			}
+
+			.titleIMg {
+				margin: 50px 0 10px 0;
+				height: 48px;
+			}
+
+			.btn {
+				margin-top: 30px;
+				border-radius: 40px;
+				font-size: 15px;
+				line-height: 40px;
+				text-align: center;
+				background: #3b6af1;
+				color: #FFFFFF;
+			}
+
+			.closeIMg {
+				margin-top: 30px;
+				padding: 10px 30px;
+				width: 20px;
+			}
+		}
+
+
+
+	}
+</style>

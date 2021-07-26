@@ -1,0 +1,27 @@
+##### 1、支付模块 #####
+# 去支付
+android.nongAliPay()   农行支付宝渠道
+android.unionAliPay()   云闪付支付宝渠道，
+android.unionPay()   云闪付，
+android.unionWxPay()  云闪付微信渠道
+# 支付结束
+onPayFinish(info)
+
+
+##### 2、微信登录 #####
+# 唤起微信登录
+android.loginWX()
+
+# 微信成功授权并返回用户信息
+onWxLogin(info)
+
+# 登录失败
+执行onWxLoginFail
+
+
+#####  3、登录令牌 #####
+var code = android.totpCode('LPCS7I5KPSTTYTXF')
+
+
+
+#####  4、定位 #####

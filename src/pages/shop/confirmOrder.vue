@@ -1,0 +1,867 @@
+<template>
+  <div class="confirmOrder">
+    <van-nav-bar
+      :border="false"
+      :fixed="true"
+      :placeholder="true"
+      title="确认订单"
+      left-arrow
+      @click-left="returnLast"
+      @click-right="$router.push('/shopIndex')"
+    >
+      <template #right>
+        <img src="images/icon/shouye.png" alt="" width="20" />
+      </template>
+    </van-nav-bar>
+
+    <template>
+      <template v-if="checkedAddress.id">
+        <van-cell
+          class="contact"
+          center
+          :border="false"
+          @click="collectAddress()"
+        >
+          <template #title>
+            <div class="contact-con">
+              <span class="name">{{ checkedAddress.name }}</span>
+              <span class="tel">{{ checkedAddress.mobile }}</span>
+              <div class="tag" v-if="checkedAddress.is_default">
+                <van-tag color="#ECF8FF" text-color="#41C3FF">默认</van-tag>
+              </div>
+            </div>
+            <p class="addr">
+              {{
+                (checkedAddress.province ? checkedAddress.province : "") +
+                (checkedAddress.city ? checkedAddress.city : "") +
+                (checkedAddress.area ? checkedAddress.area : "") +
+                (checkedAddress.street ? checkedAddress.street : "") +
+                (checkedAddress.village ? checkedAddress.village : "") +
+                (checkedAddress.address ? checkedAddress.address : "")
+              }}
+            </p>
+          </template>
+          <template #icon>
+            <img
+              style="width: 28px; height: 28px"
+              src="../../images/shop/receipt.png"
+              alt=""
+            />
+          </template>
+          <template #right-icon>
+            <van-icon
+              name="arrow"
+              color="#CCCCCC"
+              size="20"
+              style="line-height: inherit"
+            />
+          </template>
+        </van-cell>
+      </template>
+      <template v-else>
+        <van-contact-card
+          type="add"
+          add-text="添加收货地址"
+          @click="collectAddress()"
+        />
+      </template>
+      <template v-if="goodsList && goodsList.length > 0">
+        <div
+          class="goods-card"
+          v-for="(item, subIndex) in goodsList"
+          :key="subIndex"
+        >
+          <div class="shop-name">
+            <img src="../../images/shop/sd.png" alt="" />
+            <span>{{ item.coopera_name }}</span>
+          </div>
+          <div v-for="(subItem, index) in item.goods" :key="index">
+            <van-card :title="subItem.goods_name" :centered="true">
+              <template #thumb>
+                <div>
+                  <van-image
+                    width="100"
+                    height="100"
+                    fit="contain"
+                    :src="subItem.thumb"
+                  />
+                </div>
+              </template>
+              <template #desc>
+                <div
+                  class="desc"
+                  :style="subItem.two == 1 ? 'width:calc(100% - 80px)' : ''"
+                >
+                  <p v-if="subItem.oneStylesName">
+                    {{ subItem.oneStylesTitle }}: {{ subItem.oneStylesName }}
+                  </p>
+                  <p v-if="subItem.twoStylesName">
+                    {{ subItem.twoStylesTitle }}: {{ subItem.twoStylesName }}
+                  </p>
+                  <p v-if="subItem.threeStylesName">
+                    {{ subItem.threeStylesTitle }}:
+                    {{ subItem.threeStylesName }}
+                  </p>
+                </div>
+              </template>
+              <template #price>
+                <div class="price" v-if="subItem.two == 0">
+                  <span style="font-size: 0.7rem">￥</span
+                  >{{ subItem.retail_price }}
+                </div>
+                <div class="price1" v-if="subItem.two == 1">
+                  <span style="font-size: 0.7rem">￥</span
+                  >{{ subItem.pro_price }}
+                  <span style="font-size: 0.5rem">X </span
+                  >{{ subItem.pro_number }}
+                </div>
+              </template>
+              <template #num>
+                <div class="num" v-if="subItem.two == 0">
+                  <span style="font-size: 0.5rem">X</span>{{ subItem.number }}
+                </div>
+                <div class="price2" v-if="subItem.two == 1">
+                  <span style="font-size: 0.7rem">￥</span
+                  >{{ subItem.retail_price
+                  }}<span style="font-size: 0.5rem">X </span
+                  >{{ subItem.retail_number }}
+                </div>
+              </template>
+              <template #bottom>
+                <div class="bottom">
+                  <van-tag color="#f5f5f5" text-color="#888888"
+                    >24小时内发货</van-tag
+                  >
+                </div>
+              </template>
+            </van-card>
+            <div class="goods_total_price">
+              <van-cell title="商品价格" :value="`￥${subItem.retail_price}`" />
+            </div>
+          </div>
+          <div class="other-mark">
+            <van-cell
+              title="运费/快递"
+              :value="
+                item.coopera_post_fee > 0
+                  ? `￥${item.coopera_post_fee}`
+                  : '免邮'
+              "
+            />
+          </div>
+
+          <van-cell-group class="need-pay-con" :border="false">
+            <van-cell title="买家留言"></van-cell>
+            <van-field
+              v-model="item.note"
+              rows="2"
+              autosize
+              type="textarea"
+              placeholder="请输入留言"
+            ></van-field>
+          </van-cell-group>
+
+          <van-cell-group class="need-pay-con" :border="false" v-if="item.real_name==1">
+            <van-cell
+              required
+              title="根据国家种子农药经营相关法律法规要求，请添加相关信息，使用地点，电话，身份证"
+            ></van-cell>
+            <div
+              style="display: flex; align-items: center"
+              @click="getIndex(subIndex)"
+            >
+              <div style="padding: 0 0 0 14px; flex: 1">
+                <van-uploader
+                  v-model="item.fileList"
+                  :after-read="frontIDcard"
+                  multiple
+                  :max-count="1"
+                />
+              </div>
+              <div style="flex: 1; text-align: center">上传身份证照片</div>
+            </div>
+            <van-field
+              v-model="item.zaddress"
+              required
+              label="使用地点"
+              input-align="right"
+              :border="false"
+              placeholder="请输入"
+            >
+            </van-field>
+            <van-field
+              v-model="item.phone"
+              required
+              label="电话"
+              input-align="right"
+              :border="false"
+              placeholder="请输入"
+            >
+            </van-field>
+            <van-field
+              v-model="item.idCard"
+              required
+              label="身份证号码"
+              input-align="right"
+              :border="false"
+              placeholder="请输入"
+            >
+            </van-field>
+          </van-cell-group>
+        </div>
+      </template>
+      <van-cell-group
+        class="need-pay-con"
+        style="margin-bottom: 0.75rem"
+        :border="false"
+      >
+        <van-cell title="需付款" :value="'￥' + orderTotalPrice" />
+      </van-cell-group>
+      <div style="height: 50px"></div>
+      <van-submit-bar
+        :price="orderTotalPrice * 100"
+        button-text="付款"
+        button-size="small"
+        @submit="confirmOrder"
+      />
+    </template>
+
+    <van-overlay
+      :show="isWait"
+      style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2222;
+      "
+    >
+      <van-loading vertical>请求中，请等待...</van-loading>
+    </van-overlay>
+  </div>
+</template>
+<script>
+export default {
+  name: "confirmOrder",
+  data() {
+    return {
+      isWait: true,
+      checkedAddress: {},
+      goodsList: [
+        {
+          goods_name: "（豫粮优选）东北长粒香米",
+          thumb: require("../../images/shop/ucenter/fahuo.png"),
+          two: 1,
+          oneStylesTitle: "重量",
+          oneStylesName: "5kg",
+          retail_price: "39.00",
+          goods_num: 2,
+        },
+      ],
+      post_fee: 0,
+      goodsTotalPrice: 100,
+      order: {},
+      orderTotalPrice: 0,
+
+      rightOff: {
+        is_now: "",
+        address_id: "",
+      },
+
+      realObj: {
+        fileList: [],
+        zaddress: "",
+        phone: "",
+        idCard: "",
+        idcardSrc: "",
+      },
+      idCardIndex: 0,
+    };
+  },
+  mounted() {
+    this.details();
+    this.order.is_now = this.$route.query.is_now;
+    this.rightOff.is_now = this.$route.query.is_now;
+    if (!this.$route.query.address_id) {
+      this.collectList();
+    } else {
+      this.rightOff.address_id = this.$route.query.address_id;
+    }
+
+    this.goodsList.forEach((item) => {
+      item.zaddress = "1";
+      item.phone = "";
+      item.idCard = "";
+      item.idcardSrc = "";
+      item.fileList = [];
+      item.note = "";
+    });
+
+    window.leftBack = this.leftBack
+  },
+  methods: {
+    leftBack() {
+      this.returnLast()
+    },
+    //返回上一页
+    returnLast() {
+      // window.history.go(-1);
+      let href = window.location.href;
+      if (href.indexOf("cart") > -1) {
+        this.$router.push("/shoppingCart");
+      } else if (href.indexOf("speedBuy") > -1) {
+        this.$router.push("/speedBuy");
+      } else if (href.indexOf("is_now") > -1) {
+        if (this.$route.query.cate_id) {
+          this.$router.push({
+            path: "/goodsDetails",
+            query: {
+              id: this.$route.query.id,
+              cate_id: this.$route.query.cate_id,
+              tabIndex: this.$route.query.tabIndex,
+            },
+          });
+        } else {
+          this.$router.push({
+            path: "/goodsDetails",
+            query: {
+              id: this.$route.query.id,
+              index: 1,
+            },
+          });
+        }
+      } else {
+        this.$router.go(-1);
+      }
+    },
+    confirmOrder() {
+      this.order.addressId = this.checkedAddress.id;
+      // this.order.coupon_ids = coupon_ids_arr.join(",");
+      // this.order.user_coupon_ids = user_coupon_ids_arr.join(",");
+      // this.order.coupon_price = this.disPrice ? this.disPrice : 0;
+      this.order.total_price = this.goodsTotalPrice;
+      let noteArr = [];
+      this.goodsList.forEach((ele) => {
+        noteArr.push({
+          coopera_id: ele.coopera_id,
+          note: ele.note,
+        });
+      });
+      let seed_info = [];
+      this.goodsList.forEach((ele) => {
+        seed_info.push({
+          seed_address: ele.zaddress,
+          seed_phone: ele.phone,
+          seed_idcard: ele.idCard,
+          idcard_url: ele.idcardSrc,
+        });
+      });
+      this.order.note_arr = noteArr;
+      this.order.seed_info = seed_info;
+      this.order.lock_mem_id = this.$route.query.lock_mem_id
+        ? this.$route.query.lock_mem_id
+        : "";
+      this.$api.coopera_submit_order(this.order).then((res) => {
+        if (res.errno == 0) {
+          this.order_id = res.order_id;
+          if (this.order_id) {
+            let href = window.location.href;
+            if (href.indexOf("cate_id") > -1) {
+              let id = this.$route.query.id;
+              let cate_id = this.$route.query.cate_id;
+              let tabIndex = this.$route.query.tabIndex;
+              this.$router.push({
+                path: "/shopPay",
+                query: {
+                  order_id: this.order_id,
+                  id: id,
+                  cate_id: cate_id,
+                  tabIndex: tabIndex,
+                },
+              });
+              if (this.$route.query.team_id) {
+                this.$router.push({
+                  path: "/shopPay",
+                  query: {
+                    order_id: this.order_id,
+                    id: id,
+                    cate_id: cate_id,
+                    tabIndex: tabIndex,
+                    team_id: this.$route.query.team_id,
+                  },
+                });
+              } else {
+                this.$router.push({
+                  path: "/shopPay",
+                  query: {
+                    order_id: this.order_id,
+                    id: id,
+                    cate_id: cate_id,
+                    tabIndex: tabIndex,
+                  },
+                });
+              }
+            } else if (href.indexOf("is_now") > -1) {
+              let id = this.$route.query.id;
+              if (this.$route.query.team_id) {
+                this.$router.push({
+                  path: "/shopPay",
+                  query: {
+                    order_id: this.order_id,
+                    id: id,
+                    team_id: this.$route.query.team_id,
+                    index: 1,
+                  },
+                });
+              } else {
+                this.$router.push({
+                  path: "/shopPay",
+                  query: {
+                    order_id: this.order_id,
+                    id: id,
+                    index: 1,
+                  },
+                });
+              }
+            } else if (href.indexOf("cart") > -1) {
+              this.$router.push({
+                path: "/shopPay",
+                query: {
+                  order_id: this.order_id,
+                  source: "cart",
+                },
+              });
+            } else if (href.indexOf("speedBuy") > -1) {
+              this.$router.push({
+                path: "/shopPay",
+                query: {
+                  order_id: this.order_id,
+                  source: "speedBuy",
+                },
+              });
+            } else {
+              this.$router.push({
+                path: "/shopPay",
+                query: {
+                  order_id: this.order_id,
+                },
+              });
+            }
+          }
+        } else {
+          this.$toast.fail(res.errmsg);
+        }
+      });
+    },
+    collectAddress() {
+      let href = window.location.href;
+      let addressid = this.checkedAddress.id ? this.checkedAddress.id : 0;
+      if (href.indexOf("cart") > -1) {
+        this.$router.push({
+          path: "/collectAddress",
+          query: {
+            from: "order",
+            source: "cart",
+            addressid: addressid,
+          },
+        });
+      } else if (href.indexOf("speedBuy") > -1) {
+        this.$router.push({
+          path: "/collectAddress",
+          query: {
+            from: "order",
+            source: "speedBuy",
+            addressid: addressid,
+          },
+        });
+      } else if (href.indexOf("is_now") > -1) {
+        if (this.$route.query.cate_id) {
+          this.$router.push({
+            path: "/collectAddress",
+            query: {
+              from: "order",
+              source: "is_now",
+              addressid: addressid,
+              id: this.$route.query.id,
+              cate_id: this.$route.query.cate_id,
+            },
+          });
+        } else {
+          this.$router.push({
+            path: "/collectAddress",
+            query: {
+              from: "order",
+              source: "is_now",
+              addressid: addressid,
+              id: this.$route.query.id,
+              index: 1,
+            },
+          });
+        }
+      } else {
+        this.$router.push({
+          path: "/collectAddress",
+          query: {
+            addressid: addressid,
+          },
+        });
+      }
+    },
+
+    // 详情
+    details() {
+      this.$api
+        .coopera_shop_checkout(this.rightOff)
+        .then((res) => {
+          this.isWait = false;
+          if (res.errno === 0) {
+            this.checkedAddress = res.data.checkedAddress;
+            this.goodsList = res.data.checkedGoodsList;
+            this.goodsTotalPrice = res.data.goodsTotalPrice;
+            this.orderTotalPrice = res.data.orderTotalPrice;
+            this.curOrderTotalPrice = res.data.goodsTotalPrice;
+            this.post_fee = Number(res.data.post_fee);
+            this.goodsCount = res.data.goodsCount;
+            let goodsArr = [];
+            this.goodsList.forEach((item) => {
+              goodsArr.push(item.goods_id);
+            });
+            this.goodsArr = goodsArr.join(",");
+          } else if (res.errno === 1) {
+            this.$toast.fail(res.errmsg);
+          }
+        })
+        .catch(() => {
+          this.isWait = false;
+        });
+    },
+
+    //获取收货地址
+    collectList() {
+      this.$api.address_lists().then((res) => {
+        if (res.errno === 0) {
+          res.data.forEach((ele) => {
+            if (ele.is_default == 1) {
+              this.checkedAddress = ele;
+              this.rightOff.address_id = ele.id;
+            }
+          });
+        }
+      });
+    },
+
+    // 获取上传图片的index
+    getIndex(index) {
+      this.idCardIndex = index;
+    },
+    // 身份证正面
+    frontIDcard(file) {
+      let formdata = new FormData();
+      formdata.append("file", file.file);
+      formdata.append("token", localStorage.getItem("token"));
+      const instance = this.$axios.create({
+        //withCredentials:true
+        // headers:{
+        //   'authToken': localStorage.getItem('token')
+        // }
+      });
+      instance
+        .post("http://coopera.xfd365.com/api/orderhz/uploadImg", formdata)
+        .then((res) => {
+          if (res.data.errno === 0) {
+            this.$toast.success("照片上传成功");
+            this.goodsList[this.idCardIndex].idcardSrc = res.data.data.url;
+            this.idCardOcr(res.data.data.url);
+          } else {
+            this.$toast(res.errmsg);
+          }
+        })
+        .catch((e) => {});
+    },
+    // 身份证ocr识别
+    idCardOcr(url) {
+      this.$api
+        .idcardOcr({
+          idcard_url: url,
+        })
+        .then((res) => {
+          if (res.errno === 0) {
+            // this.goodsList[this.idCardIndex].idCard = res.data.certNumber;
+            this.$set(
+              this.goodsList[this.idCardIndex],
+              "idCard",
+              res.data.certNumber
+            );
+            console.log(this.idCardIndex, this.goodsList);
+          }
+        });
+    },
+  },
+};
+</script>
+<style lang="less">
+.confirmOrder {
+  min-height: 100%;
+  background: #f5f5f5;
+  .van-nav-bar {
+    .van-icon,
+    .van-nav-bar__text {
+      color: #444;
+    }
+  }
+
+  /* 选择地址 */
+  .van-contact-card::before {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: -webkit-repeating-linear-gradient(
+      135deg,
+      #ffc3c3 0,
+      #ffc3c3 20%,
+      transparent 0,
+      transparent 25%,
+      #b3dcfa 0,
+      #b3dcfa 45%,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 80px;
+    content: "";
+  }
+
+  .contact {
+    .van-cell__title {
+      padding-left: 14px;
+      .contact-con {
+        display: flex;
+        align-items: center;
+        .name {
+          font-size: 20px;
+          font-weight: 500;
+          color: rgba(53, 53, 53, 1);
+          padding-right: 0.75rem;
+        }
+        .tel {
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(136, 136, 136, 1);
+          padding-right: 40px;
+        }
+        .tag {
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(0, 181, 120, 1);
+        }
+      }
+      .addr {
+        padding: 0;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(53, 53, 53, 1);
+      }
+
+      &::before {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: -webkit-repeating-linear-gradient(
+          135deg,
+          #ffc3c3 0,
+          #ffc3c3 20%,
+          transparent 0,
+          transparent 25%,
+          #b3dcfa 0,
+          #b3dcfa 45%,
+          transparent 0,
+          transparent 50%
+        );
+        background-size: 80px;
+        content: "";
+      }
+    }
+  }
+
+  /* 选择的商品列表 */
+  .goods-card {
+    background: rgba(255, 255, 255, 1);
+    margin-top: 14px;
+    .shop-name {
+      padding: 10px 14px 0 14px;
+      display: flex;
+      align-items: center;
+      img {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+      }
+      span {
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(51, 51, 51, 1);
+        padding-left: 10px;
+      }
+    }
+    .van-card {
+      padding-left: 14px;
+      padding-right: 14px;
+      margin-top: 0;
+      background: rgba(255, 255, 255, 1);
+      .van-card__header {
+        align-content: center;
+      }
+      .van-card__thumb {
+        width: auto;
+        height: auto;
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+      }
+      .van-card__title {
+        width: calc(100% - 80px);
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(53, 53, 53, 1);
+        padding-bottom: 10px;
+      }
+      .desc {
+        width: calc(100% - 2.5rem);
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(136, 136, 136, 1);
+        p {
+          padding: 0;
+          margin: 0;
+          word-break: break-all;
+          word-wrap: break-word;
+        }
+      }
+      .van-card__price {
+        font-size: 14px;
+        font-weight: 400;
+        color: #353535;
+        .price {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 80px;
+          text-align: right;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+        .price1 {
+          position: absolute;
+          bottom: 20px;
+          right: 0;
+          width: 80px;
+          text-align: right;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          font-size: 14px;
+          font-weight: 400;
+          color: #888888;
+        }
+      }
+      .van-card__num {
+        font-size: 14px;
+        font-weight: 400;
+        color: #888888;
+        .num {
+          position: absolute;
+          top: 20px;
+          right: 0;
+          width: 40px;
+          text-align: right;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+        .price2 {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 80px;
+          text-align: right;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          font-size: 14px;
+          font-weight: 400;
+          color: #888888;
+        }
+      }
+    }
+    .goods_total_price {
+      .van-cell {
+        font-size: 14px;
+        color: #333;
+      }
+      .van-cell__value {
+        color: #333;
+      }
+    }
+    .other-mark {
+      .van-cell {
+        font-size: 14px;
+        color: #888888;
+        .van-cell__value {
+          color: #888888;
+        }
+        .price {
+          color: #ff2814;
+          font-weight: 400;
+        }
+      }
+    }
+  }
+  /* 需付款 */
+  .need-pay-con {
+    .van-cell {
+      font-size: 14px;
+      color: #333;
+      .van-cell__value {
+        font-size: 16px;
+        color: #ff2814;
+        font-weight: 400;
+      }
+    }
+
+    .van-uploader__upload {
+      width: 180px;
+      height: 120px;
+      background-image: url(../../images/shop/idCard1.png);
+      background-size: 100% 100%;
+    }
+    .van-uploader__preview-image {
+      width: 180px;
+      height: 120px;
+    }
+  }
+  /* 订单号等标注信息 */
+  .order-desc {
+    padding: 10px 16px;
+    background: #fff;
+    margin: 14px 0;
+    p {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+  }
+
+  /* 提交 */
+  .van-submit-bar__bar {
+    .van-submit-bar__text {
+      text-align: left;
+    }
+    .van-button {
+      width: 80px;
+      height: 30px;
+      line-height: 30px;
+      background: linear-gradient(#66d6fc, #00beff);
+    }
+  }
+}
+</style>

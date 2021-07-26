@@ -1,0 +1,19 @@
+<template>
+    <div class="account">
+        <van-nav-bar title="账户管家" left-arrow />
+    </div>
+</template>
+<script>
+export default {
+  name: "account",
+  data () {
+    return {
+    };
+  }
+}
+</script>
+<style lang="less">
+.account{
+
+}
+</style>

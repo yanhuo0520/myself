@@ -1,0 +1,669 @@
+<template>
+	<div class="applyJie">
+		<van-nav-bar title="申请借款" left-arrow fixed @click-left="leftBack" />
+		<p class="m-title">您正在申请<span>“小额借款”</span>请认真填写以下信息</p>
+		<div class="groupCont">
+			<van-cell-group>
+				<van-field v-model="cardNum" clearable label="社员卡号" :left-icon="require('../../images/cardNum.png')"
+					readonly placeholder="请输入社员卡号" />
+				<van-field v-model="name" clearable label="社员姓名" :left-icon="require('../../images/person1.png')"
+					readonly placeholder="请输入社员姓名" />
+				<van-field v-model="idNumber" clearable label="身份证号" :left-icon="require('../../images/person2.png')"
+					readonly placeholder="请输入身份证号" />
+				<van-field v-model="phone" clearable label="手机号" :left-icon="require('../../images/phone.png')" readonly
+					placeholder="请输入手机号" />
+			</van-cell-group>
+
+			<van-cell-group>
+				<van-field v-model="jieTime" readonly label="借款时长" :left-icon="require('../../images/time.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择借款时长"
+					@click="selectShow1 = true" />
+				<van-field v-model="jieUse" readonly label="借款用途" :left-icon="require('../../images/jieuse.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择借款用途"
+					@click="selectShow2 = true" />
+			</van-cell-group>
+
+			<van-cell-group>
+				<van-field v-model="jieLv" readonly :label="'借款' + rateEexplainTitle" :left-icon="require('../../images/yearlilv.png')"
+					:placeholder="'借款' + rateEexplainTitle" />
+				<van-field v-model="jieNum" clearable label="借款金额" :left-icon="require('../../images/jieNum.png')"
+					@input="inMoney()" placeholder="请输入借款金额" />
+				<van-field v-model="jieLixi" readonly label="借款利息" :left-icon="require('../../images/jielixi.png')"
+					placeholder="借款利息" />
+			</van-cell-group>
+
+			<van-cell-group>
+				<van-field v-model="huanType" readonly label="还款方式" :left-icon="require('../../images/huanpay.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择还款方式"
+					@click="selectShow3 = true" />
+			</van-cell-group>
+
+			<van-cell-group>
+				<van-field v-model="danbaoPer" readonly label="担保人" :left-icon="require('../../images/person3.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择担保人" @click="selectShow4 = true" />
+			</van-cell-group>
+
+		</div>
+
+
+		<van-button :icon='require("../../images/send.png")' type="info" block class="sendBtn" @click="sendApply()">
+			提交申请
+		</van-button>
+
+
+		<!-- 选择借款时长 -->
+		<van-action-sheet v-model="selectShow1" title="选择借款时长" class="selSheet" :closeable="false">
+			<template v-if="list1.length > 0">
+				<van-radio-group v-model="selRadio1" v-for="(item1, index1) in list1" :key="index1">
+					<van-cell :title="item1.loan_name" clickable
+						@click="selRadio1 = item1.rate_id, selTitle1 = item1.loan_name, selliLv = item1.loan_rate_str"
+						:class="selRadio1 == item1.rate_id ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item1.rate_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+			
+			<p class="sheetNull" v-if="list1.length == 0">暂无</p>
+			<van-button round block type="info" @click="sureSel1()">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 借款用途 -->
+		<van-action-sheet v-model="selectShow2" title="选择借款用途" class="selSheet" :closeable="false">
+			<template  v-if="list2.length > 0">
+				<van-radio-group v-model="selRadio2" v-for="(item2, index2) in list2" :key="index2">
+					<van-cell :title="item2.loan_use_name" clickable
+						@click="selRadio2 = item2.loan_use_id, selTitle2 = item2.loan_use_name"
+						:class="selRadio2 == item2.loan_use_id ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item2.loan_use_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+
+			<p class="sheetNull" v-if="list2.length == 0">暂无</p>
+			<van-button round block type="info" @click="sureSel2()">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 还款方式 -->
+		<van-action-sheet v-model="selectShow3" title="选择还款方式" class="selSheet" :closeable="false">
+			<template v-if="list3.length > 0">
+				<van-radio-group v-model="selRadio3" v-for="(item3, index3) in list3" :key="index3">
+					<van-cell :title="item3.repayment_name" clickable
+						@click="selRadio3 = item3.repayment_id, selTitle3 = item3.repayment_name"
+						:class="selRadio3 == item3.repayment_id ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item3.repayment_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+			<p class="sheetNull" v-if="list3.length == 0">暂无</p>
+			<van-button round block type="info" @click="sureSel3()">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 担保人 -->
+		<van-action-sheet v-model="selectShow4" class="selSheet selSheet4" :closeable="false">
+			<div>
+				<p class="title">选择担保人</p>
+				<van-search v-model="nameSear" show-action placeholder="请输入搜索关键词" class="searchName" @clear="clear()">
+					<template #action>
+						<div @click="onSearch">搜索</div>
+					</template>
+				</van-search>
+			</div>
+			<div class="content" @scroll="scrollEvent($event)" :style='{height: deviceScrollHeight + "px"}'>
+
+				<van-checkbox-group v-model="result">
+					<van-cell-group>
+						<van-cell v-for="(item4, index4) in list4" clickable :key="index4" :title="item4.name"
+							@click="toggle(index4, item4.relation_id, item4.name)">
+							<template #right-icon>
+								<van-checkbox :name="item4.relation_id" ref="checkboxes" />
+							</template>
+						</van-cell>
+
+						<!-- 加载中 -->
+						<van-loading v-if="isLoading" size="24px">{{deviceTip}}</van-loading>
+						<!-- 没有更多了 -->
+						<!-- <p v-if="!isLoading" class="noMore">{{deviceTip}}</p> -->
+					</van-cell-group>
+				</van-checkbox-group>
+				<p class="sheetNull" v-if="list4.length == 0">暂无</p>
+				<van-button round block type="info" @click="sureSel4()">确定</van-button>
+			</div>
+
+		</van-action-sheet>
+
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "applyJie",
+		data() {
+			return {
+				productId: '',
+				cardNum: '',
+				name: '',
+				idNumber: '',
+				phone: '',
+
+				jieTime: '',
+				jieUse: '',
+				
+				rateEexplainTitle: '',
+				jieLv: '',
+				jieNum: '',
+				jieLixi: '',
+
+				huanType: '',
+				danbaoPer: '',
+
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+
+				selectShow: false,
+				radio: '1',
+
+				// 选择借款时长
+				list1: [],
+				selectShow1: false,
+				selRadio1: '',
+				selTitle1: '',
+				selliLv: '',
+
+				// 选择借款用途
+				list2: [],
+				selectShow2: false,
+				selRadio2: '',
+				selTitle2: '',
+				// 还款方式
+				list3: [],
+				selectShow3: false,
+				selRadio3: '',
+				selTitle3: '',
+				// 选择担保人
+				list4: [],
+				result: [],
+				idArray: [],
+				nameArray: [],
+				selectShow4: false,
+				deviceScrollHeight: document.body.clientHeight - 200,
+				nameSear: '',
+
+				pageSize: 10, //每页显示
+				page: 1, //当前页
+				totalNum: 0, //总条数
+				totalPage: 1, //总页数
+				ifFinish: false, //是否加载完成
+				isLoading: true, //是否加载更多
+				deviceTip: '',
+
+				danbaoStr: ''
+
+			}
+		},
+		mounted() {
+			this.$toast.loading({
+				message: '加载中...',
+				forbidClick: true,
+				duration: 0,
+			});
+			this.myInfo()
+			this.productId = this.$route.query.productId
+			if (this.productId) {
+
+				this.getLoanRate()
+			} else {
+				this.$dialog.alert({
+					message: '选择产品类型失败，请重新选择',
+				}).then(() => {
+					this.$router.go(-1);
+				});
+			}
+			this.getLoanUse()
+			this.getRepayment();
+			this.selectGuarantee()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 我要借款--我的基本信息
+			myInfo() {
+				this.$api.myInfo().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.cardNum = res.data.passbook_num
+						this.name = res.data.name
+						this.idNumber = res.data.idcard
+						this.phone = res.data.phone
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+
+			// 我要借款--根据产品获取对应的借款时长、利率、最高借款金额、利率名称（进入申请借款页面使用）（请求参数改变）
+			getLoanRate() {
+				this.$api.getLoanRate({
+					"product_id": this.productId
+				}).then(res => {
+					if (res.errno == 0) {
+						this.rateEexplainTitle = res.product.rate_explain
+						this.selRadio1 = res.rate[0].rate_id
+						this.selTitle1 = res.rate[0].loan_name
+						this.selliLv = res.rate[0].loan_rate_str
+						this.list1 = res.rate;
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			sureSel1() {
+				this.selectShow1 = false
+				this.jieTime = this.selTitle1
+				this.jieLv = this.selliLv
+				this.inMoney() // 获取借款利息
+			},
+
+			// 我要借款--获取借款用途
+			getLoanUse() {
+				this.$api.getLoanUse().then(res => {
+					if (res.errno == 0) {
+						this.selRadio2 = res.use[0].loan_use_id
+						this.selTitle2 = res.use[0].loan_use_name
+						this.list2 = res.use;
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			sureSel2() {
+				this.selectShow2 = false
+				this.jieUse = this.selTitle2
+			},
+
+			// 我要借款--获取还款方式
+			getRepayment() {
+				this.$api.getRepayment().then(res => {
+					if (res.errno == 0) {
+						this.selRadio3 = res.repayment[0].repayment_id
+						this.selTitle3 = res.repayment[0].repayment_name
+						this.list3 = res.repayment;
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			sureSel3() {
+				this.selectShow3 = false
+				this.huanType = this.selTitle3
+				this.inMoney() // 获取借款利息
+			},
+			// 输入借款金额
+			inMoney() {
+				if (this.jieLv && this.jieNum.length > 0 && this.huanType) {
+					this.getInterestByRate() // // 获取借款利息
+				}
+			},
+			// 我要借款--根据还款方式，借款时长利率id跟借款金额计算利息
+			getInterestByRate() {
+				let data = {}
+				data.rate_id = this.selRadio1
+				data.loan_money = this.jieNum
+				data.repayment_id = this.selRadio3
+				this.$api.getInterestByRate(data).then(res => {
+					if (res.errno == 0) {
+						this.jieLixi = res.interest_money
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+
+
+			scrollEvent(e) {
+				if (e instanceof Event) {
+					let el = e.target;
+					let scrollTop = el.scrollTop;
+					let clientHeight = el.clientHeight; // 获取可视区的高度
+					let scrollHeight = el.scrollHeight; // 获取滚动条的总高度
+					let height = 50;
+					//到底了
+					// console.log(this.isLoading, this.ifFinish);
+					// console.log(scrollTop, clientHeight, scrollHeight);
+					//是否继续加载且已完成加载
+					if (scrollTop + clientHeight >= scrollHeight && this.isLoading && !this.ifFinish && this.page <= this
+						.totalPage) {
+						// 把距离顶部的距离加上可视区域的高度 等于或者大于滚动条的总高度就是到达底部
+						this.isLoading = true;
+						// console.log("到底了");
+						setTimeout(() => {
+							this.selectGuarantee();
+						}, 1000);
+					}
+				}
+			},
+
+			// 我要借款--选择担保人（带搜索）（加入总条数总页数）
+			selectGuarantee() {
+				let data = {}
+				data.name = this.nameSear
+				data.page = this.page
+				data.size = this.pageSize
+				this.$api.selectGuarantee(data).then(res => {
+					if (res.errno == 0) {
+						this.totalNum = res.data.count;
+						this.totalPage = res.data.total_page
+						if (this.totalNum == 0) {
+							// console.log("没有数据");
+							this.isLoading = false;
+							this.ifFinish = true;
+							this.page = 1;
+							this.deviceTip = "暂无数据";
+							return false;
+						}
+						this.list4 = this.list4.concat(res.data.lists);
+						// console.log(this.page, this.totalPage);
+						if (this.page == this.totalPage) {
+							this.isLoading = false;
+							this.ifFinish = true;
+							// this.page = 1;
+							// this.deviceTip = "没有更多了~";
+							this.deviceTip = "";
+							// console.log("没有更多了");
+						} else {
+							// console.log("下一页");
+							this.isLoading = true;
+							this.ifFinish = false;
+							this.page++;
+							this.deviceTip = "正在加载中~";
+						}
+					} else {
+						this.list4 = [];
+						this.isLoading = false;
+						this.ifFinish = true;
+						this.page = 1;
+						this.deviceTip = "数据加载失败~";
+					}
+				});
+			},
+
+			onSearch() {
+				this.list4 = []
+				this.page = 1
+				this.totalNum = 0
+				this.totalPage = 1
+				this.ifFinish = false
+				this.isLoading = true
+				this.deviceTip = ''
+				this.selectGuarantee()
+			},
+			clear() {
+				this.list4 = []
+				this.page = 1
+				this.totalNum = 0
+				this.totalPage = 1
+				this.ifFinish = false
+				this.isLoading = true
+				this.deviceTip = ''
+				this.selectGuarantee()
+			},
+			toggle(index, id, name) {
+				this.$refs.checkboxes[index].toggle();
+				let indexId = this.idArray.indexOf(id)
+				let indexName = this.nameArray.indexOf(name)
+				if (indexId == -1) {
+					this.idArray.push(id)
+				} else {
+					this.idArray.splice(indexId, 1);
+				}
+
+				if (indexName == -1) {
+					this.nameArray.push(name)
+				} else {
+					this.nameArray.splice(indexName, 1)
+				}
+			},
+			sureSel4() {
+				this.selectShow4 = false
+				if (this.idArray.length > 0) {
+					let idStr = ''
+					let nameStr = ''
+					this.idArray.forEach(ele => {
+						idStr += ele + ','
+					})
+					this.nameArray.forEach(ele => {
+						nameStr += ele + ','
+					})
+
+					if (idStr.lastIndexOf(',') > -1) {
+						idStr = idStr.substr(0, idStr.length - 1)
+						nameStr = nameStr.substr(0, nameStr.length - 1)
+					}
+
+					this.danbaoPer = nameStr
+					this.danbaoStr = idStr
+				} else {
+					this.danbaoPer = ''
+					this.danbaoStr = ''
+				}
+			},
+
+
+			// 提交借款申请
+			sendApply() {
+				let data = {}
+				data.repayment_id = this.selRadio3 // 还款方式id
+				data.rate_id = this.selRadio1 // 所选合作社借款时长和利率id
+				data.loan_use_id = this.selRadio2 // 借款用途id
+				data.loan_money = this.jieNum // 	借款金额
+				data.relation_id_str = this.danbaoStr // 所选担保人relation_id用逗号隔开的字符串
+
+				this.$api.submitLoanApply(data).then(res => {
+					if (res.errno == 0) {
+						this.$router.go(-1);
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			}
+
+		},
+	}
+</script>
+<style lang="less">
+	.applyJie {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		min-height: calc(100% - 90px);
+		background: #f0f6fc url(../../images/applyBg.png) no-repeat right 46px;
+		background-size: auto 36px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.m-title {
+			margin: 0 10px;
+			padding-top: 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.groupCont {
+			.van-cell-group {
+				margin-top: 10px;
+
+				&:last-child {
+					margin-bottom: 10px;
+				}
+
+				.van-field__label {
+					width: 5.2em;
+					color: #444444;
+				}
+
+				input {
+					text-align: right;
+				}
+
+				input:-ms-input-placeholder {
+					color: #9AA8B6;
+				}
+
+				::-webkit-input-placeholder {
+					color: #9AA8B6;
+				}
+			}
+		}
+
+
+
+		.sendBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+		// 选择框
+		.selSheet {
+			&.selSheet4 {
+				.title {
+					font-size: 15px;
+					text-align: center;
+					font-weight: bold;
+					position: relative;
+					color: #000000;
+					padding: 5px 0 15px 0;
+
+					&::after {
+						content: '';
+						position: absolute;
+						height: 3px;
+						width: 30px;
+						background: #3B6AF1;
+						border-radius: 2px;
+						bottom: 6px;
+						left: calc(50% - 15px);
+					}
+				}
+
+				.searchName {
+					padding: 2px 12px 4px 12px;
+				}
+
+				.van-action-sheet__content {
+					padding-top: 10px;
+				}
+
+				.content {
+					overflow: auto;
+
+				}
+
+
+			}
+
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+
+			.sheetNull {
+				margin: 20px 0;
+				color: #666666;
+				text-align: center;
+			}
+		}
+
+		.van-loading,
+		.noMore {
+			padding: 10px 0;
+			text-align: center;
+		}
+
+
+
+
+
+	}
+</style>

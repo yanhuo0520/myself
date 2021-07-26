@@ -1,0 +1,278 @@
+<template>
+	<div class="danDetail" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="担保详情" left-arrow fixed @click-left="leftBack" />
+		<div class="header">
+			<template v-if="status == 1">
+				<p class="title">我的担保额</p>
+				<p class="num"><span>¥</span>{{baseDetail.has_guarantee_money}}</p>
+			</template>
+			<template v-else>
+				<p class="title">需担保额</p>
+				<p class="num"><span>¥</span>{{baseDetail.loan_left_guarantee_money}}</p>
+			</template>
+			
+		</div>
+		<van-radio-group class="huanCont">
+			<van-cell title="借款人" :value="baseDetail.name">
+				<template #icon>
+					<img src="../../images/person1.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款人身份证号" :value="baseDetail.idcard">
+				<template #icon>
+					<img src="../../images/person2.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款人手机号" :value="baseDetail.phone">
+				<template #icon>
+					<img src="../../images/phone.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款金额" :value="baseDetail.loan_money">
+				<template #icon>
+					<img src="../../images/jieNum.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款利息" :value="baseDetail.interest_money">
+				<template #icon>
+					<img src="../../images/jielixi.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款时长" :value="baseDetail.loan_name">
+				<template #icon>
+					<img src="../../images/time.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="借款用途" :value="baseDetail.loan_use_name">
+				<template #icon>
+					<img src="../../images/jieuse.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="已担保额" :value="baseDetail.has_guarantee_money">
+				<template #icon>
+					<img src="../../images/qian7.png" alt="" />
+				</template>
+			</van-cell>
+		</van-radio-group>
+		
+		<van-radio-group class="huanCont refuse" v-if="baseDetail.reason && status == 2">
+			<van-cell title="拒绝理由">
+				<template #icon>
+					<img src="../../images/jujueIcon.png" alt="" />
+				</template>
+			</van-cell>
+			<p class="desc">{{baseDetail.reason}}</p>
+		</van-radio-group>
+		<div class="otherCont">
+			查看<div class="title" @click="otherList()">其历史借款<img src="../../images/right5.png" /> </div>
+		</div>
+
+		<div class="btnCont" v-if="status == 0">
+			<van-button :icon='require("../../images/jujue.png")' block class="sendBtn" @click="$router.push('/danInput')">
+				拒绝担保
+			</van-button>
+			<van-button :icon='require("../../images/danbaoIcon.png")' type="info" block class="sendBtn"
+				@click="goDanbao()">
+				为他担保
+			</van-button>
+		</div>
+
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "danDetail",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 90,
+				loanCode: '',
+				status: '',
+				baseDetail: '',
+			};
+		},
+		mounted() {
+			this.loanCode = this.$route.query.loanCode
+			this.status = this.$route.query.status
+			if (this.loanCode) {
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.getDetail()
+			}
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getDetail() {
+				this.$api.guaranteeLoanDetail({
+					"loan_code": this.loanCode
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.baseDetail = res.data[0]
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			otherList(){
+				this.$router.push({
+					path: '/historyJie',
+					query: {
+						loanCode: this.loanCode,
+						name: this.baseDetail.name
+					}
+				})
+			},
+			goDanbao() { // 为他担保
+				this.$router.push({
+					path: '/danInput',
+					query: {
+						name: this.baseDetail.name,
+						needMoney: this.baseDetail.loan_left_guarantee_money,
+						guaranteeCode: this.baseDetail.guarantee_code,
+					}
+				})
+
+			}
+		},
+	}
+</script>
+<style lang="less">
+	.danDetail {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		background: #f0f6fc url(../../images/bgHeader7.png) no-repeat;
+		background-size: 100% 170px;
+		overflow: auto;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader7.png) no-repeat top center;
+			background-size: 100% 170px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.header {
+			margin: 0 10px;
+			padding: 25px 0;
+			text-align: center;
+
+			.num {
+				font-size: 30px;
+				margin-top: 10px;
+				font-family: DIN, DIN-Medium;
+
+				span {
+					font-size: 14px;
+					font-weight: bold;
+					padding-right: 5px;
+				}
+			}
+		}
+
+		.huanCont {
+			margin: 0 10px;
+			&.refuse{
+				margin-top: 10px;
+				background: #FFFFFF;
+				border-radius: 10px;
+				.desc{
+					font-size: 15px;
+					color: #9AA8B6;
+					padding: 10px 16px;
+				}
+			}
+
+			.van-cell {
+				&:first-child {
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+				}
+				&:nth-last-child(1){
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
+				}
+
+				img {
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+
+				.van-cell__title {
+					flex: 0.5;
+					color: #444444;
+					font-size: 15px;
+				}
+
+				.van-cell__value {
+					font-size: 15px;
+					color: #9AA8B6;
+				}
+			}
+
+			.tip {
+				margin-top: 20px;
+				display: flex;
+				align-items: center;
+				background: #FDF7ED;
+				color: #AA9C8B;
+				line-height: 18px;
+
+				img {
+					width: 58px;
+					margin-right: 5px;
+				}
+
+			}
+
+		}
+		
+		
+		.otherCont{
+			font-size: 13px;
+			margin: 15px 20px;
+			display: flex;
+			align-items: center;
+			.title{
+				color: #3B6AF1;
+			}
+			img{
+				width: 10px;
+				margin-left: 2px;
+			}
+		}
+
+		.btnCont {
+			position: fixed;
+			left: 0;
+			width: 100%;
+			bottom: 0;
+			display: flex;
+
+			.van-button--default {
+				color: #3B6AF1;
+			}
+		}
+
+
+	}
+</style>

@@ -1,0 +1,184 @@
+<template>
+	<div class="huzhuInResult" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="互助金存入" left-arrow fixed @click-left="leftBack" />
+		<div class="huanCont">
+			<!-- 成功 -->
+			<template v-if="ifSuccess == 1">
+				<img src="../../images/success2.png" class="tipImg" />
+				<div class="cont">
+					  <!-- "pay_type": 2,//支付方式：3微信4支付宝5微信（银联渠道）6支付宝（银联渠道）7云闪付 -->
+					<div class="item" v-if="payData.pay_type == 1">
+						<img src="../../images/qian13.png" />
+						<p class="name">现金</p>
+					</div>
+					<div class="item" v-else-if="payData.pay_type == 3 || payData.pay_type == 5">
+						<img src="../../images/wei.png" />
+						<p class="name">微信</p>
+					</div>
+					<div class="item" v-else-if="payData.pay_type == 4 || payData.pay_type == 6">
+						<img src="../../images/zhi.png" />
+						<p class="name">支付宝</p>
+					</div>
+					<div class="item" v-else-if="payData.pay_type == 7">
+						<img src="../../images/yun.png" />
+						<p class="name">云闪付</p>
+					</div>
+					<div class="item itemRi">
+						<img src="../../images/qian4.png" />
+						<p class="money">{{payData.money}}</p>
+					</div>
+				</div>
+				<p class="btn" @click="leftBack()">完成</p>
+			</template>
+			
+			
+			<!-- 失败 -->
+			<template v-else-if="ifSuccess == 2">
+				<img src="../../images/failed2.png" class="tipImg" />
+				<p class="btn" @click="leftBack()">重新转入</p>
+				<p class="btnBack" @click="leftBack()">返回互助金存入</p>
+			</template>
+
+			<!-- 查询中 -->
+			<template v-else>
+				<img src="../../images/ing.png" class="tipImg" />
+				<p class="btn" @click="$router.replace('/hezuoIndexPresid')">完成</p>
+			</template>
+			
+			
+		</div>
+
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "huzhuInResult",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				save_proof: '',
+				ifSuccess: 0,
+				payData: ''
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			
+			this.save_proof = this.$route.query.save_proof
+			if (this.save_proof){
+				this.getResult()
+			}
+		},
+		methods: {
+			leftBack() {
+				// this.$router.go(-1);
+				this.$router.replace('/hezuoIndexPresid')
+			},
+			getResult(){
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.orderQuery({save_proof: this.save_proof}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.ifSuccess = 1
+						this.payData = res.pay_info
+					} else {
+						this.ifSuccess = 2
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			}
+		},
+	}
+</script>
+<style lang="less">
+	.huzhuInResult {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.huanCont {
+			height: 100%;
+			background: #FFFFFF;
+			border-radius: 10px 10px 0 0;
+			text-align: center;
+
+			.tipImg {
+				margin-top: 30px;
+				width: 96px;
+			}
+			.cont {
+				margin: 40px 20px 0 20px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+
+				.item {
+					display: flex;
+					align-items: center;
+					&.itemRi{
+						align-items: baseline;
+						img{
+							height: 10px;
+						}
+					}
+
+					img {
+						height: 15px;
+						padding-right: 3px;
+					}
+					.name {
+						font-size: 15px;
+					}
+					.money {
+						font-family: DIN, DIN-Medium;
+						font-size: 18px;
+					}
+				}
+			}
+		}
+
+		.btn {
+			margin: 40px 20px 0 20px;
+			text-align: center;
+			line-height: 36px;
+			color: #FFFFFF;
+			border-radius: 30px;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+		.btnBack {
+			margin-top: 10px;
+			line-height: 36px;
+			color: #444444;
+			font-size: 15px;
+		}
+
+
+
+	}
+</style>

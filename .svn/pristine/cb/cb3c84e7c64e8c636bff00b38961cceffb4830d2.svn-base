@@ -1,0 +1,239 @@
+<template>
+	<div class="cooCardAcc">
+		<van-nav-bar title="我的银行卡" left-arrow fixed @click-left="leftBack" />
+		<p class="title-total">共计<span>{{cardNum}}</span>张</p>
+		<div class="content" v-if="cardNum > 0">
+			<van-loading v-if="isLoading" size="24px">加载中……</van-loading>
+			<div class="item" @click="userDelBank(item.bank_id)" :class="{
+				'blue':(item.open_bank_letter == 'CCB' || item.open_bank_letter == 'BC'),
+				'red':(item.open_bank_letter == 'BOC' ||item.open_bank_letter == 'CMB' ||item.open_bank_letter == 'GF' ||item.open_bank_letter == 'ICBC' ||item.open_bank_letter == 'CITIC'),
+				'green':(item.open_bank_letter == 'ABC' || item.open_bank_letter == 'CMBC' || item.open_bank_letter == 'YZ'),
+				'purple':item.open_bank_letter == 'CEB',
+				'orange':item.open_bank_letter == 'ZZBANK'}" v-for="(item, index) in cardList" :key="index">
+				<img src="../../images/light3.png" class="itemBg" />
+				<img src="../../images/light2.png" class="itemBgAll" />
+				<div class="topCont">
+					<img :src="item.logoImg" alt="" />
+					<p class="title">{{item.open_bank}}</p>
+					<p class="tip">{{item.bank_type}}</p>
+					<p class="tip">{{item.bank_remark}}</p>
+				</div>
+				<p class="carnum">{{item.bank_num}}</p>
+			</div>
+		</div>
+		<!-- 暂无内容 -->
+		<div class="null" v-else-if="cardNum == 0 && !isLoading">
+			<img src="../../images/zanwu.png" alt="" />
+		</div>
+		<van-button :icon= 'require("../../images/add.png")'  type="info" block class="addBtn" @click="$router.push('/applyCard')">
+			添加银行卡
+		</van-button>
+	</div>
+</template>
+<script>
+	export default {
+		name: "cooCardAcc",
+		data() {
+			return {
+				cardNum: 0,
+				isLoading: true,
+				cardList: []
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			if(this.$isAndroid()){
+				android.onVueMounted()
+			}
+			
+			this.getList()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getList(){
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.user_bank({}).then(res => {
+					this.isLoading = false
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.cardNum = res.data.length
+						res.data.forEach(ele => {
+							if(ele.open_bank_letter == 'CCB'){ // 建行
+								ele.logoImg = require("../../images/CCB.png")
+							}else if(ele.open_bank_letter == 'BC'){
+								ele.logoImg = require("../../images/BC.png")
+							}else if(ele.open_bank_letter == 'BOC'){
+								ele.logoImg = require("../../images/BOC.png")
+							}else if(ele.open_bank_letter == 'CMB'){
+								ele.logoImg = require("../../images/CMB.png")
+							}else if(ele.open_bank_letter == 'GF'){
+								ele.logoImg = require("../../images/GF.png")
+							}else if(ele.open_bank_letter == 'ICBC'){ // 工商
+								ele.logoImg = require("../../images/ICBC.png")
+							}else if(ele.open_bank_letter == 'CITIC'){
+								ele.logoImg = require("../../images/ZX.png")
+							}else if(ele.open_bank_letter == 'ABC'){ // 农行
+								ele.logoImg = require("../../images/ABC.png")
+							}else if(ele.open_bank_letter == 'CMBC'){
+								ele.logoImg = require("../../images/CMBC.png")
+							}else if(ele.open_bank_letter == 'YZ'){
+								ele.logoImg = require("../../images/YZ.png")
+							}else if(ele.open_bank_letter == 'CEB'){ // 光大
+								ele.logoImg = require("../../images/CEB.png")
+							}else{
+								ele.logoImg = ele.bank_log
+							}
+						});
+						
+						this.cardList = res.data;
+					} else {
+						this.$toast(res.errmsg)	
+					}
+
+				}).catch(err=>{
+					this.$toast.clear()
+					this.isLoading = false
+				})
+			},
+			userDelBank(bank_id){
+				this.$router.push({
+					path: '/carDetail',
+					query: {
+						id: bank_id
+					}
+				})
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.cooCardAcc {
+		padding-top: 46px;
+		padding-bottom: 50px;
+		background: #F0F6FC;
+		min-height: calc(100% - 96px);
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+
+		.title-total {
+			margin: 15px 10px 5px 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.content {
+			margin: 0 10px;
+
+			.item {
+				margin-top: 10px;
+				height: 120px;
+				color: #FFFFFF;
+				border-radius: 10px;
+				position: relative;
+				&.blue{
+					background: linear-gradient(#3799fc 0%, #3d6be2 100%);
+				}
+				&.red{ 
+					background: linear-gradient(#ff717e 0%, #f73c57 100%);
+				}
+				&.green{ 
+					background: linear-gradient(#09beaa 0%, #00aa95 100%);
+				}
+				&.purple{ 
+					background: linear-gradient(#aa91fc  0%, #755ddf 100%);
+				}
+				&.orange{ 
+					background: linear-gradient(#ffa500  0%, #ff8917 100%);
+				}
+				.itemBg {
+					position: absolute;
+					right: 0;
+					top: 0;
+					height: 45px;
+				}
+				.itemBgAll{
+					position: absolute;
+					left: 0;
+					bottom: 0;
+					max-width: 290px;
+				}
+
+				.topCont {
+					display: flex;
+					align-items: center;
+					padding: 20px 15px 0 15px;
+					img{
+						width: 30px;
+						height: 30px;
+						border-radius: 50%;
+					}
+					.title{
+						margin-left: 10px;
+						font-size: 18px;
+					}
+					.tip{
+						font-size: 13px;
+						color: #eeeeee;
+						margin-left: 5px;
+						line-height: 20px;
+						padding: 0 6px;
+						text-align: center;
+						border-radius: 40px;
+						background: rgba(225, 225, 225, 0.2);
+					}
+
+				}
+				.carnum {
+					margin-top: 30px;
+					margin-right: 20px;
+					font-family: DIN Bold, DIN Bold-Bold;
+					font-weight: bold;
+					font-size: 24px;
+					text-align: right;
+				}
+			}
+		}
+		
+		.null{
+			img{
+				max-width: 100%;
+			}
+		}
+		.van-loading {
+			padding: 10px 0;
+			text-align: center;
+		}
+		.addBtn{
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			border-radius: 0;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+	}
+</style>

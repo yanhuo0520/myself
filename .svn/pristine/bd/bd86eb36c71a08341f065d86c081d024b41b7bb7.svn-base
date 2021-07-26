@@ -1,0 +1,518 @@
+<template>
+	<div class="huzhuZhuan" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="互助金转账" left-arrow fixed @click-left="leftBack" />
+		<p class="m-title">您正在办理<span>"互助金转账"</span>请认真填写以下信息</p>
+
+		<div class="inCont">
+			<p class="title">转账金额</p>
+			<van-field v-model="money" type="number" clearable :class="ifIn? 'ifIn' : ''" @input="ifIn = true, outMoney()" @clear="disabled = true"
+				placeholder="">
+				<template #right-icon>
+					<p @click="allOUt()">全部</p>
+				</template>
+				<template #left-icon>
+					<img src="../../images/qian4.png" alt="" class="iconImg" />
+				</template>
+			</van-field>
+
+			<div class="tip">
+				互助金余额￥{{allMoney}}
+			</div>
+		</div>
+
+		<van-cell-group>
+			<van-field v-model="huMing" clearable label="收款人户名" :left-icon="require('../../images/person1.png')"
+				input-align="right" placeholder="请输入收款人户名">
+				<template #right-icon>
+					<img src="../../images/person7.png" class="rightIcon" />
+				</template>
+			</van-field>
+			<van-field v-model="zhangHu" clearable label="收款人账号" :left-icon="require('../../images/date7.png')"
+				input-align="right" placeholder="请输入收款人账号">
+				<template #right-icon>
+					<van-uploader :after-read="afterRead" :max-count="1" class="upload">
+						<img src="../../images/camera.png" class="rightIcon" />
+					</van-uploader>
+				</template>
+			</van-field>
+
+			<van-field v-model="bank" clearable label="收款人开户行" :left-icon="require('../../images/bank.png')" readonly
+				is-link input-align="right" placeholder="请选择收款人开户行" @click="selBank()" />
+		</van-cell-group>
+
+		<van-cell-group>
+			<van-field v-model="fuYan" clearable label="附言" maxlength="10"
+				:left-icon="require('../../images/message1.png')" input-align="right" placeholder="选填,最多10个汉字" />
+		</van-cell-group>
+
+
+		<van-button :disabled="disabled" :icon='require("../../images/dui2.png")' type="info" block class="sendBtn" @click="goPay()"
+			v-if="hidshowFooter">
+			确定转账
+		</van-button>
+
+		<!-- 选择银行 -->
+		<van-action-sheet v-model="show" title="选择开户银行" class="selSheet" :closeable="false" cancel-text="确定" @cancel="sureSel()">
+			<template v-if="bankList.length > 0">
+				<van-radio-group v-model="selRadio" v-for="(item, index) in bankList" :key="index">
+					<van-cell :title="item.bank_name" clickable @click="selRadio = item.id, selTitle = item.bank_name"
+						:class="selRadio == item.id ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item.id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+
+			<p class="sheetNull" v-if="bankList.length == 0">暂无</p>
+			
+		</van-action-sheet>
+
+		<van-overlay :show="showInput" class="inputCont" @click="this.showKeyboard = false">
+			<div class="wrapper" @click.stop @click="showInput = false,showKeyboard = false">
+				<div class="block">
+					<p class="title">请输入支付密码</p>
+					<!-- 密码输入框 -->
+					<van-password-input :value="passward" :focused="showKeyboard" @focus="showKeyboard = true" />
+					<!-- 数字键盘 -->
+					<van-number-keyboard v-model="passward" :show="showKeyboard" :transition="false" theme="custom"
+						:maxlength="6" close-button-text="转出" @close="closeKeyboard" />
+				</div>
+
+			</div>
+		</van-overlay>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "huzhuZhuan",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 90,
+				money: '',
+				disabled: true,
+				allMoney: 0,
+				ifIn: false,
+				huMing: '',
+				zhangHu: '',
+				bank_id: '',
+				bank: '',
+				fuYan: '',
+
+				show: false,
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				selRadio: '',
+				selTitle: '',
+				bankList: [],
+				ifHezuoCard: false,
+
+				showInput: false,
+				showKeyboard: false,
+				passward: '',
+
+				docmHeight: document.documentElement.clientHeight, //默认屏幕高度
+				showHeight: "0", //实时屏幕高度
+				hidshowFooter: true, //显示或者隐藏footer,
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			this.allMoney = this.$route.query.money
+			this.bankLists()
+
+			window.onresize = () => { // 实时屏幕高度
+				this.showHeight = document.body.clientHeight;
+			};
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			bankLists() {
+				this.$api.bank_lists({}).then(res => {
+					this.isLoading = false
+					if (res.errno == 0) {
+						this.bankList = res.data
+						this.selRadio = res.data[0].id
+						this.selTitle = res.data[0].bank_name
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.isLoading = false
+				})
+			},
+			sureSel() {
+				this.bank_id = this.selRadio
+				this.bank = this.selTitle
+				this.show = false
+			},
+			selBank() {
+				if (this.huMing.trim().length > 0 && this.zhangHu.trim().length > 0) {
+					let data = {}
+					data.payment_user = this.huMing
+					data.bank_num = this.zhangHu
+					this.$api.passbook_turn_src(data).then(res => {
+						if (res.errno == 0) {
+							this.bank_id = res.bank.id
+							this.bank = res.bank.bank_name
+							this.ifHezuoCard = true
+							setTimeout(() => {
+								this.show = true
+							}, 1000)
+						} else {
+							this.show = true
+							this.ifHezuoCard = false
+						}
+					}).catch(err => {
+						this.show = true
+					});
+				} else {
+					this.show = true
+				}
+			},
+			outMoney() {
+				if(this.allMoney == 0){
+					this.$toast("暂无可转出")
+					this.money = ''
+					this.disabled = true
+					return
+				}else if (Number(this.money) > Number(this.allMoney)) {
+					this.disabled = false
+					this.money = this.allMoney
+					this.$toast("账户最多只能转出" + this.allMoney + "元！")
+					return
+				}else{
+					this.disabled = false
+				}
+			},
+			allOUt(){
+				if(this.allMoney == 0){
+					this.$toast("暂无可转出金额")
+					this.money = ''
+					this.disabled = true
+					return
+				}else{
+					this.money = this.allMoney
+					this.ifIn = true
+					this.disabled = false
+				}
+			},
+			// 银行卡识别
+			afterRead(file) {
+				// 判断图片大小，确定是否压缩图片
+				this.$compreImg(file.content).then(result => {
+					if (result.size > file.file.size){
+						//压缩后比原来更大，则将原图上传
+						this._uploadFile(file.file, file.file.name);
+					} else {
+						//压缩后比原来小，上传压缩后的
+						this._uploadFile(result, file.file.name)
+					}
+				})
+			},
+			_uploadFile(file, filename){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				let token = this.$Cookies.get('token');
+				formdata.append("file", file, filename);
+				formdata.append("token", token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				this.$toast.loading({
+					message: '识别中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						this.cardImg = res.data.data.url
+						this.$api.get_aipocr_bank_no({
+							'url': this.cardImg
+						}).then(res => {
+							this.$toast.clear()
+							if (res.errno == 0) {
+								this.zhangHu = res.data.bank_card_number
+							} else {
+								this.$toast(res.errmsg)
+							}
+						}).catch(err => {
+							this.$toast.clear()
+						})
+					} else {
+						this.$toast(res.errmsg);
+					}
+				});
+			},
+
+			goPay() {
+				if (this.money <= 0) {
+					this.$toast("请输入转出金额")
+					return
+				}
+				if (this.huMing.trim().length <= 0) {
+					this.$toast("请输入收款人户名")
+					return
+				}
+				if (this.zhangHu.trim().length <= 0) {
+					this.$toast("请输入收款人银行卡号/合作社帐号")
+					return
+				}
+				if (this.bank.trim().length <= 0) {
+					this.$toast("请选择收款人开户行")
+					return
+				}
+				this.passward = ''
+				this.showInput = true
+				this.showKeyboard = true
+			},
+
+			closeKeyboard() {
+				if (this.passward.length < 6) {
+					this.$toast('请输入完整的6位数密码')
+					return
+				}
+				this.showInput = false
+				this.showKeyboard = false
+
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				let data = {}
+				data.money = this.money
+				data.payment_user = this.huMing
+				data.bank_num = this.zhangHu
+				data.id = this.bank_id // 银行id
+				data.bank_name = this.bank // 银行或合作社名称
+				data.turn_note = this.fuYan // 转账附言
+				data.pay_pwd = this.$md5(this.$md5(this.passward)) // 支付密码（前端md5加密）
+
+				this.$api.submit_passbook_turn(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if(this.ifHezuoCard){ // 社内卡不需要审核
+							this.$toast("转账成功")
+						}else{
+							this.$toast("预计2小时到账，请耐心等待")
+						}
+						
+						setTimeout(() => {
+							this.$router.go(-1);
+						}, 1000)
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+
+		},
+
+		watch: {
+			showHeight: function() {
+				if (this.docmHeight > this.showHeight) {
+					this.hidshowFooter = false;
+				} else {
+					this.hidshowFooter = true;
+				}
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.huzhuZhuan {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		background: #f0f6fc url(../../images/applyBg.png) no-repeat right 46px;
+		background-size: auto 36px;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.m-title {
+			margin: 0 10px;
+			padding-top: 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.van-cell-group {
+			margin-top: 10px;
+
+			.van-field__right-icon {
+				line-height: 0;
+			}
+
+			.rightIcon {
+				width: 15px;
+				height: 15px;
+			}
+		}
+
+		.inCont {
+			background: #FFFFFF;
+			margin: 10px 0;
+			padding: 15px;
+			border-radius: 10px 10px 0 0;
+
+			.title {
+				color: #9AA8B6;
+			}
+
+			.van-cell {
+				margin-top: 15px;
+				padding: 0;
+
+				&.ifIn {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				&::after {
+					left: 0;
+					right: 0;
+				}
+
+				input {
+					font-size: 21px;
+				}
+
+				img {
+					height: 10px;
+					margin-top: 10px;
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+					font-size: 13px;
+				}
+			}
+
+			.tip {
+				margin-top: 10px;
+				color: #9AA8B6;
+			}
+		}
+
+		.sendBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+		// 选择框
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.sheetNull {
+				margin: 20px 0;
+				color: #666666;
+				text-align: center;
+			}
+		}
+
+		.btnRound {
+			margin: 20px 15px 10px 15px;
+			text-align: center;
+			line-height: 36px;
+			color: #FFFFFF;
+			border-radius: 30px;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+		.inputCont {
+			.wrapper {
+				height: 100%;
+
+				.block {
+					text-align: center;
+					position: fixed;
+					bottom: 0;
+					left: 0;
+					right: 0;
+					height: 380px;
+					background-color: #fff;
+					border-radius: 10px 10px 0 0;
+
+					.title {
+						line-height: 60px;
+						font-size: 15px;
+					}
+				}
+
+			}
+
+		}
+
+		.van-action-sheet__gap{
+			height: 0px;
+		}
+		.van-action-sheet__cancel{
+			color: #FFFFFF;
+			height: 80px;
+			font-size: 15px;
+			padding-top: 25px;
+			background: url(../../images/bgBtn1.png) no-repeat center 25px;
+			background-size: calc(100% - 40px) 40px;
+		}
+
+
+	}
+</style>

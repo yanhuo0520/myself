@@ -1,0 +1,271 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import index from '@/pages/index'
+import login from '@/pages/login' // 登录
+import chooseIdentity from '@/pages/chooseIdentity' // 登录 - 选择身份
+
+import ucenter from '@/pages/ucenter' // 登录 - 个人中心
+import feedback from '@/pages/feedback' // 个人中心 - 意见反馈
+import yeji from '@/pages/yeji' // 个人中心 - 业绩顾问
+
+// 账号管家
+import accountIndex from '@/pages/account/index' // 账号管家
+import applyCard from '@/pages/account/applyCard' // 我的银行卡 -- 添加银行卡
+import applyCardDetail from '@/pages/account/applyCardDetail' // 账户管家 - 我的银行卡 - 添加银行卡 - 银行卡信息
+import cooCardAcc from '@/pages/account/cooCard' // 我的银行卡
+import cooperativeAcc from '@/pages/account/cooperative' // 我的合作社账户
+import cooProfitAcc from '@/pages/account/cooProfit' // 我的合作社账户--收益明细
+
+// 合作经济
+import joinCooper from '@/pages/hezuo/join' // 登录注册 - 注册 - 入社
+import hezuoIndexMass from '@/pages/hezuo/indexMass' // 合作经济-群众
+import applyMass from '@/pages/hezuo/applyMass' // 合作经济-群众 - 群众团体 - 创建群众团体
+
+
+import hezuoIndexPresid from '@/pages/hezuo/indexPresid' // 合作经济-社长
+import presidentJie from '@/pages/hezuo/presidentJie' // 合作经济-社长-我要借款
+import applyJie from '@/pages/hezuo/applyJie' // 合作经济-社长 - 我要借款 - 申请借款
+import jieDetail from '@/pages/hezuo/jieDetail' // 合作经济 - 社长 - 我要借款 - 历史借款 - 借款详情待审批
+
+import presidentHuan from '@/pages/hezuo/presidentHuan' // 合作经济 - 社长 - 我要还款
+import preHuanPlan from '@/pages/hezuo/preHuanPlan' // 合作经济 - 社长 - 我要还款 - 还款计划
+import huanDetail from '@/pages/hezuo/huanDetail' // 合作经济 - 社长 - 我要还款 - 还款详情
+import advanceHuan from '@/pages/hezuo/advanceHuan' // 合作经济 - 社长 - 我要还款 - 提前还款
+import ontimeHuanNull from '@/pages/hezuo/ontimeHuanNull' // 合作经济 - 社长 - 按期还款 - 暂无
+import ontimeHuan from '@/pages/hezuo/ontimeHuan' // 合作经济 - 社长 - 我要还款 - 按时还款【多期】
+import untimeHuan from '@/pages/hezuo/untimeHuan' // 合作经济 - 社长 - 我要还款 - 按时还款---单期
+import huanResult from '@/pages/hezuo/huanResult' // 合作经济 - 社长 - 我要还款 - 提前还款 - 还款成功/失败
+import huanSuccess from '@/pages/hezuo/huanSuccess' // 合作经济 - 社长 - 我要还款 - 提前还款 - 还款成功
+import huanFaile from '@/pages/hezuo/huanFaile' // 合作经济 - 社长 - 我要还款 - 提前还款 - 还款失败
+import huanJilu from '@/pages/hezuo/huanJilu' // 合作经济 - 社长 - 我要还款 - 提前还款 - 还款记录
+import huanJiluList from '@/pages/hezuo/huanJiluList' // 合作经济 - 社长 - 我要还款 - 提前还款 - 还款记录 --提前还款列表
+
+import presidentDan from '@/pages/hezuo/presidentDan' // 合作经济 - 社长 - 我要担保
+import danDetail from '@/pages/hezuo/danDetail' // 合作经济 - 社长 - 我要担保 ---担保详情
+import danInput from '@/pages/hezuo/danInput' // 合作经济 - 社长 - 我要担保 ---为他担保
+import danFang from '@/pages/hezuo/danFang' // 合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 房产
+import danChe from '@/pages/hezuo/danChe' // 合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 车产
+import danOther from '@/pages/hezuo/danOther' // 合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 其他资产
+import historyJie from '@/pages/hezuo/historyJie' // 合作经济 - 社长 - 我要担保 ---历史借款
+import danjieDetail from '@/pages/hezuo/danjieDetail' // 合作经济 - 社长 - 我要担保 ---历史借款 --- 借款详情
+
+import hezuoIndexState from '@/pages/hezuo/indexState' // 合作经济-站长
+
+import nongziShop from '@/pages/nongzi/shop'
+
+// 解决tab重复点击报错问题
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location) {
+	return originalPush.call(this, location).catch(err => err)
+}
+
+Vue.use(Router)
+
+export default new Router({
+	routes: [{
+			path: '/',
+			name: 'index',
+			component: index
+		},
+		{
+			path: '/login',
+			name: '登录',
+			component: login
+		},
+		{
+			path: '/chooseIdentity',
+			name: '登录 - 选择身份',
+			component: chooseIdentity
+		},
+		{
+			path: '/ucenter',
+			name: '登录 - 个人中心',
+			component: ucenter
+		},
+		{
+			path: '/feedback',
+			name: '个人中心 - 意见反馈',
+			component: feedback
+		},
+		{
+			path: '/yeji',
+			name: '个人中心 - 业绩顾问',
+			component: yeji
+		},
+		{
+			path: '/accountIndex',
+			name: '账户管家',
+			component: accountIndex
+		},
+		{
+			path: '/applyCard',
+			name: '我的银行卡-添加银行卡',
+			component: applyCard
+		},
+		{
+			path: '/applyCardDetail',
+			name: '账户管家 - 我的银行卡 - 添加银行卡 - 银行卡信息',
+			component: applyCardDetail
+		},
+		{
+			path: '/cooCardAcc',
+			name: '我的银行卡',
+			component: cooCardAcc
+		},
+		{
+			path: '/cooperativeAcc',
+			name: '我的合作社账户',
+			component: cooperativeAcc
+		},
+		{
+			path: '/cooProfitAcc',
+			name: '我的合作社账户-收益明细',
+			component: cooProfitAcc
+		},
+		{
+			path: '/joinCooper',
+			name: '合作经济-群众',
+			component: joinCooper
+		},
+		{
+			path: '/hezuoIndexMass',
+			name: '合作经济 - 群众',
+			component: hezuoIndexMass
+		},
+		{
+			path: '/applyMass',
+			name: '合作经济 - 群众 - 群众团体 - 创建群众团体',
+			component: applyMass
+		},
+		{
+			path: '/hezuoIndexPresid',
+			name: '合作经济-社长',
+			component: hezuoIndexPresid
+		},
+		{
+			path: '/presidentJie',
+			name: '合作经济-社长-我要借款',
+			component: presidentJie
+		},
+		{
+			path: '/applyJie',
+			name: '合作经济-社长 - 我要借款 - 申请借款',
+			component: applyJie
+		},
+		{
+			path: '/jieDetail',
+			name: '合作经济 - 社长 - 我要借款 - 历史借款 - 借款详情待审批',
+			component: jieDetail
+		},
+		{
+			path: '/presidentHuan',
+			name: '合作经济-社长-我要还款',
+			component: presidentHuan
+		},
+		{
+			path: '/huanDetail',
+			name: '合作经济-社长-我要还款 - 还款详情',
+			component: huanDetail
+		},
+		{
+			path: '/preHuanPlan',
+			name: '合作经济 - 社长 - 我要还款 - 还款计划',
+			component: preHuanPlan
+		},
+		{
+			path: '/advanceHuan',
+			name: '合作经济-社长-我要还款 - 提前还款',
+			component: advanceHuan
+		},
+		{
+			path: '/ontimeHuanNull',
+			name: '合作经济-社长-我要还款 - 按期还款--暂无',
+			component: ontimeHuanNull
+		},
+		{
+			path: '/ontimeHuan',
+			name: '合作经济-社长-我要还款 - 按时还款',
+			component: ontimeHuan
+		},
+		{
+			path: '/untimeHuan',
+			name: '合作经济-社长-我要还款 - 按时还款 -- 单期 ',
+			component: untimeHuan
+		},
+		{
+			path: '/huanResult',
+			name: '合作经济-社长-我要还款 - 提前还款 - 还款成功/失败',
+			component: huanResult
+		},
+		{
+			path: '/huanSuccess',
+			name: '合作经济-社长-我要还款 - 提前还款 - 还款成功',
+			component: huanSuccess
+		},
+		{
+			path: '/huanFaile',
+			name: '合作经济-社长-我要还款 - 提前还款 - 还款失败',
+			component: huanFaile
+		},
+		{
+			path: '/huanJilu',
+			name: '合作经济-社长-我要还款 - 提前还款 - 还款记录',
+			component: huanJilu
+		},
+		{
+			path: '/huanJiluList',
+			name: '合作经济-社长-我要还款 - 提前还款 - 还款记录 --提前还款列表',
+			component: huanJiluList
+		},
+		{
+			path: '/presidentDan',
+			name: '合作经济-社长-我要担保',
+			component: presidentDan
+		},
+		{
+			path: '/danDetail',
+			name: '合作经济-社长-我要担保 - 担保详情',
+			component: danDetail
+		},
+		{
+			path: '/danInput',
+			name: '合作经济-社长-我要担保 - 为他担保',
+			component: danInput
+		},
+		{
+			path: '/danFang',
+			name: '合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 房产',
+			component: danFang
+		},
+		{
+			path: '/danChe',
+			name: '合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 车产',
+			component: danChe
+		},
+		{
+			path: '/danOther',
+			name: '合作经济 - 社长 -  我要担保 - 担保详情 - 为他担保 - 其他资产担保 - 其他资产',
+			component: danOther
+		},
+		{
+			path: '/historyJie',
+			name: '合作经济-社长-我要担保 - 历史借款',
+			component: historyJie
+		},
+		{
+			path: '/danjieDetail',
+			name: '合作经济 - 社长 - 我要担保 ---历史借款 --- 借款详情',
+			component: danjieDetail
+		},
+		{
+			path: '/hezuoIndexState',
+			name: '合作经济-站长',
+			component: hezuoIndexState
+		},
+		{
+			path: '/nongziShop',
+			name: '农资商城',
+			component: nongziShop
+		},
+	]
+})

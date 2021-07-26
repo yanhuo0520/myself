@@ -1,0 +1,185 @@
+<template>
+	<div class="cooCardAcc">
+		<van-nav-bar title="我的银行卡" left-arrow fixed @click-left="leftBack" />
+		<p class="title-total">共计<span>{{cardNum}}</span>张</p>
+		<div class="content" v-if="cardNum > 0">
+			<van-loading v-if="isLoading" size="24px">加载中……</van-loading>
+			<div class="item" :class="{
+				'blue':(item.open_bank_letter == 'CCB' || item.open_bank_letter == 'BC'),
+				'red':(item.open_bank_letter == 'BOC' ||item.open_bank_letter == 'CMB' ||item.open_bank_letter == 'GF' ||item.open_bank_letter == 'ICBC' ||item.open_bank_letter == 'ZX'),
+				'green':(item.open_bank_letter == 'ABC' || item.open_bank_letter == 'CMBC' || item.open_bank_letter == 'YZ'),
+				'purple':item.open_bank_letter == 'CEB'}" v-for="(item, index) in cardList" :key="index">
+				<img src="../../images/light3.png" class="itemBg" />
+				<img src="../../images/light2.png" class="itemBgAll" />
+				<div class="topCont">
+					<img :src="item.bank_log" alt="" />
+					<p class="title">{{item.open_bank}}</p>
+					<p class="tip">{{item.bank_type}}</p>
+				</div>
+				<p class="carnum">{{item.bank_num}}</p>
+			</div>
+		</div>
+		<!-- 暂无内容 -->
+		<div class="null" v-else-if="cardNum == 0 && !isLoading">
+			<img src="../../images/zanwu.png" alt="" />
+		</div>
+		<van-button :icon= 'require("../../images/add.png")'  type="info" block class="addBtn" @click="$router.push('/applyCard')">
+			添加银行卡
+		</van-button>
+	</div>
+</template>
+<script>
+	export default {
+		name: "cooCardAcc",
+		data() {
+			return {
+				cardNum: 0,
+				isLoading: true,
+				cardList: []
+			};
+		},
+		mounted() {
+			this.userBank()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 用户银行卡包
+			userBank(){
+				this.$api.userBank({}).then(res => {
+					this.isLoading = false
+					if (res.errno == 0) {
+						this.cardNum = res.data.length
+						this.cardList = res.data;
+					} else {
+						this.$toast(res.errmsg)	
+					}
+
+				}).catch(err=>{
+					this.isLoading = false
+				})
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.cooCardAcc {
+		padding-top: 46px;
+		padding-bottom: 50px;
+		background: #F0F6FC;
+		min-height: calc(100% - 96px);
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+
+		.title-total {
+			margin: 15px 10px 5px 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.content {
+			margin: 0 10px;
+
+			.item {
+				margin-top: 10px;
+				height: 120px;
+				color: #FFFFFF;
+				border-radius: 10px;
+				position: relative;
+				&.blue{ // 建行
+					background: linear-gradient(#3799fc 0%, #3d6be2 100%);
+				}
+				&.red{ // 工商银行
+					background: linear-gradient(#ff717e 0%, #f73c57 100%);
+				}
+				&.green{ // 民生银行
+					background: linear-gradient(#09beaa 0%, #00aa95 100%);
+				}
+				&.purple{ // 广大
+					background: linear-gradient(#aa91fc  0%, #755ddf 100%);
+				}
+				.itemBg {
+					position: absolute;
+					right: 0;
+					top: 0;
+					height: 45px;
+				}
+				.itemBgAll{
+					position: absolute;
+					left: 0;
+					bottom: 0;
+					max-width: 290px;
+				}
+
+				.topCont {
+					display: flex;
+					align-items: center;
+					padding: 20px 20px 0 20px;
+					img{
+						width: 30px;
+						height: 30px;
+						border-radius: 50%;
+					}
+					.title{
+						margin-left: 10px;
+						font-size: 18px;
+					}
+					.tip{
+						font-size: 13px;
+						color: #eeeeee;
+						margin-left: 5px;
+						padding: 1px 8px;
+						line-height: 20px;
+						border-radius: 40px;
+						background: rgba(225, 225, 225, 0.2);
+					}
+
+				}
+				.carnum {
+					margin-top: 30px;
+					margin-right: 20px;
+					font-family: DIN Bold, DIN Bold-Bold;
+					font-weight: bold;
+					font-size: 24px;
+					text-align: right;
+				}
+			}
+		}
+		
+		.null{
+			img{
+				max-width: 100%;
+			}
+		}
+		.van-loading {
+			padding: 10px 0;
+			text-align: center;
+		}
+		.addBtn{
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+	}
+</style>

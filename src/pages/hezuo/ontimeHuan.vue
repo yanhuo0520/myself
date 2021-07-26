@@ -1,0 +1,667 @@
+<template>
+	<div class="ontimeHuan" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="按期还款" left-arrow fixed @click-left="leftBack" />
+		<div class="header">
+			<p class="title">应还总额</p>
+			<p class="num"><span>¥</span>{{tottalHuanMoney}}</p>
+		</div>
+		<p class="s-title">选择归还欠款</p>
+			<van-checkbox-group v-model="result" class="overCheck" :class="{'ifAll': ifAllNum}">
+				<div class="item" v-for="(item, index) in radioNumItem" clickable :key="index"
+					@click="toggle(index, item.back_code, item.qishu)">
+					<div class="top">
+						<van-checkbox :name="item.back_id" ref="checkboxeMon">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+							{{item.all_repaid}}元
+							<van-tag plain type="primary" 
+							:class="{'red': (item.if_should_repaid == 1 && item.overdue_day > 0),
+							'orange': item.if_should_repaid == 3 }">第{{item.qishu}}期</van-tag>
+						</van-checkbox>
+						<img src="../../images/right1.png" class="rightIcon" @click.stop="showItem(item.back_id)" />
+					</div>
+					<div class="listCont" :class="radiosSel == item.back_id ? 'show' : ''">
+						<van-cell :title="loan_info.rate_explain" :value="loan_info.loan_rate">
+							<template #icon>
+								<img src="../../images/yearlilv.png" alt="" />
+							</template>
+						</van-cell>
+						<van-cell title="利息" :value="item.back_interest">
+							<template #icon>
+								<img src="../../images/jielixi.png" alt="" />
+							</template>
+						</van-cell>
+						<template v-if="item.overdue_day > 0">
+							<van-cell title="应还日期" :value="item.should_back_date">
+								<template #icon>
+									<img src="../../images/date1.png" alt="" />
+								</template>
+							</van-cell>
+							<van-cell title="逾期滞纳金" :value="item.overdue_rate">
+								<template #icon>
+									<img src="../../images/qian2.png" alt="" />
+								</template>
+							</van-cell>
+							<van-cell title="逾期天数" :value="item.overdue_day">
+								<template #icon>
+									<img src="../../images/date.png" alt="" />
+								</template>
+							</van-cell>
+						</template>
+						<van-cell title="本金" :value="item.back_principal">
+							<template #icon>
+								<img src="../../images/qian3.png" alt="" />
+							</template>
+						</van-cell>
+						
+					</div>
+				</div>
+				<p class="more" v-if="radioNumItem.length > 3"><img src="../../images/down2.png" /></p>
+			</van-checkbox-group>
+
+		<p class="s-title">选择支付方式</p>
+		<van-radio-group v-model="radioBanType" class="selGroup payGroup">
+			<van-cell :title="item.bank_num_str" clickable v-for="(item, index) in radioPayItem" :key="index"
+				@click="radioBanType = item.pay_type, radioBankId = item.bank_id, radioBanNum = item.bank_num, radioBanNumStr = item.bank_num_str"
+				:class="radioBanType == item.pay_type ? 'active' : ''">
+				<template #icon>
+					<img :src="item.icon" alt="" class="iconImg" />
+				</template>
+				<template #right-icon>
+					<van-radio :name="item.pay_type">
+						<template #icon="props">
+							<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+						</template>
+					</van-radio>
+				</template>
+			</van-cell>
+		</van-radio-group>
+
+		<div class="bottomCont">
+			<p class="money"><span>¥</span>{{tottalHuanMoney}}</p>
+			<p class="btnBlock" @click="goPay()" v-if="tottalHuanMoney > 0">立即还款</p>
+		</div>
+
+		<van-overlay :show="showInput" class="inputCont" @click="this.showKeyboard = false">
+			<div class="wrapper" @click.stop @click="showInput = false,showKeyboard = false">
+				<div class="block">
+					<p class="title">请输入支付密码</p>
+					<!-- 密码输入框 -->
+					<van-password-input :value="passward" :focused="showKeyboard" @focus="showKeyboard = true" />
+					<!-- 数字键盘 -->
+					<van-number-keyboard v-model="passward" :show="showKeyboard" :transition="false" theme="custom" :maxlength="6"
+						close-button-text="完成" @close="closeKeyboard" />
+				</div>
+
+			</div>
+		</van-overlay>
+	</div>
+</template>
+<script>
+	export default {
+		name: "ontimeHuan",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 100,
+				loanCode: '',
+				loan_info: '',
+
+				ifAllNum: false,
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				result: [],
+				back_code_array: [],
+				back_code_str: '',
+				radiosSel: '',
+				radioNumItem: [],
+				requiredQishu: '', // if_should_repaid = 1，立即还款-而且没有逾期 -- 必选
+				noRequiredQishu: [], // if_should_repaid = 3，可提前10日内还款 -- 非必选
+				overTimeQishu: [],
+				qishu_arry: [],
+
+				radioBankId: '',
+				radioBanNum: '',
+				radioBanType: '',
+				radioBanNumStr: '',
+				radioPayItem: [],
+
+				tottalHuanMoney: '-',
+				showInput: false,
+				showKeyboard: false,
+				passward: '',
+				
+				tg_back_code: '',
+				order_id: '',
+				interval: '',
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			
+			this.loanCode = this.$route.query.loanCode
+			this.$toast.loading({
+				message: '加载中...',
+				forbidClick: true,
+				duration: 0,
+			});
+			this.togetherDetail()
+			this.getPayType()
+			
+			let that = this;
+			if (that.interval) {
+        clearInterval(that.interval)
+        that.interval = ''
+      }
+		},
+		methods: {
+			leftBack() {
+				if (this.interval) {
+					clearInterval(this.interval)
+					this.interval = ''
+				}
+
+				this.$router.go(-1);
+			},
+			// 调取支付之后---轮询查支付状态
+			onPayFinish(info) {
+				// hasResult为false开始轮询
+				if (info.length > 0 && !info.hasResult) {
+					this.orderState()
+					this.interval = setInterval(function() {
+						this.orderState()
+					}, 1000)
+				}
+			},
+			togetherDetail() { // 我要还款--待还款时我的还款计划中的多期待还
+				this.$api.myRepaidLoanBackPlanTogether({
+					"loan_code": this.loanCode
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.loan_info = res.data.loan_info
+						let loan_back_plan = res.data.loan_back_plan
+						this.result = []
+						this.back_code_array = []
+						this.qishu_arry = []
+						this.back_code_str = ''
+						let CodeStr = ''
+
+						this.requiredQishu = ''
+						this.noRequiredQishu = []
+						this.overTimeQishu = []
+						if (loan_back_plan.length > 0) {
+							loan_back_plan.forEach(ele => {
+								this.result.push(ele.back_id)
+								this.back_code_array.push(ele.back_code)
+								CodeStr += ele.back_code + ','
+
+								if(ele.if_should_repaid == 1 && ele.overdue_day == 0){ // 必选id
+									this.requiredQishu = ele.qishu
+								}else if(ele.if_should_repaid == 3){ // 可提前10日内还款 -- 非必选
+									this.noRequiredQishu.push(ele.qishu)
+								}else{
+									this.overTimeQishu.push(ele.qishu)
+									this.qishu_arry.push(ele.qishu)
+								}
+
+							})
+							if (CodeStr.lastIndexOf(',') > -1) {
+								CodeStr = CodeStr.substr(0, CodeStr.length - 1)
+							}
+							this.back_code_str = CodeStr
+							this.radioNumItem = loan_back_plan
+							this.myRepaidLoanBackPlanTogetherChoose()
+						} else {
+
+						}
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			toggle(index, back_code, qishu) {
+				if(qishu == this.requiredQishu){
+					this.$toast("当前待还，不可取消")
+					this.$refs.checkboxeMon[index].toggle(true);
+					return
+				}
+				var maxBase = Math.max.apply(null, this.overTimeQishu);
+				var minBase = Math.min.apply(null, this.overTimeQishu);	
+
+				var max = Math.max.apply(null, this.qishu_arry);
+				var min = Math.min.apply(null, this.qishu_arry);	
+				if(qishu < max){
+					this.$toast("逾期还款必须按顺序选择")
+					this.$refs.checkboxeMon[index].toggle(true);
+					return
+				}else if(this.qishu_arry.length == 0 && qishu > minBase){
+					this.$toast("逾期还款必须按顺序选择")
+					this.$refs.checkboxeMon[index].toggle(false);
+					return
+				}else if((qishu - max > 1) && this.qishu_arry.length > 0){
+					this.$toast("逾期还款必须按顺序选择")
+					this.$refs.checkboxeMon[index].toggle(false);
+					return
+				}
+
+
+				this.$refs.checkboxeMon[index].toggle();
+
+				let qishuId = this.qishu_arry.indexOf(qishu)
+				if (qishuId == -1) {
+					this.qishu_arry.push(qishu)
+				} else {
+					this.qishu_arry.splice(qishuId, 1);
+				}
+
+
+				let backCodeId = this.back_code_array.indexOf(back_code)
+				if (backCodeId == -1) {
+					this.back_code_array.push(back_code)
+				} else {
+					this.back_code_array.splice(backCodeId, 1);
+				}
+
+				let CodeStr = ''
+				this.back_code_str = ''
+				if (this.back_code_array.length > 0) {
+					this.back_code_array.forEach(ele => {
+						CodeStr += ele + ','
+					})
+
+					if (CodeStr.lastIndexOf(',') > -1) {
+						CodeStr = CodeStr.substr(0, CodeStr.length - 1)
+					}
+					this.back_code_str = CodeStr
+				}
+
+				this.myRepaidLoanBackPlanTogetherChoose()
+			},
+			showItem(id) {
+				if (id == this.radiosSel) {
+					this.radiosSel = ''
+				} else {
+					this.radiosSel = id
+				}
+			},
+			getPayType() { // 我要还款--还款时显示支付方式
+				this.$api.loanBackSelectPayType().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						res.data.forEach(ele => {
+							if (ele.pay_type == 1) {
+								ele.icon = require("../../images/card1.png")
+							} else if (ele.pay_type == 3 || ele.pay_type == 5) {
+								ele.icon = require("../../images/wei.png")
+							} else if (ele.pay_type == 4 || ele.pay_type == 6) {
+								ele.icon = require("../../images/zhi.png")
+							} else if (ele.pay_type == 7) {
+								ele.icon = require("../../images/yun.png")
+							}
+						})
+						this.radioBankId = res.data[0].bank_id
+						this.radioBanNum = res.data[0].bank_num
+						this.radioBanType = res.data[0].pay_type
+						this.radioBanNumStr = res.data[0].bank_num_str
+						this.radioPayItem = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			myRepaidLoanBackPlanTogetherChoose() { // 我要还款--计算待还款时我的还款计划中的选中的多期待还总金额
+				let data = {}
+				data.loan_code = this.loanCode
+				data.back_code_str = this.back_code_str
+				this.$api.myRepaidLoanBackPlanTogetherChoose(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.tottalHuanMoney = res.data.sum_repaid
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			goPay() { // 立即还款
+				if(typeof android == "undefined"){
+					this.$toast("请在手机端支付！")
+					return
+				}
+
+				this.passward = ''
+				if (this.radioBanType == 1) {
+					this.showInput = true
+					this.showKeyboard = true
+				} else {
+					this.closeKeyboard()
+				}
+			},
+			closeKeyboard() {
+				if (this.radioBanType == 1 && this.passward.length < 6) {
+					this.$toast('请输入完整的6位数密码')
+					return
+				}
+				this.showInput = false
+				this.showKeyboard = false
+				let data = {}
+				data.back_code_str = this.back_code_str
+				data.loan_code = this.loanCode
+				data.bank_id = this.radioBankId
+				data.bank_num = this.radioBanNum
+				// 支付密码（合作社卡支付也就是pay_type为1时才必传）
+				data.pay_pwd = this.$md5(this.passward)
+				// 还款支付方式：1社内卡3微信4支付宝5微信银联渠道6支付宝银联渠道7云闪付
+				data.pay_type = this.radioBanType
+				this.$api.payLoanBackPlanByPassbookTogether(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if (this.radioBanType == 1) { // 合作社卡支付
+							this.$router.push({
+								path: '/huanSuccess',
+								query:{
+									bankStr: this.radioBanNumStr,
+									type: this.radioBanType,
+									money: this.tottalHuanMoney
+								}
+							})
+						} else {
+							this.tg_back_code = res.tg_back_code //合并还款编号
+							this.order_id = res.order_id // 订单id
+							// nongAliPay,农行支付宝渠道.，unionAliPay云闪付支付宝渠道，unionPay云闪付，unionWxPay云闪付微信渠道
+							if(this.radioBanType == 5){ // 微信支付(银联渠道)
+								if (typeof android != "undefined") {
+									android.unionWxPay(res.data);
+								}
+							}else if(this.radioBanType == 6){ // 支付宝支付(银联渠道)
+								if (typeof android != "undefined") {
+									android.unionAliPay(res.data);
+								}
+							}else if(this.radioBanType == 7){ // 云闪付
+								let dataJson = JSON.parse(res.data)
+								if (typeof android != "undefined") {
+									android.unionPay(dataJson.tn);
+								}
+							}
+							
+							let that = this
+							that.interval = setInterval(() => {
+								that.orderState()
+							}, 1000)
+						}
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			orderState() {
+				let that = this
+				let data = {}
+					data.tg_back_code = that.tg_back_code
+					data.order_id = that.order_id
+				this.$api.loanBackTogetherOrderQuery(data).then(res => {
+					if (res.errno == 0) {
+						this.$router.push({
+							path: '/huanResult',
+							query: {
+								orderId: this.order_id,
+								tgBackCode: this.tg_back_code,
+								together: 2 // 到结果查询调取查询支付接口和提前还款和单期还款不一样
+							}
+						})
+						clearInterval(that.interval)
+						that.interval = ''
+					}
+				}).catch(err => {
+					clearInterval(that.interval)
+					that.interval = ''
+				})
+
+			}
+			
+		},
+	}
+</script>
+<style lang="less">
+	.ontimeHuan {
+		padding-top: 46px;
+		background: #f0f6fc url(../../images/bgHeader6.png) no-repeat;
+		background-size: 100% 170px;
+		overflow: auto;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader6.png) no-repeat top center;
+			background-size: 100% 170px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.header {
+			margin: 0 10px;
+			padding: 25px 0;
+			text-align: center;
+
+			.num {
+				font-size: 30px;
+				margin-top: 10px;
+				font-family: DIN, DIN-Medium;
+
+				span {
+					font-size: 14px;
+					font-weight: bold;
+					padding-right: 5px;
+				}
+			}
+		}
+
+		.s-title {
+			margin: 15px 10px 0 10px;
+			font-size: 15px;
+		}
+
+		.overCheck {
+			background: #FFFFFF;
+			border-radius: 10px;
+			margin: 10px;
+			padding: 0 15px;
+
+			.item {
+				.img-icon {
+					width: 16px;
+					height: 16px;
+					margin: 2px 0px 0 0;
+				}
+				.van-checkbox__label--disabled{
+					color: #323233;
+				}
+
+				.top {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					height: 42px;
+					font-size: 14px;
+					border-bottom: 1px solid #EEEEEE;
+				}
+
+				.van-tag {
+					border-radius: 30px;
+					background: #e2f4ff;
+					&.orange{
+						background: #fffde2;
+						color: #FFA800;
+					}
+					&.red{
+						background: #ffeded;
+						color: #F24B4B;
+					}
+				}
+
+				.rightIcon {
+					padding: 12px 0 12px 60px;
+					width: 9px;
+					height: 15px;
+				}
+			}
+
+			.listCont {
+				display: none;
+
+				&.show {
+					display: block;
+				}
+
+				.van-cell {
+					font-size: 13px;
+					padding: 5px 16px;
+				}
+
+				img {
+					width: 15px;
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+			}
+		}
+
+		.selGroup {
+			margin: 10px;
+
+			.van-cell {
+				&:first-child {
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+				}
+
+				.img-icon {
+					width: 15px;
+					height: 15px;
+				}
+			}
+		}
+
+		.more {
+			background: #FFFFFF;
+			border-radius: 0 0 10px 10px;
+			text-align: center;
+			line-height: 28px;
+
+			img {
+				width: 8px;
+			}
+		}
+
+		.payGroup {
+			.van-cell {
+				&:nth-last-of-type(1) {
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
+				}
+
+				img {
+					width: 15px;
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+			}
+		}
+
+		.bottomCont {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background: #FFFFFF;
+			height: 40px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.money {
+				font-size: 18px;
+				font-family: DIN, DIN-Medium;
+				margin-left: 10px;
+				position: relative;
+
+				&::before {
+					position: absolute;
+					top: -5px;
+					left: calc(100% + 2px);
+					content: '';
+					width: 36px;
+					height: 10px;
+					background: url(../../images/yixuan.png) no-repeat;
+					background-size: auto 10px;
+				}
+
+				span {
+					color: #9AA8B6;
+					font-size: 14px;
+					padding-right: 3px;
+				}
+
+			}
+
+			.btnBlock {
+				color: #FFFFFF;
+				font-size: 15px;
+				background: #3B6AF1;
+				line-height: 40px;
+				display: inline-block;
+				padding: 0 20px;
+				&.gary{
+					background: #666666;
+				}
+			}
+		}
+
+		.van-overlay {
+			z-index: 10;
+		}
+
+		.inputCont {
+			.wrapper {
+				height: 100%;
+
+				.block {
+					text-align: center;
+					position: fixed;
+					bottom: 0;
+					left: 0;
+					right: 0;
+					height: 380px;
+					background-color: #fff;
+					border-radius: 10px 10px 0 0;
+
+					.title {
+						line-height: 60px;
+						font-size: 15px;
+					}
+				}
+
+			}
+
+		}
+
+	}
+</style>

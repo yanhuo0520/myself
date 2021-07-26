@@ -1,0 +1,119 @@
+<template>
+  <div class="eachflows">
+    <van-nav-bar title="互评打分流程" left-arrow fixed @click-left="leftBack" />
+    <van-skeleton title avatar :row="3" :loading="loading">
+    <div style="text-align: center;margin:15px 0;">
+      <p style="margin-bottom: 10px;font-size: 18px;">待进行</p>
+      <p>请回答以下问题作为评分项</p>
+    </div>
+    
+     <van-cell-group>
+      <van-cell v-for="(item,index) in scoreList" :key="index" :title="item.content" clickable @click="toggle(item)">
+        <template #right-icon>
+          <van-radio-group v-model="item.is_xuan" direction="horizontal">
+            <van-radio name="1">是</van-radio>
+            <van-radio name="2">否</van-radio>
+          </van-radio-group>
+        </template>
+      </van-cell>
+    </van-cell-group>
+    <div style="width: 40%; height: 40px; margin: 0 auto; margin-top: 20px;">
+      <van-button style="width: 100%;height: 100%;font-size: 17px;border-radius: 7px;" type="info"
+        @click="addCreditScore">提交</van-button>
+    </div>
+     </van-skeleton>
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "eachflows",
+    data() {
+      return {
+        citizen: '1',
+        scoreList: [],
+        success_id: '',
+        lists: [],
+        loading: true,
+      };
+    },
+    mounted() {},
+    created() {
+      let id = localStorage.getItem('id');
+      if (id != null) {
+        this.success_id = id;
+      }
+      this.getScoreItem()
+    },
+    methods: {
+      leftBack() {
+        this.$router.go(-1);
+      },
+      getScoreItem() {
+        let that = this;
+        that.$api.scoreItem({}).then(res => {
+          if (res.errno == 0) {
+            res.data.forEach(item => {
+              item.is_xuan = '1';
+            });
+            that.scoreList = res.data;
+            that.loading = false;
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {
+
+        })
+      },
+      toggle(event) {
+        let that = this;
+        that.lists = [];
+        that.scoreList.forEach(item => {
+          var items = {};
+          items.id = item.id;
+          items.content = item.content;
+          items.is_xuan = item.is_xuan;
+          that.lists.push(items)
+        })
+      },
+      addCreditScore() {
+        let that = this;
+        if (that.lists.length == 0) {
+          that.lists = [];
+          that.scoreList.forEach(item => {
+            var items = {};
+            items.id = item.id;
+            items.content = item.content;
+            items.is_xuan = item.is_xuan;
+            that.lists.push(items)
+          })
+        }
+        that.$api.addCreditScore({
+          credit_id: that.success_id,
+          lists: JSON.stringify(that.lists)
+        }).then(res => {
+          if (res.errno == 0) {
+            that.$toast(res.errmsg)
+            that.$router.push('/creditScore')
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {
+
+        })
+      }
+    },
+  }
+</script>
+
+<style lang="less">
+  .eachflows {
+    padding-top: 46px;
+     .van-cell::after {
+        border-bottom: 0px;
+      }
+      [class*=van-hairline]::after{
+        border-bottom: 0px;
+      }
+  }
+</style>

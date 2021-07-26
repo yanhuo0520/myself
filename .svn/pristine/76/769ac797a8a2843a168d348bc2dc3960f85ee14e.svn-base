@@ -1,0 +1,285 @@
+<template>
+	<div class="hezuoIndexMass">
+		<van-nav-bar title="合作经济" fixed />
+		<div class="topCont">
+			<img :src="photoIMg" alt="" class="headerImg" />
+			<p>{{userName}} <img src="../../images/mass.png" /> </p>
+		</div>
+		<div class="joinCont">
+			<p class="title">加入方式</p>
+			<div class="cont">
+				<div class="item" @click="goin(0)">
+					<img src="../../images/massbg.png" alt="" class="topBg" />
+					<img src="../../images/hezuoshe.png" alt="" class="textImg" />
+					<img src="../../images/right.png" alt="" class="rightBtn" />
+				</div>
+				<div class="item" @click="goin(1)">
+					<img src="../../images/massbg.png" alt="" class="topBg" />
+					<img src="../../images/hezuolianshe.png" alt="" class="textImg" />
+					<img src="../../images/right.png" alt="" class="rightBtn" />
+				</div>
+				<div class="item" @click="show = true">
+					<img src="../../images/massbg.png" alt="" class="topBg" />
+					<img src="../../images/tuanti.png" alt="" class="textImg" />
+					<img src="../../images/right.png" alt="" class="rightBtn" />
+				</div>
+			</div>
+		</div>
+		<div class="null">
+			<img src="../../images/nojoin.png" alt="" class="noJoin" />
+		</div>
+		<bottom :idx="1"></bottom>
+		
+		<van-action-sheet v-model="show" title="选择类型" class="selSheet" >
+		  <div class="content">
+				<div class="item" @click="$router.push('/applyMass')">
+					<img src="../../images/chuang.png" alt="" />
+					<p>创建群众团体</p>
+				</div>
+				<div class="item">
+					<img src="../../images/ru.png" alt="" />
+					<p>加入群众团体</p>
+				</div>
+			</div>
+		</van-action-sheet>
+	</div>
+</template>
+
+<script>
+	import bottom from "@/components/bottom";
+	export default {
+		name: "hezuoIndexMass",
+		components: {
+			bottom,
+		},
+		data() {
+			return {
+				userName: this.$Cookies.get('userName'),
+				photoIMg: require("../../images/header.png"),
+				show: false,
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack
+			if(this.$isAndroid()){
+				android.onVueMounted()
+			}
+			
+			// 获取头像
+			this.$api.userInfo().then(res => {
+				if (res.errno == 0) {
+					if (res.data.photo) {
+						this.photoIMg = res.data.photo
+					} else {
+						this.photoIMg = require("../../images/header.png")
+					}
+				} 
+			}).catch(err => {
+
+			})
+		},
+		methods: {
+			// 主页面返回退出应用
+			leftBack(){
+				let that = this
+				var first = null
+				window.leftBack = function(){
+					if(!first){
+					first = new Date().getTime();
+					that.$toast("再按一次退出应用");
+					setTimeout(function() {
+						first = null;
+					}, 1500);
+					}else{
+					if(new Date().getTime() - first < 1500){
+						android.closeWindow();
+					}
+					}
+				}
+			},
+			goin(type){
+				this.$router.push({
+					path: '/joinCooper',
+					query: {
+						type: type
+					}
+				})
+			}
+		},
+	}
+</script>
+<style lang="less">
+	.hezuoIndexMass {
+		padding-top: 46px;
+		min-height: calc(100% - 46px);
+		background: #f0f6fc url(../../images/bgHeader2.png) no-repeat;
+		background-size: 100% 200px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader2.png) no-repeat top center;
+			background-size: 100% 200px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.topCont {
+			margin: 15px 10px 20px 10px;
+			display: flex;
+			align-items: center;
+
+			.headerImg {
+				position: absolute;
+				width: 40px;
+				height: 40px;
+				border: 2px solid #FFFFFF;
+				border-radius: 50%;
+			}
+
+			p {
+				font-size: 15px;
+				line-height: 30px;
+				background: #FFFFFF;
+				padding: 0 15px 0 30px;
+				border-radius: 30px;
+				margin-left: 20px;
+				display: flex;
+				align-items: center;
+
+				img {
+					margin-left: 5px;
+					height: 15px;
+				}
+			}
+		}
+
+		.joinCont {
+			padding: 15px 10px;
+			background: linear-gradient(#ffffff 0%, #f0f6fc 100%);
+			border-radius: 10px 10px 0 0;
+
+			.title {
+				padding: 5px 0 15px 5px;
+				font-size: 14px;
+			}
+
+			.cont {
+				display: flex;
+				align-items: center;
+				justify-content: space-around;
+
+				.item {
+					width: calc(33.33333% - 10px);
+					height: 60px;
+					line-height: 60px;
+					position: relative;
+					text-align: center;
+					border-radius: 5px;
+					overflow: hidden;
+
+					&:nth-child(1) {
+						background: #DFF1F0;
+
+						.rightBtn {
+							background: #94D1C8;
+						}
+					}
+
+					&:nth-child(2) {
+						background: #F9E9E4;
+
+						.rightBtn {
+							background: #EDB1B5;
+						}
+					}
+
+					&:nth-child(3) {
+						background: #E4E6F5;
+
+						.rightBtn {
+							background: #AEB4E2;
+						}
+					}
+
+					.topBg {
+						position: absolute;
+						top: 0;
+						right: 0;
+						height: 60px;
+					}
+
+					.textImg {
+						height: 15px;
+					}
+
+					.rightBtn {
+						position: absolute;
+						right: 0;
+						bottom: 0;
+						height: 7px;
+						padding: 5px 10px;
+						border-radius: 10px 0 10px 0;
+					}
+				}
+			}
+		}
+
+		.null {
+			text-align: center;
+
+			.noJoin {
+				width: 90%;
+				max-width: 400px;
+
+			}
+		}
+		
+		.selSheet{
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+			
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+			.content{
+				padding: 20px 0;
+				display: flex;
+				justify-content: space-around;
+				.item{
+					text-align: center;
+					img{
+						width: 70px;
+					}
+					p{
+						margin-top: 10px;
+						font-size: 15px;
+					}
+				}
+			}
+		}
+
+
+
+	}
+</style>

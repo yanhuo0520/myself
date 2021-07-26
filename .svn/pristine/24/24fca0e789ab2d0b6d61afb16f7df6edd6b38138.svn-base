@@ -1,0 +1,195 @@
+<template>
+  <div class="creditIndex">
+    <van-nav-bar title="信用评分" left-arrow fixed @click-left="leftBack" />
+    <div class="center">
+      <div class="center_box" v-if="!isUnreviewed">
+        <div class="text">
+          <p>测一测</p>
+          <p style="margin-top: 10px;">形成你的专属信用评分</p>
+        </div>
+      </div>
+      <div class="center_box" v-if="isUnreviewed">
+        <div class="text" style="line-height: 20px;">
+          <p>{{mycredit}}分</p>
+          <p style="margin-top: 10px;">信用综合评分+他人信用打分</p>
+          <p style="margin-top: 10px;">信用优秀 继续保持</p>
+        </div>
+      </div>
+      <div class="ceping" v-if="!isUnreviewed">
+        <van-button class="ceping_btn" @click="$router.push('/userCepings')">开始测评</van-button>
+      </div>
+      <div class="ceping" v-else>
+        <van-button class="ceping_btn" @click="$router.push('/userCepings')">测评有误差？再测一次</van-button>
+      </div>
+      <van-notice-bar color="#ED6A0C" background="#FFFBE8" left-icon="info-o" :scrollable="false">
+        注：此次测评具有人行权威数据标准，具有认可性和有效性 </van-notice-bar>
+      <van-divider> 你还可以 </van-divider>
+      <div class="tuanti">
+        <van-cell center title=" " label="给你的组织团体人员打分增添信用获取更多信用机会">
+          <template #right-icon>
+            <van-button class="dafen" style="width: 28%; height: 35px;" @click="insideMark">去打分</van-button>
+          </template>
+        </van-cell>
+      </div>
+      <div class="tuanti">
+        <van-cell center title=" " label="查看我的评分记录">
+          <template #right-icon>
+            <van-button class="dafen" @click="getCreaitList" style="width: 28%;height: 35px;">查看</van-button>
+          </template>
+        </van-cell>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "creditIndex",
+    data() {
+      return {
+        isUnreviewed: false,
+        mycredit: '',
+      };
+    },
+    created() {
+      let isUnreviewed = localStorage.getItem('isUnreviewed');
+      let mycredit = localStorage.getItem('mycredit');
+      if (isUnreviewed != null && isUnreviewed == '已出分数') {
+        this.isUnreviewed = true;
+        this.mycredit = mycredit;
+      } else {
+        this.isUnreviewed = false;
+      }
+    },
+    methods: {
+      leftBack() {
+        this.$router.push('/');
+      },
+      insideMark() {
+        let that = this;
+        that.$api.creditistc({}).then(res => {
+          if (res.errno == 0) {
+            //is_c 是否加入合作社 is_team 是否加入团队 1加入 2未加入 
+            if (res.data.is_c == 2 && res.data.is_team == 2) {
+              that.$toast('未加入合作社组织,团体 不能进行组织内成员打分')
+            } else {
+              // 1社员2团队
+              if (res.data.is_c == 1 && res.data.is_team == 2) {
+                console.log('合作社成员');
+                localStorage.setItem('is_group', 1)
+              } else if (res.data.is_c == 2 && res.data.is_team == 1) {
+                console.log('团队成员');
+                localStorage.setItem('is_group', 2)
+              }else if(res.data.is_c == 1 && res.data.is_team == 1){
+                 console.log('团队成员');
+                localStorage.setItem('is_group', 2)
+              }
+              that.$router.push('/eachOthers')
+            }
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {})
+      },
+      // 查看自评列表
+      getCreaitList() {
+        let that = this;
+        that.$api.myCreditLists({}).then(res => {
+          if (res.errno == 0) {
+            console.log(res.data);
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {
+
+        })
+      },
+    },
+  }
+</script>
+
+<style lang="less">
+  .creditIndex {
+    padding-top: 46px;
+
+    .van-nav-bar {
+      background: #F0F6FC;
+
+      .van-icon {
+        color: #222222;
+
+      }
+
+      .van-nav-bar__title {
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+    }
+
+    .van-hairline--bottom::after {
+      border-bottom-width: 0
+    }
+
+    .center {
+      padding-top: 40px;
+
+      .center_box {
+        position: relative;
+        width: 50%;
+        height: 170px;
+        border-radius: 50%;
+        background-color: #04A9ED;
+        margin: auto;
+        text-align: center;
+
+        .text {
+          position: absolute;
+          width: 100%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: #fff;
+        }
+      }
+
+      .ceping {
+        width: 50%;
+        height: 40px;
+        margin: 0 auto;
+        margin-top: 20px;
+
+        .ceping_btn {
+          width: 100%;
+          height: 100%;
+          border-radius: 9px;
+          background-color: #04A9ED;
+          color: #fff;
+          border-radius: 10px;
+        }
+      }
+
+      .van-notice-bar {
+        width: 90%;
+        margin: auto;
+        margin-top: 60px;
+        font-size: 11px;
+      }
+
+      .tuanti {
+        .van-cell__label {
+          width: 70%;
+        }
+
+        .dafen {
+          width: 30%;
+          background-color: #04A9ED;
+          color: #fff;
+          border-radius: 10px;
+        }
+      }
+
+
+    }
+  }
+</style>

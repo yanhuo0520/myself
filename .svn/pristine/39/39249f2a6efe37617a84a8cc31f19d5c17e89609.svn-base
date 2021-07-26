@@ -1,0 +1,263 @@
+<template>
+	<div class="cooperativeAcc" @scroll="scrollEvent($event)" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="我的合作社账户" left-arrow fixed @click-left="leftBack" />
+		<p class="title-total">共计<span>{{totalNum}}</span>张</p>
+		<div class="content" v-if="totalNum > 0">		
+			<div class="item" v-for="(item, index) in accountList" :key="index">
+				<img src="../../images/light3.png" class="itemBg" />
+				<p class="tip">社员</p>
+				<div class="topCont">
+					<img src="../../images/cooperative1.png" alt="" />
+					<div class="cardCont">
+						<p class="title">{{item.coopera_name}}</p>
+						<p class="card">{{item.card}}</p>
+					</div>
+				</div>
+				<van-grid class="grid" :border="false" :column-num="3">
+					<van-grid-item>
+						<img src="../../images/cooperative2.png" alt="" />
+						我的股金
+					</van-grid-item>
+					<van-grid-item>
+						<img src="../../images/cooperative3.png" alt="" />
+						我的互助金
+					</van-grid-item>
+					<van-grid-item @click="goProfit(item.coopera_id, item.coopera_name, item.card)">
+						<img src="../../images/cooperative4.png" alt="" />
+						收益明细
+					</van-grid-item>
+				</van-grid>
+			</div>
+			<!-- 加载中 -->
+			<van-loading v-if="isLoading" size="24px">{{deviceTip}}</van-loading>
+			<!-- 没有更多了 -->
+			<p v-if="!isLoading" class="noMore">{{deviceTip}}</p>
+		</div>
+		<!-- 暂无内容 -->
+		<div class="content null" v-else-if="totalNum == 0 && !isLoading">
+			<img src="../../images/zanwu.png" alt="" />
+		</div>
+	</div>
+</template>
+<script>
+	export default {
+		name: "cooperativeAcc",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				accountList: [],
+				pageSize: 10, //每页显示
+				page: 1, //当前页
+				totalNum: 0, //总条数
+				totalPage: 0, //总页数
+				ifFinish: false, //是否加载完成
+				isLoading: true, //是否加载更多
+				deviceTip: ''
+			};
+		},
+		mounted() {
+			this.myCooperAccount()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			scrollEvent(e) {
+				if (e instanceof Event) {
+					let el = e.target;
+					let scrollTop = el.scrollTop;
+					let clientHeight = el.clientHeight; // 获取可视区的高度
+					let scrollHeight = el.scrollHeight; // 获取滚动条的总高度
+					let height = 50;
+					//到底了
+					// console.log(this.isLoading, this.ifFinish);
+					// console.log(scrollTop, clientHeight, scrollHeight);
+					//是否继续加载且已完成加载
+					if (scrollTop + clientHeight >= scrollHeight && this.isLoading &&!this.ifFinish && this.page <= this.totalPage) {
+						// 把距离顶部的距离加上可视区域的高度 等于或者大于滚动条的总高度就是到达底部
+						this.isLoading = true;
+						console.log("到底了");
+						setTimeout(() => {
+							this.myCooperAccount();
+						}, 1000);
+					}
+				}
+			},
+			 myCooperAccount() {
+				this.$api.myCooperAccount({page: this.page, size: this.pageSize}).then(res => {
+					if (res.errno == 0) {
+						this.totalNum = res.count;
+						this.totalPage = res.total_page
+						if (this.totalNum == 0) { 
+							// console.log("没有数据");
+							this.isLoading = false;
+							this.ifFinish = true;
+							this.page = 1;
+							this.deviceTip = "暂无数据";
+							return false;
+						}
+						this.accountList = this.accountList.concat(res.data);
+						// console.log(this.page, this.totalPage);
+						if (this.page == this.totalPage) {
+							this.isLoading = false;
+							this.ifFinish = true;
+							// this.page = 1;
+							this.deviceTip = "没有更多了~";
+							// console.log("没有更多了");
+						} else {
+							// console.log("下一页");
+							this.isLoading = true;
+							this.ifFinish = false;
+							this.page++;
+							this.deviceTip = "正在加载中~";
+						}
+					// console.log("accountList", this.accountList);
+					} else {
+						this.accountList = [];
+						this.isLoading = false;
+						this.ifFinish = true;
+						this.page = 1;
+						this.deviceTip = "数据加载失败~";
+					}
+				});
+			},
+			// 用户在合作社收益明细
+			goProfit(coopera_id, coopera_name, card){
+				this.$router.push({
+					path: '/cooProfitAcc',
+					query: {
+						id: coopera_id,
+						name: coopera_name,
+						card: card
+					}
+				})
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.cooperativeAcc {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+
+		.title-total {
+			position: fixed;
+			top: 46px;
+			left: 10px;
+			width: 100%;
+			line-height: 32px;
+			background: #F0F6FC;
+			z-index: 1;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.content {
+			margin: 0 10px;
+ 			overflow: auto;
+			padding-top: 25px;
+
+			.item {
+				margin-top: 10px;
+				height: 140px;
+				color: #FFFFFF;
+				background: linear-gradient(#47516c 0%, #747e98 100%);
+				border-radius: 10px;
+				position: relative;
+
+				&::before {
+					position: absolute;
+					top: 5px;
+					left: 5px;
+					content: '';
+					width: calc(100% - 12px);
+					height: 128px;
+					border-radius: 10px;
+					border: 1px solid rgba(225, 225, 225, 0.6);
+				}
+				&:last-child{
+					padding-bottom: 10px;
+				}
+
+				.itemBg {
+					position: absolute;
+					right: 0;
+					top: 0;
+				}
+
+				.tip {
+					position: absolute;
+					top: 0;
+					right: 0;
+					color: #E7CD8E;
+					background: #344057;
+					padding: 5px 12px;
+					border-radius: 0 10px 0 10px;
+				}
+
+				.topCont {
+					display: flex;
+					align-items: center;
+					padding: 20px 155px 0 15px;
+					img{
+						height: 50px;
+					}
+					.cardCont {
+						margin-left: 10px;
+
+						.title {
+							font-size: 15px;
+							color: #D0DCE8;
+						}
+
+						.card {
+							margin-top: 6px;
+							font-family: DIN Medium, DIN Medium-Medium;
+							font-weight: 500;
+							font-size: 18px;
+						}
+					}
+				}
+
+				.van-grid-item__content {
+					background: transparent;
+
+					img {
+						margin-bottom: 8px;
+						height: 17px;
+					}
+				}
+			}
+		}
+
+		.null{
+			img{
+				max-width: 100%;
+			}
+		}
+
+		.van-loading, .noMore {
+			padding: 10px 0;
+			text-align: center;
+		}
+
+	}
+</style>

@@ -1,0 +1,315 @@
+<template>
+	<div class="login">
+		<img src="../images/logo1.png" alt="" class="logoImg" />
+		<img src="../images/logoBg1.png" alt="" class="logoBg" />
+		<div class="loginGroup">
+			<p class="title">手机号</p>
+			<van-field v-model="phone" :class="ifInPhone? 'ifInPhone' : ''" clearable
+				:right-icon="require('../images/phone.png')" placeholder="请输入手机号" @input="blurInput"
+				@blur="ifInPhone = false" />
+
+			<p class="title yzTil">{{ifTitle}}</p>
+			<van-field v-model="yzCodePw" clearable :placeholder="ifPlaceholder">
+				<template v-if="showCodeBtn" #right-icon>
+					<p @click="getCode">{{ifBtnTitle}}</p>
+				</template>
+				<template v-else #right-icon>
+					<p>{{times}}秒</p>
+				</template>
+				<template #button>
+					<img src="../images/yzm.png" alt="" class="iconImg" />
+				</template>
+			</van-field>
+			<van-field style="display: none;"></van-field>
+		</div>
+
+		<p class="loginBtn" @click.stop="login()">立即登录</p>
+	</div>
+</template>
+<script>
+	export default {
+		name: "login",
+		data() {
+			return {
+				ifInPhone: false,
+				phone: '',
+				yzCodePw: '',
+				times: 180,
+				showCodeBtn: true,
+				ifHasPaw: false,
+				ifTitle: '验证码',
+				ifPlaceholder: '请输入验证码',
+				ifBtnTitle: '发送验证码'
+			};
+		},
+		mounted() {
+
+		},
+		methods: {
+			// 获取验证码倒计时
+			getCode() {
+				if (this.ifHasPaw) { // 忘记密码
+					this.$toast("开发中……")
+					return
+				}
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				this.$api.getCode({
+					phone: this.phone
+				}).then(res => {
+					if (res.errno == 0) { // 启用倒计时
+						this.showCodeBtn = false
+						this.timer = setInterval(() => {
+							this.times--
+							if (this.times === 0) {
+								this.times = 180
+								this.showCodeBtn = true
+								clearInterval(this.timer)
+							}
+						}, 1000)
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+
+
+			},
+			blurInput() { // 根据输入，实时调取接口判断是否已注册
+				this.ifInPhone = true
+				if (this.$validatePhone(this.phone) == true) {
+					// console.log("验证通过")
+					this.$api.frontCheckPwd({
+						phone: this.phone
+					}).then(res => {
+						// 0设置过密码，使用密码登录，1错误直接提示，2没有设置过密码，使用验证码登录
+						if (res.errno == 0) {
+							this.ifHasPaw = true
+							this.ifPlaceholder = "请输入密码"
+							this.ifBtnTitle = "忘记密码"
+						} else if (res.errno == 2) {
+							this.ifHasPaw = false
+							this.ifPlaceholder = "请输入验证码"
+							this.ifBtnTitle = "发送验证码"
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				}
+			},
+			//截取code
+			getUrlCode() { // 截取url中的code方法
+				var url = location.search
+				var theRequest = new Object()
+				if (url.indexOf("?") != -1) {
+					var str = url.substr(1)
+					var strs = str.split("&");
+					for (var i = 0; i < strs.length; i++) {
+						theRequest[strs[i].split("=")[0]] = (strs[i].split("=")[1])
+					}
+				}
+				// console.log(theRequest)
+				return theRequest
+				console.log(theRequest)
+			},
+			login() {
+				// appid	是	应用唯一标识（前面认证网页应用中获得）
+				// redirect_uri	是	重定向地址，需要进行UrlEncode（前面认证网页应用中获得）
+				// response_type	是	填code
+				// scope	是	应用授权作用域，拥有多个作用域用逗号（,）分隔，网页应用目前仅填写snsapi_login即可
+				// state	是	用于保持请求和回调的状态，授权请求后原样带回给第三方。该参数可用于防止csrf攻击（跨站请求伪造攻击），建议第三方带上该参数，可设置为简单的随机数加session进行校验
+				// let appid = ''
+				// let path = encodeURIComponent(location.href)
+				// let url = "https://open.weixin.qq.com/connect/qrconnect?" +
+				// 	"appid=" + appid + 
+				// 	"&redirect_uri=" + path + "&scope=snsapi_login#wechat_redirect"
+				// this.code = this.getUrlCode().code;
+				// //如果没有code 去获取code
+				// if (this.code == null) {
+				// 	window.location.href = url;
+				// } else {
+				// 	//获取到code后的逻辑
+				// 	console.log('code', this.code);
+				// }
+
+
+				// return
+
+
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				if (this.ifHasPaw) { // 密码登录 
+					this.$api.login({
+						uname: this.phone,
+						password: this.$md5(this.yzCodePw)
+					}).then(res => {
+						if (res.errno == 0) {
+							this.$router.replace('/')
+							// 存cookie set方法支持的属性有 ：
+							// expires->过期时间  eg: 17天
+							// path->设置为指定页面创建cookie
+							this.$Cookies.set('token', res.token, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('userName', res.name, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('userId', res.user_id, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('peopleId', res.idcard, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('phone', this.phone, {
+								expires: 30,
+								path: ''
+							})
+							// localStorage.setItem('token1', res.token)
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				} else { // 验证码登录
+					this.$api.loginCode({
+						phone: this.phone,
+						code: this.yzCodePw
+					}).then(res => {
+						// 0成功，1验证码过期
+						if (res.errno == 0) {
+							this.$router.replace('/')
+							this.$Cookies.set('token', res.token, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('userName', res.name, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('userId', res.user_id, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('peopleId', res.idcard, {
+								expires: 30,
+								path: ''
+							})
+							this.$Cookies.set('phone', this.phone, {
+								expires: 30,
+								path: ''
+							})
+							// localStorage.setItem('token', res.token)
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				}
+			},
+
+		},
+
+
+	}
+</script>
+<style lang="less">
+	.login {
+		background: url(../images/bgHeader4.png) no-repeat;
+		background-size: 100% auto;
+		min-height: 100%;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.logoImg {
+			width: 230px;
+			margin: 50px calc(50% - 115px) 30px;
+		}
+
+		.logoBg {
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			width: 160px;
+		}
+
+		.loginGroup {
+			margin: 30px 20px;
+
+			input:-ms-input-placeholder {
+				color: #444444;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+			}
+
+			.title {
+				margin-left: 15px;
+				color: #9AA8B6;
+
+				&.yzTil {
+					margin-top: 25px;
+				}
+			}
+
+			.van-cell {
+				background: transparent;
+
+				&.ifInPhone {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+		}
+
+		.loginBtn {
+			margin: 0 30px;
+			background: #3b6af1;
+			border-radius: 40px;
+			font-size: 15px;
+			line-height: 40px;
+			color: #FFFFFF;
+			text-align: center;
+		}
+
+
+	}
+</style>

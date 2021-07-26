@@ -1,0 +1,101 @@
+<template>
+	<div class="myGujin" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="我的股金" left-arrow fixed @click-left="leftBack" />
+		<div class="moneyCont">
+			<div class="item">
+				<p class="title">股金金额</p>
+				<p class="money">{{detail.stock_money}}</p>
+			</div>
+			<div class="item">
+				<p class="title">累计分红</p>
+				<p class="money money2">{{detail.stock_all_profit}}</p>
+			</div>
+		</div>
+		
+	</div>
+</template>
+<script>
+	export default {
+		name: "myGujin",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				detail: '',
+			};
+		},
+		mounted() {
+			this.myDetail()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			 myDetail() {
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.myStockMoney().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.detail = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+		}
+	}
+</script>
+<style lang="less">
+	.myGujin {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+		.moneyCont{
+			margin: 0 10px;
+			padding: 10px;
+			background: #ffffff;
+			border-radius: 10px;
+			display: flex;
+			justify-content: space-between;
+			.item{
+				&:last-child{
+					text-align: right;
+				}
+			}
+			.title{
+				color: #9AA8B6;
+			}
+			.money{
+				font-weight: bold;
+				margin-top: 5px;
+				font-size: 15px;
+				&.money2{
+					color: red;
+				}
+			}
+		}
+
+
+
+	}
+</style>

@@ -1,0 +1,147 @@
+<template>
+  <div class="eachothers">
+    <van-nav-bar title="组织团体互评" left-arrow fixed @click-left="leftBack" />
+    <van-field v-model="groupStr" label="你所在的组织" :placeholder="groupStr" input-align="right" readonly />
+    <van-field v-model="groupStr" label="被评分人所在的组织" :placeholder="groupStr" input-align="right" readonly />
+    <!-- <props :propContent="bygradeList" :xjdi.sync="bygrade" :indexs.sync="bygradeindex"
+      :label="bygradelabel"></props> -->
+    <props :propContent="bypeopleList" :xjdi.sync="bypeople" :indexs.sync="bypeopleindex" :label="bypeoplelabel">
+    </props>
+    <!-- <props :propContent="relationList" :xjdi.sync="relation" :indexs.sync="relationindex" :label="relationlabel">
+    </props> -->
+    <van-field
+      v-model="relation"
+      label="你和被评分人的关系"
+      placeholder="请输入"
+      input-align="right"
+    />
+    <van-checkbox v-model="checked" style="float: right;margin: 15px;">是否匿名评分</van-checkbox>
+    <div style="width: 30%; height: 30px;margin: 0 auto; margin-top: 70px; ">
+      <van-button type="info" style="width: 100%;border-radius: 5px;" @click="addCredit">开始打分</van-button>
+    </div>
+
+  </div>
+</template>
+
+<script>
+  import props from "@/pages/credit/props";
+  export default {
+    name: "eachothers",
+    components: {
+      props
+    },
+    
+    data() {
+      return {
+        checked: true,
+        bygradeList: ['18-24', '25-29', '30-44', '45-54', '55-59', '60以上'],
+        bygradelabel: '被评分人所在的组织',
+        bygrade: '',
+        bygradeindex: 0,
+        bypeopleList: [],
+        bypeoplelabel: '被评分人',
+        bypeople: '',
+        bypeopleindex: 0,
+        relationlabel: '你和被评分人的关系',
+        relation: '',
+        relationindex: 0,
+        isGroup: 0,
+        groupStr: '',
+        teamList: [],
+        is_n: 0,
+        userID: '',
+        teamId: '',
+      };
+    },
+    mounted() {
+      this.getTeamLists()
+    },
+    created() {
+      let is_group = localStorage.getItem('is_group');
+      if (is_group == 1) {
+        this.isGroup = 1;
+        this.groupStr = '合作社成员';
+      } else if (is_group == 2) {
+        this.isGroup = 2;
+        this.groupStr = '团队成员';
+      }
+    },
+    watch: {
+      bypeople: {
+        handler: function () {
+          console.log(this.bypeople);
+          this.teamList.forEach(item => {
+            if (item.name == this.bypeople) {
+              this.userID = item.user_id;
+              this.teamId = item.id;
+            }
+          })
+        },
+      },
+    },
+    methods: {
+      leftBack() {
+        this.$router.go(-1);
+      },
+      addCredit() {
+        let that = this;
+        if(that.bypeople == ""){
+          that.$toast('请选择被评分人');
+          return
+        }else if(that.relation == ""){
+          that.$toast('请输入你和被评人的关系');
+          return
+        }
+        if(that.checked) {
+          that.is_n = 2;
+        }else {
+          that.is_n = 1;
+        }
+        that.$api.addCredit({
+          type: that.isGroup,
+          is_n: that.is_n,
+          b_user_id: that.userID,
+          relation: that.relation,
+          id: that.teamId
+        }).then(res => {
+          if (res.errno == 0) {
+            localStorage.setItem('id', res.data)
+            that.$router.push('/eachFlows')
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {
+
+        })
+      },
+      getTeamLists() {
+        let that = this;
+        that.$api.teamLists({
+          type: that.isGroup
+        }).then(res => {
+          if (res.errno == 0) {
+            that.teamList = res.data;
+            res.data.forEach(item => {
+              that.bypeopleList.push(item.name)
+            });
+          } else {
+            that.$toast(res.errmsg)
+          }
+
+        }).catch(err => {
+
+        })
+      }
+    },
+  }
+</script>
+
+<style lang="less">
+  .eachothers {
+    padding-top: 46px;
+
+    .van-cell::after {
+      border: 0;
+    }
+  }
+</style>

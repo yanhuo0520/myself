@@ -1,0 +1,803 @@
+<template>
+	<div class="taskIndex">
+		<div class="header">
+            <van-nav-bar :border="false" title="赏金首页" >
+				<template #left>
+					<div class="left-nav-con" @click="leftBack()">返回三位一体</div>
+				</template>
+			</van-nav-bar>
+			<div class="search-con">
+				<form action="/" style="width:100%;height:100%">
+        			 <van-search v-model="searchName" shape="round" background="transparent" placeholder="请输入任务标题" @search="onSearch" @clear="onSearch" clearable/>
+				</form>
+			</div>
+		</div>
+        <!-- <van-notice-bar class="notice-bar" left-icon="volume-o" :scrollable="false">
+            <van-swipe vertical  class="notice-swipe"  :autoplay="2000" :show-indicators="false" >
+                <van-swipe-item v-for="(item,index) in noticeList" :key="index">用户 <span class="masker">{{item.name}}</span> 完成悬赏提现成功 <span class="masker">{{item.price}}</span>元</van-swipe-item>
+            </van-swipe>
+        </van-notice-bar> -->
+		<van-grid class="grid" :column-num="4" :border="false">
+            <template v-if="taskTypeOption && taskTypeOption.length > 0">
+				<van-grid-item v-for="(item, index) in taskTypeOption" :key="index"  @click="toTaskHall(item)"  v-if="index != 0">  
+					<img :src="item.icon" alt="" />
+					{{ item.text }}
+				</van-grid-item>
+			</template>
+			<template v-else>
+				<div class="task-type-status" @click="handleTaskType">
+					<template v-if="taskTypeLoading">
+						<img  src="https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/sanwei-app-logo.png" alt="">
+						<span>加载中...</span>
+					</template>
+					<template v-if="taskTypeErr">
+						<span>任务类型获取失败,点击重新加载</span>
+					</template>
+				</div>
+			</template>
+		</van-grid>
+		<div class="dropdown">
+			<van-dropdown-menu :close-on-click-overlay="false" :close-on-click-outside="false"	>
+				<van-dropdown-item v-model="taskType" :options="taskTypeOption" @change="changeTaskType" />
+				<van-dropdown-item  @open="showAddressPopup" ref="addr">
+					<template #title>
+						<span>{{curSelectAddr ? curSelectAddr : '选择地区'}}</span>
+					</template>
+				</van-dropdown-item>
+				<van-dropdown-item title="筛选" ref="filter">
+					<van-cell center title="最新发布" >
+						<template #right-icon>
+							<van-switch v-model="isNewDate" size="24" active-color="#ee0a24" />
+						</template>
+					</van-cell>
+					<van-cell center title="价格由高到低">
+						<template #right-icon>
+							<van-switch v-model="isMaxPrice" size="24" active-color="#ee0a24" />
+						</template>
+					</van-cell>
+					<van-cell center title="人气由高到低">
+						<template #right-icon>
+							<van-switch v-model="isMaxOrder" size="24" active-color="#ee0a24" />
+						</template>
+					</van-cell>
+					<div style="padding: 5px 16px;">
+						<van-button type="danger" block round @click="onFilterConfirm">
+							确认
+						</van-button>
+					</div>
+				</van-dropdown-item>
+			</van-dropdown-menu>
+		</div>
+        <div class="task-box">
+			<div class="task-group-type"  @click="toTaskHall()">
+				<div class="name-con">
+					<img class="icon" src="https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/tuijian.png" alt="">
+					<span class="desc">推荐</span>
+				</div>
+                <div class="more-con">
+                    <span>更多<van-icon name="arrow" /></span>
+                </div> 
+			</div>
+			<van-pull-refresh v-model="isLoading" @refresh="onRefresh" :disabled="!taskList || taskList.length == 0">
+				<van-list v-model="loading" :finished="finished" :finished-text="taskList && taskList.length > 0 ? '没有更多了' : (searchName ? '暂无搜索结果,请换个关键词试试(#^.^#)' : '暂无发布的任务')" @load="onLoad" >
+					<template #loading>
+                        <div class="list-loading-con">
+                            <img  src="https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/sanwei-app-logo.png" alt="">
+                            <span>加载中...</span>
+                        </div>
+                    </template>
+					<div class="task-group" v-for="(item, index) in taskList" :key="index" @click="toTaskDetail(item)">
+						<div class="task-tit-con van-hairline--bottom">
+							<div class="tit">{{item.title}}</div>
+							<div class="num">剩余数量: {{item.num - item.stock}}/{{item.num}}</div>
+						</div>
+						<div class="task-con">
+							<div class="task-img-con">
+								<img :src="item.icon ? item.icon : 'https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/sanwei-app-logo.png'" alt="">
+							</div>
+							<div class="task-desc-con">
+								<div class="task-tag-con">
+									<div class="tag">{{item.type_name}}</div>
+									<template v-if="item.name">
+										<div class="tag name" >{{item.name}}</div>
+									</template>
+								</div>
+								<div class="task-desc-con">{{item.note}}</div>
+							</div>
+							<div class="task-price-con">
+								<div class="tip">奖励金额</div>
+								<div class="price">{{item.price}}</div>
+								<div class="btn-con">
+									<div class="btn-item">查看</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</van-list>
+			</van-pull-refresh>
+		</div>
+		<!-- 请选择任务地区 -->
+		<van-popup v-model="isShowAddrPopup" round position="bottom">
+			<van-cascader v-model="selectCode" :closeable="false" ref="addrSelect" :options="addrOptions" active-color="#1989fa" @close="isShowAddrPopup = false" @change="onSelectAddrChange" @finish="onSelectAddrFinish" >
+				<template #title>
+					<div class="slect-tit-con">
+						<div class="text cancle" @click="selectAddrCancle">全部地区</div>
+						<div class="tit">
+							<template v-if="changeAddrTit">
+								<span class="masker">{{changeAddrTit}}</span>
+							</template>
+							<template v-else>
+								<span class="masker">请选择任务地区</span>
+							</template>
+						</div>
+						<div class="text confirm" @click="selectAddrConfirm">确定</div>
+					</div>
+				</template>
+			</van-cascader>
+		</van-popup>
+        <taskBottom :idx="0"></taskBottom>
+	</div>
+</template>
+<script>
+    import taskBottom from "@/components/taskBottom";
+	export default {
+		name: "taskIndex",
+		data() {
+			return {
+				isShowAddrPopup: false,
+				changeAddrTit: '',
+				curSelectAddr: '',
+				optionId1: 0,
+				optionId2: 0,
+				addrOptions: [],
+				selectCode: '',
+				province_id: '',
+				city_id: '',
+				area_id:'',
+
+				taskTypeLoading: false,
+				taskTypeErr: false,
+				taskTypeOption: [],
+				searchName: '',
+                taskType: '',
+                // taskTypeOption: [
+                //     { text: '全部类型', value: 0 },
+                //     { text: '下载', value: 1 },
+				// 	{ text: '注册', value: 2 },
+				// ],
+				isNewDate: true, // 是否最新发布
+				isMaxPrice: false, // 是否最高价格
+				isMaxOrder: false, // 是否最高人气
+				loading: false,
+				finished: false,
+				isErr: false,
+				page: 0,
+				size: 10,
+                taskList: [],
+                
+                noticeList: [{
+                    name: '测试1',
+                    price: 100
+                },{
+                    name: '张三',
+                    price: 50
+                },{
+                    name: '李四',
+                    price: 20
+                },{
+                    name: '王五',
+                    price: 10
+				}],
+				
+				isLoading: false
+			};
+        },
+        components: {
+			taskBottom,
+		},
+		mounted() {
+			window.leftBack = this.leftBack
+			this.getConfig('reward_type')
+			this.capitalAccountAdd()
+			this.getAddress(1)
+		},
+		methods: {
+            leftBack() {
+				this.$router.push('/');
+			},
+			onRefresh() {
+                this.page = 0
+                this.loading = true
+                this.finished = false
+                this.onLoad()
+			},
+			// 处理获取任务类型异常
+			handleTaskType () {
+				if (this.taskTypeLoading) return
+				if (this.taskTypeErr) {
+					this.taskTypeErr = false
+					this.taskTypeLoading = true
+					this.getConfig('reward_type')
+				}
+			},
+			// 获取接单限时，审核时间，做单次数,任务类型配置信息
+            getConfig (table) {
+				this.taskTypeOption = []
+				this.taskTypeLoading = true
+				this.taskTypeErr = false
+                this.$api.getConfig({
+                    table: table
+                }).then(res => {
+					this.taskTypeLoading = false
+					this.taskTypeErr = false
+					if (res.errno == 0) {
+						let tmpArr = [{
+							text: "全部类型",
+							icon: 'http://coopera.xfd365.com/public/uploads/20210616/16ecbba006a106b17d245ec198b23dfc.png',
+							value: ''
+						}]
+						if (res.data) {
+							res.data.forEach(item =>{
+								item.text = item.type_name
+								item.value = item.type_id
+							})
+						}
+						this.taskTypeOption = tmpArr.concat(res.data)
+					} else {
+						this.$toast(res.errmsg)	
+					
+					}
+				}).catch(err=>{
+					this.taskTypeLoading = false
+					this.taskTypeErr = true
+					this.$toast('服务异常,请稍后重试')
+				})
+            },
+			// 悬赏开户
+			capitalAccountAdd () {
+				this.$api.capitalAccountAdd({}).then(res => {
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			// 显示地区筛选框
+			showAddressPopup () {
+				this.isShowAddrPopup = true
+				setTimeout(() =>{
+					this.$refs.addr.toggle(false)
+				})
+			},
+			// 选择合作社地址
+			getAddress(level, code) {
+				this.$api.addresss({
+					level: level,
+					code: code,
+					type: 1
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						for (let i = 0; i < res.data.length; i++) {
+							res.data[i].id = i
+							res.data[i].value = res.data[i].code
+							res.data[i].text = res.data[i].name
+							res.data[i].level = level
+							res.data[i].children = []
+						}
+						this.addrOptions = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			// 地区选择改变
+			onSelectAddrChange({value, selectedOptions, tabIndex}) {
+				if (tabIndex == 0) {
+					this.optionId1 = selectedOptions[0].id
+				} else if (tabIndex == 1) {
+					this.optionId2 = selectedOptions[1].id
+				}
+				this.changeAddrTit = selectedOptions.map((option) => option.text).join('/');
+				if (tabIndex > 1) {
+					return
+				}
+				this.$api.addresss({
+					level: tabIndex + 2,
+					code: value,
+					type: this.seltype
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if (res.data.length > 0) {
+							for (let i = 0; i < res.data.length; i++) {
+								res.data[i].id = i
+								res.data[i].value = res.data[i].code
+								res.data[i].text = res.data[i].name
+								res.data[i].level = tabIndex + 2
+								if (tabIndex < 1) {
+									res.data[i].children = []
+								}
+							}
+						} else {
+							let array = {}
+							array.id = 0
+							array.code = ''
+							array.value = '暂无'
+							array.text = '暂无'
+							array.name = '暂无'
+							array.level = tabIndex + 2
+							res.data.push(array)
+						}
+
+						this.$nextTick(() => {
+							if (tabIndex == 0) {
+								this.addrOptions[this.optionId1].children = res.data;
+							} else if (tabIndex == 1) {
+								let children1 = this.addrOptions[this.optionId1].children
+								children1[this.optionId2].children = res.data;
+							}
+						})
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			// 地区选择完成
+			onSelectAddrFinish({selectedOptions}) {
+				this.isShowAddrPopup = false;
+				this.province_id = selectedOptions[0].value
+				this.city_id = selectedOptions[1].value
+				this.area_id = selectedOptions[2].value
+				this.curSelectAddr = selectedOptions.map((option) => option.text).join('/');
+				this.page = 0
+				this.loading = true
+				this.finished = false
+				this.taskList = []
+				this.onLoad()
+			},
+			// 地区确认完成
+			selectAddrConfirm () {
+				if (!this.$refs.addrSelect.value) {
+					this.$toast('请先选择地区')
+					return
+				}
+				let selectedOptions = this.$refs.addrSelect.getSelectedOptionsByValue(this.$refs.addrSelect.options,this.$refs.addrSelect.value)
+				let activeTab = this.$refs.addrSelect.activeTab
+				if (activeTab == 1) {
+					this.province_id = selectedOptions[0].value
+				} else if (activeTab == 2) {
+					this.city_id = selectedOptions[1].value
+				} else if (activeTab == 3) {
+					this.area_id = selectedOptions[2].value
+				}
+				this.curSelectAddr = selectedOptions.map((option) => option.text).join('/')
+				this.$refs.addrSelect.onClose()
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 地区取消
+			selectAddrCancle () {
+                this.curSelectAddr = ''
+                this.province_id = ''
+                this.city_id = ''
+                this.area_id = ''
+                this.selectCode = ''
+                this.changeAddrTit = ''
+				this.$refs.addrSelect.onClose()
+				this.page = 0
+				this.loading = true
+				this.finished = false
+				this.taskList = []
+				this.onLoad()
+			},
+			// 确认筛选
+			onFilterConfirm () {
+				this.$refs.filter.toggle();
+				this.page = 0
+				this.loading = true
+				this.finished = false
+				this.taskList = []
+				this.onLoad()
+			},
+			// 获取任务列表
+			onLoad() {
+				this.finished = false
+				let page = this.page + 1
+				this.loading = true
+				let order = ''
+				if (this.isNewDate) {
+					order+='add_time desc'
+				}
+				if (this.isMaxPrice) {
+					if (order) {
+						order+=',price desc'
+					} else {
+						order+='price desc'
+					}
+				}
+				if (this.isMaxOrder) {
+					if (order) {
+						order+=',renqi desc'
+					} else {
+						order+='renqi desc'
+					}
+				}
+				this.$api.rewardLists({
+					page: page,
+					size: this.size,
+					order: order,
+					title: this.searchName,
+					provinceCode: this.province_id,
+					cityCode: this.city_id,
+					areaCode: this.area_id,
+					type_id: this.taskType,
+					user_id: '',
+					publish: localStorage.getItem('publish')
+				}).then(res => {
+					this.loading = false
+					this.isLoading = false
+					if (res.errno == 0) {
+						let data = res.data.data
+						if (data && data.length > 0) {
+							if (page == 1) {
+								this.taskList = []
+								this.taskList = data
+							} else {
+								this.taskList = this.taskList.concat(data)
+							}
+						}
+						this.page = page
+						if (this.page >= res.data.total) {
+							this.finished = true
+						} else {
+							this.finished = false
+						}
+					} else {
+						this.$toast(res.errmsg)	
+						this.finished = true
+						this.page = 0
+					}
+				}).catch(err=>{
+					this.$toast('服务异常,请稍后重试')
+					this.isLoading = false
+					this.loading = false
+					this.finished = true
+					this.page = 0
+					this.isErr = true
+				})
+			},
+			// 搜索
+			onSearch () {
+				this.page = 0
+				this.loading = true
+				this.finished = false
+				this.taskList = []
+				this.onLoad()
+			},
+			// 改变任务类型
+			changeTaskType () {
+				this.page = 0
+				this.loading = true
+				this.finished = false
+				this.taskList = []
+				this.onLoad()
+			},
+			// 前往任务详情
+			toTaskDetail (item) {
+				this.$router.push({
+					path: '/taskDetail',
+					query: {
+						id: item.reward_id
+					}
+				})
+            },
+            toTaskHall (item) {
+                this.$router.push({
+                    path: '/taskHall',
+                    query: {
+                        type: item ? item.value : ''
+                    }
+                })
+            }
+		}
+	};
+</script>
+<style lang="less">
+	.taskIndex {
+		min-height: 100%;
+		background: #f0f6fc;
+        position: relative;
+        .van-nav-bar {
+            background: transparent;
+			.van-icon {
+				color: #222222;
+			}
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.header {
+			background: url(../../images/bgHeader1.png) no-repeat;
+			background-size: 100% 100%;
+			width: 100%;
+			height: 105px;
+			.search-con {
+				display: flex;
+				justify-content: space-between;
+                align-items: center;
+                padding: 0 10px;
+                .van-search {
+                    width: 100%;
+                    .van-search__content--round {
+                        background: #fff;
+                    }
+                }
+			}
+			.left-nav-con {
+				position: absolute;
+				top: 50%;
+				left: 0;
+				transform: translateY(-50%);
+				background: #1989fa;
+				color: #fff;
+				font-size: 0.34rem;
+				width: 2.5rem;
+				padding: 3px 0;
+				border-top-right-radius: 100px;
+				border-bottom-right-radius: 100px;
+			}
+		}
+		.grid {
+			width: calc(100% - 20px);
+			margin: 0 10px 0 10px;
+			padding: 10px 0;
+			background: #fff;
+			border-radius: 15px;
+			.task-type-status {
+				display: flex;
+                align-items: center;
+				justify-content: center;
+				width: 100%;
+				min-height: 60px;
+                img {
+                    width: 1rem;
+                    animation: cuIcon-spin 1s infinite linear;
+                }
+                @keyframes cuIcon-spin {
+                    0% {
+                        -webkit-transform: rotate(0);
+                        transform: rotate(0);
+                    }
+
+                    100% {
+                        -webkit-transform: rotate(359deg);
+                        transform: rotate(359deg);
+                    }
+                }
+			}
+			.van-grid-item {
+				width: 25%;
+			}
+			.van-grid-item__content {
+				padding: 6px 8px;
+				img {
+					width: 57px;
+					height: 57px;
+				}
+			}
+        }
+        .dropdown {
+			margin-top: 20px;
+		}
+		
+		.task-box {
+			.list-loading-con {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                img {
+                    width: 1rem;
+                    animation: cuIcon-spin 1s infinite linear;
+                }
+                @keyframes cuIcon-spin {
+                    0% {
+                        -webkit-transform: rotate(0);
+                        transform: rotate(0);
+                    }
+
+                    100% {
+                        -webkit-transform: rotate(359deg);
+                        transform: rotate(359deg);
+                    }
+                }
+            }
+			.van-pull-refresh {
+                min-height: 100%;
+            }
+			.task-group-type {
+				display: flex;
+				align-items: center;
+				padding: 6px 10px;
+				.name-con {
+					display: flex;
+                    align-items: center;
+                    flex:1;
+					.icon {
+						width: 0.7rem;
+					}
+					.desc {
+						font-weight: bold;
+						font-size: 14px;
+					}
+                }
+                .more-con {
+                    display: flex;
+                    align-items:center;
+                    justify-content: center;
+                    span {
+                        display: flex;
+                        color: #999;
+                    }
+                }
+			}
+			.task-group {
+				margin: 0 10px;
+				background: #fff;
+				border-radius: 10px;
+				margin-bottom: 15px;
+				box-shadow: 5px 5px 10px #ccc;
+				.task-tit-con {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 10px;
+					.tit {
+						font-weight: bold;
+						font-size: 14px;
+					}
+					.num {
+						color: #333
+					}
+				}
+				.task-con {
+					display: flex;
+					align-items: center;
+					padding: 10px;
+					.task-img-con {
+						width: 50px;
+						height: 50px;
+						border-radius: 50%;
+						margin-right: 8px;
+						img {
+							width: 100%;
+							height: 100%;
+						}
+					}
+					.task-desc-con {
+						flex: 1;
+						display: flex;
+						flex-direction: column;
+						overflow: hidden;
+						.task-tag-con {
+							display: flex;
+							margin-bottom: 6px;
+							.tag {
+                                    padding: 4px 6px;
+                                    background: rgb(161, 122, 255);
+                                    // background: rgb(219, 204, 255);
+                                    // color: rgb(161, 122, 255);
+                                    color: #fff;
+                                    border-radius: 100px;
+                                    font-weight: normal;
+                                    font-size: 0.3rem
+                                }
+                                .name {
+                                    margin-left: 10px;
+                                    background: #1989fa;
+                                    color: #fff;
+                                }
+                                .sale {
+                                    margin-left: 10px;
+                                    background: #F56C6C;
+                                    color: #fff;
+                                }
+                                .isShow {
+                                    background: #67C23A;
+                                    color: #fff;
+                                }
+						}
+						.task-desc-con {
+							display: block;
+							width: 100%;
+							color: #666;
+							overflow: hidden; 
+							text-overflow: ellipsis;
+							white-space: nowrap; 
+						}
+					}
+				}
+				.task-price-con {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					.price {
+						font-weight: bold;
+						font-size: 14px;
+						color: #F85E23;
+						padding: 6px 0;
+					}
+					.btn-con {
+						display: flex;
+						align-items: center;
+						margin-left: 8px;
+						.btn-item {
+							padding: 6px 12px;
+							background: linear-gradient(90deg,#9672f7,#7045f2);
+							color: #fff;
+							border-radius: 1000px;
+						}
+					}
+				}
+			}
+		}
+		.slect-tit-con {
+			display: flex;
+			align-items: center;
+			justify-items: center;
+			.text {
+				width: 50px;
+				height: 50px;
+				color: #7045f2;
+            }
+            .cancle {
+                width: 70px!important;
+            }
+			.tit {
+				flex: 1;
+				display: block;
+				overflow: hidden; 
+				text-overflow: ellipsis;
+				white-space: nowrap; 
+			}
+		}
+		.van-cascader__title {
+			width: 100%;
+			height: 100%;
+			line-height: normal;
+			.slect-tit-con {
+				width: 100%;
+				height: 100%;
+				.text {
+					width: 50px;
+					height: 100%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+				.tit {
+					text-align: center;
+					.masker {
+						font-weight: bold;
+					}
+				}
+			}
+        }
+        .notice-bar {
+            background:transparent;
+            .notice-swipe {
+                height: 40px;
+                line-height: 40px;
+                color: #999;
+                .masker {
+                    color: #ed6a0c
+                }
+            }
+        }
+        
+	}
+</style>

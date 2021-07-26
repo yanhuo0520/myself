@@ -1,0 +1,1046 @@
+<template>
+	<div class="hezuoIndexState" @scroll="scrollEvent($event)" :style='{height: deviceHeight + "px"}' :class="{'ifFixed': ifFixed}">
+		<van-nav-bar title="合作经济" fixed />
+		<div class="topCont">
+			<div class="topLeft">
+				<img src="../../images/header.png" alt="" class="headerImg" />
+				<p>张三 <img src="../../images/zhanzhang.png" /></p>
+			</div>
+			<p class="topRight" @click="selectShow=true">信服达科技有限公司河北</p>
+		</div>
+
+		<div class="money">
+			<div>
+				<p class="num">5825</p>
+				<p class="title">互助金总额</p>
+			</div>
+			<div>
+				<p class="num">6</p>
+				<p class="title">互助金收益</p>
+			</div>
+			<div>
+				<p class="num">41</p>
+				<p class="title">股金分红</p>
+			</div>
+		</div>
+
+		<van-tabbar :fixed="false" class="teamTabbar" :class="{'ifFixed': ifFixed}">
+			<van-tabbar-item v-for="(item1,index1) of itemsTeam" @click="clickTeamTab(item1.id)" :key="index1">
+				<template #icon>
+					<img :src="index1 === itemTeamId ?item1.iconSelect: item1.icon" />
+				</template>
+			</van-tabbar-item>
+		</van-tabbar>
+
+		<!-- 团队业务 -->
+		<div class="content" v-if="itemTeamId == 0">
+			<div class="imgCont">
+				<div class="left">
+					<img src="../../images/hezuobg.png" alt="" class="topBg" />
+					<img src="../../images/hezuoshop.png" alt="" class="topImg" />
+					<img src="../../images/jiantou3.png" alt="" class="leftImg" />
+					<img src="../../images/shopic.png" alt="" class="rightImg" />
+				</div>
+				<div class="right">
+					<img src="../../images/hezuobg.png" alt="" class="topBg" />
+					<img src="../../images/baoxian.png" alt="" class="topImg" />
+					<img src="../../images/jiantou4.png" alt="" class="leftImg" />
+					<img src="../../images/baxianpic.png" alt="" class="rightImg" />
+				</div>
+			</div>
+			<!-- 商品分类 -->
+			<van-tabbar :fixed="false" class="goodsTabbar" v-if="categoryList.length > 0">
+				<van-tabbar-item v-for="(item2,index2) of categoryList" @click="clickGoodTab(item2.cate_id)" :key="index2">
+					<template #icon>
+						<img :src="item2.icon" />
+					</template>
+					<p :class="item2.cate_id === categoryId ? 'active': ''">{{item2.cate_name}}</p>
+				</van-tabbar-item>
+			</van-tabbar>
+			<div class="shopCont">
+				<div class="shop">
+					<div class="img-cont">
+						<p class="saleNum">已抢购255</p>
+						<img src="../../images/good1.png" class="shop-img" />
+					</div>
+					<div class="bottom-cont">
+						<p class="name">牛油果新鲜共10斤装</p>
+						<p class="from">河南饮料商贸有限公司</p>
+						<div class="price-cont">
+							<p class="price"><span class="new">￥</span>35.<span class="new">9</span> <span
+									class="old">￥22</span> </p>
+							<img src="../../images/addgood.png" alt="" />
+						</div>
+					</div>
+				</div>
+				<div class="shop">
+					<div class="img-cont">
+						<p class="saleNum">已抢购255</p>
+						<img src="../../images/good2.png" class="shop-img" />
+					</div>
+					<div class="bottom-cont">
+						<p class="name">新鲜冰糖橙</p>
+						<p class="from">河南饮料商贸有限公司</p>
+						<div class="price-cont">
+							<p class="price"><span class="new">￥</span>35.<span class="new">9</span> <span
+									class="old">￥22</span> </p>
+							<img src="../../images/addgood.png" alt="" />
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+
+		</div>
+
+		<!-- 团队业绩 -->
+		<div class="content" v-if="itemTeamId == 1">
+			<div class="contTotal">
+				<img src="../../images/logoBg.png" alt="" class="logoBg" />
+				<img src="../../images/xiexianBg.png" alt="" class="xiexianBg" />
+				<div class="yejiDiv">
+					<p class="num">798 </p>
+					<p class="title">团队总收益</p>
+				</div>
+				<div class="yejiDiv">
+					<p class="num">798</p>
+					<p class="title">团队业务量</p>
+				</div>
+				<div class="yejiDiv">
+					<p class="num">452</p>
+					<p class="title">个人总收益</p>
+				</div>
+			</div>
+			<div class="yejiCont">
+				<p class="main-title">实时动态</p>
+				<div class="yejiItem">
+					<div class="header">
+						<img src="../../images/header2.png" alt="" class="peoplePic" />
+						<img src="../../images/cartLine.png" alt="" class="cartLine" />
+						<img src="../../images/pic1.png" alt="" class="goodsPic" />
+					</div>
+					<div class="listItem">
+						<div>
+							<img src="../../images/shareperson.png" />
+							<p class="title">张三</p>
+						</div>
+						<div>
+							<img src="../../images/xiadantime.png" />
+							<p class="title">2021-02-21</p>
+						</div>
+					</div>
+				</div>
+				<div class="yejiItem">
+					<div class="header">
+						<img src="../../images/header2.png" alt="" class="peoplePic" />
+						<img src="../../images/cartLine.png" alt="" class="cartLine" />
+						<img src="../../images/pic1.png" alt="" class="goodsPic" />
+					</div>
+					<div class="listItem">
+						<div>
+							<img src="../../images/shareperson.png" />
+							<p class="title">张三</p>
+						</div>
+						<div>
+							<img src="../../images/xiadantime.png" />
+							<p class="title">2021-02-21</p>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+		<!-- 我的团队 -->
+		<div class="content" v-if="itemTeamId == 2">
+			<div class="contTotal">
+				<img src="../../images/logoBg.png" alt="" class="logoBg" />
+				<img src="../../images/xiexianBg.png" alt="" class="xiexianBg" />
+				<div class="teamDiv">
+					<p class="num">7984 </p>
+					<p class="title">团队总人数</p>
+				</div>
+				<div class="teamDiv">
+					<p class="num">452<span class="totalNum">/798</span></p>
+					<p class="title">有效总人数</p>
+				</div>
+			</div>
+			<div class="stateCont">
+				<p class="main-title">团队成员状态</p>
+				<div class="stateItem">
+					<div class="header">
+						<img src="../../images/header2.png" alt="" class="headerImg" />
+						<p class="title">王美玲</p>
+						<p class="tip tip1">活跃</p>
+					</div>
+					<div class="listItem">
+						<div>
+							<p class="top">2021-02-15</p>
+							<p class="bottomTitle">入团时间</p>
+						</div>
+						<div>
+							<p class="top">商城推广</p>
+							<p class="bottomTitle">参与业务</p>
+						</div>
+						<div>
+							<p class="top">589 <span class="tip">已提现</span> </p>
+							<p class="bottomTitle">业务收益</p>
+						</div>
+					</div>
+				</div>
+				<div class="stateItem">
+					<div class="header">
+						<img src="../../images/header2.png" alt="" class="headerImg" />
+						<p class="title">王美玲</p>
+						<p class="tip tip2">沉闷</p>
+					</div>
+					<div class="listItem">
+						<div>
+							<p class="top">2021-02-15</p>
+							<p class="bottomTitle">入团时间</p>
+						</div>
+						<div>
+							<p class="top">商城推广</p>
+							<p class="bottomTitle">参与业务</p>
+						</div>
+						<div>
+							<p class="top">589</p>
+							<p class="bottomTitle">业务收益</p>
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+
+
+
+
+		</div>
+
+
+		<bottom :idx="1"></bottom>
+
+		<!-- 选择合作社 -->
+		<van-action-sheet v-model="selectShow" title="选择合作社" class="selSheet" :closeable="false">
+			<van-radio-group v-model="radio">
+				<van-cell title="信服达科技公社" clickable @click="radio = '1'" :class="radio == 1 ? 'active' : ''">
+					<template #right-icon>
+						<van-radio name="1">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+				<van-cell title="河南郑州经开区幸福里街道办事处合作社" clickable @click="radio = '2'" :class="radio == 2 ? 'active' : ''">
+					<template #right-icon>
+						<van-radio name="2">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel()">确定</van-button>
+		</van-action-sheet>
+	</div>
+</template>
+<script>
+	import bottom from "@/components/bottom";
+	export default {
+		name: "hezuoIndexState",
+		components: {
+			bottom,
+		},
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				ifFixed: false,
+				selectShow: false,
+				radio: '1',
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+
+				itemTeamId: 0,
+				itemsTeam: [{
+						name: "团队业务",
+						id: 0,
+						icon: require("../../images/teamyewu.png"),
+						iconSelect: require("../../images/teamyewuA.png")
+					},
+					{
+						name: "团队业绩",
+						id: 1,
+						icon: require("../../images/teamyeji.png"),
+						iconSelect: require("../../images/teamyejiA.png")
+					},
+					{
+						name: "我的团队",
+						id: 2,
+						icon: require("../../images/teamy.png"),
+						iconSelect: require("../../images/teamyA.png")
+					}
+				],
+
+				categoryId: 0,
+				categoryList: [],
+				
+				teamId: '',
+				page: 1,
+				pageSize: 10,
+			};
+		},
+		mounted() {
+			this.selfCategory();
+		},
+		methods: {
+
+			// 确定所选合作社
+			sureSel() {
+				this.selectShow = false
+			},
+			// 切换标题
+			clickTeamTab(id) {
+				this.itemTeamId = id
+			},
+			// 团队业务---商品分类
+			clickGoodTab(id) {
+				this.categoryId = id
+			},
+			// 页面滚动
+			scrollEvent(e) {
+				if (e instanceof Event) {
+					let scrollTop = e.target.scrollTop;
+					if(scrollTop > 164){
+						this.ifFixed = true
+					}else{
+						this.ifFixed = false
+					}
+				}
+			},
+			// 团队业务--团队中供应商城商品分类
+			selfCategory() {
+				this.$api.selfCategory({}).then(res => {
+					if (res.errno == 0) {
+						this.categoryId = res.data[0].cate_id
+						this.categoryList = res.data;
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			// 团队业务--团队中供应商城商品列表（带分类带搜索）
+			selfGoodslists() {
+				let data = {}
+					data.team_id = this.itemTeamId
+					data.cate_id = this.categoryId
+					data.goods_name = ''
+					data.page = this.page
+					data.size = this.pageSize
+				this.$api.selfGoodslists(data).then(res => {
+					console.log(res)
+					if (res.errno == 0) {
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+			
+				})
+			},
+			// 团队业绩--业务收益统计
+			teamProfitStatistics() {
+				this.$api.teamProfitStatistics({team_id: this.teamId}).then(res => {
+					console.log(res)
+					if (res.errno == 0) {
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+			
+				})
+			},
+			
+			// 团队业绩--实时动态
+			user_team_business_log() {
+				let data = {}
+					data.team_id = this.itemTeamId
+					data.page = this.page
+					data.size = this.pageSize
+					data.name = this.name // 团员姓名
+					data.status = ''
+					data.start_date = ''
+					data.end_date = ''
+				this.$api.user_team_business_log(data).then(res => {
+					console.log(res)
+					if (res.errno == 0) {
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+			
+				})
+			},
+			
+			// 我的团队--团队人数统计
+			teamMemberStatistics() {
+				this.$api.teamMemberStatistics({team_id: this.teamId}).then(res => {
+					console.log(res)
+					if (res.errno == 0) {
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+			
+				})
+			},
+			
+			// 我的团队--团队成员状态
+			teamMemberStatus() {
+				let data = {}
+					data.team_id = this.itemTeamId
+					data.page = this.page
+					data.size = this.pageSize
+					data.name = this.name // 团员姓名
+					data.start_date = ''
+					data.end_date = ''
+				this.$api.teamMemberStatus(data).then(res => {
+					console.log(res)
+					if (res.errno == 0) {
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+			
+				})
+			},
+		},
+	}
+</script>
+<style lang="less">
+	.hezuoIndexState {
+		padding-top: 46px;
+		overflow: auto;
+		background: #f0f6fc url(../../images/bgHeader2.png) no-repeat;
+		background-size: 100% 200px;
+		&.ifFixed{
+			background: #f0f6fc url(../../images/bgHeader3Ch.png) no-repeat;
+			background-size: 100% 170px;
+		}
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader2.png) no-repeat top center;
+			background-size: 100% 200px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.topCont {
+			margin: 15px 10px 25px 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+
+			.topLeft {
+				display: flex;
+				align-items: center;
+				position: relative;
+				.headerImg {
+					position: absolute;
+					width: 40px;
+					border: 2px solid #FFFFFF;
+					border-radius: 50%;
+				}
+
+				p {
+					font-size: 15px;
+					line-height: 30px;
+					background: #FFFFFF;
+					padding: 0 10px 0 26px;
+					border-radius: 30px;
+					margin-left: 20px;
+					display: flex;
+					align-items: center;
+
+					img {
+						margin-left: 5px;
+						height: 15px;
+					}
+				}
+			}
+
+			.topRight {
+				background: rgba(255, 255, 255, 0.5);
+				background-image: url(../../images/down.png);
+				background-repeat: no-repeat;
+				background-position: calc(100% - 10px) calc(50% - 1px);
+				background-size: 8px 5px;
+				line-height: 20px;
+				padding: 5px 23px 5px 10px;
+				border-radius: 30px;
+				font-size: 15px;
+				max-width: calc(100% - 160px);
+			}
+
+		}
+
+		.money {
+			display: flex;
+			justify-content: space-between;
+			margin: 10px 10% 20px 10%;
+
+			div {
+				margin-top: 10px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+
+				.num {
+					font-size: 20px;
+					font-weight: bold;
+					position: relative;
+					font-family: DIN Medium, DIN Medium-Medium;
+
+					&::before {
+						position: absolute;
+						top: -5px;
+						left: calc(100% + 2px);
+						content: '';
+						width: 100%;
+						min-width: 30px;
+						height: 10px;
+					}
+				}
+
+				&:nth-child(1) .num::before {
+					background: url(../../images/xiang1.png) no-repeat;
+					background-size: auto 10px;
+				}
+
+				&:nth-child(2) .num::before {
+					background: url(../../images/ren.png) no-repeat;
+					background-size: auto 10px;
+				}
+
+				&:nth-child(3) .num::before {
+					background: url(../../images/ketixian.png) no-repeat;
+					background-size: auto 10px;
+				}
+
+				.title {
+					margin-top: 12px;
+				}
+			}
+		}
+
+		.van-tabbar.teamTabbar {
+			padding: 15px 0 10px 0;
+			height: auto;
+			border-radius: 10px 10px 0 0;
+			&.ifFixed{
+				position: fixed;
+				top: 46px;
+				z-index: 2;
+				background: #f0f6fc url(../../images/bgHeader3Ch1.png) no-repeat center top;
+				background-size: 100% auto;
+			}
+
+			.van-tabbar-item__icon {
+				height: 25px;
+
+				img {
+					width: 64px;
+					height: auto;
+				}
+			}
+		}
+
+		.van-tabbar.goodsTabbar {
+			padding: 15px 0 10px 0;
+			height: auto;
+			background: transparent;
+			border-radius: 10px 10px 0 0;
+			overflow-x: scroll;
+
+			.van-tabbar-item {
+				background: transparent;
+				min-width: 64px;
+			}
+
+			.van-tabbar-item__icon {
+				margin-bottom: 0;
+
+				img {
+					width: auto;
+					height: 35px;
+				}
+			}
+
+			.van-tabbar-item__text {
+				margin-top: 5px;
+				color: #444444;
+				line-height: 20px;
+
+				.active {
+					background: #3B6AF1;
+					color: #FFFFFF;
+					padding: 0 8px;
+					border-radius: 40px;
+				}
+			}
+		}
+
+		.van-hairline--top-bottom::after,
+		.van-hairline-unset--top-bottom::after {
+			border-width: 0;
+		}
+
+		.content {
+			position: relative;
+
+			&::before {
+				position: absolute;
+				content: '';
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100px;
+				background: linear-gradient(#ffffff 30%, #f0f6fc 100%);
+			}
+		}
+
+		.contTotal {
+			background: linear-gradient(-35deg, #3b6af1 0%, #5a94ff 100%);
+			margin: 0 10px;
+			border-radius: 10px;
+			height: 95px;
+			display: flex;
+			justify-content: space-around;
+			color: #FFFFFF;
+			position: relative;
+
+			.logoBg {
+				position: absolute;
+				top: 0;
+				right: 0;
+				height: 95px;
+			}
+
+			.xiexianBg {
+				position: absolute;
+				left: 0;
+				bottom: 0;
+				max-width: 290px;
+			}
+
+			div {
+				margin-top: 10px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+
+				.num {
+					font-size: 20px;
+					font-weight: bold;
+					font-family: DIN Medium, DIN Medium-Medium;
+					position: relative;
+
+					&::before {
+						position: absolute;
+						top: -5px;
+						left: calc(100% + 2px);
+						content: '';
+						min-width: 30px;
+						height: 10px;
+					}
+
+					.totalNum {
+						color: #A6C2FF;
+					}
+				}
+
+				.title {
+					margin-top: 12px;
+				}
+
+			}
+
+			.yejiDiv {
+
+				&:nth-of-type(1) .num::before,
+				&:nth-of-type(3) .num::before {
+					background: url(../../images/yuan.png) no-repeat;
+					background-size: auto 10px;
+				}
+
+				&:nth-of-type(2) .num::before {
+					background: url(../../images/xiang.png) no-repeat;
+					background-size: auto 10px;
+				}
+			}
+
+			.teamDiv .num::before {
+				background: url(../../images/yuan.png) no-repeat;
+				background-size: auto 10px;
+			}
+
+		}
+
+		// 团队成员状态
+		.stateCont,
+		.yejiCont {
+			margin: 15px 10px;
+
+			.main-title {
+				font-size: 15px;
+			}
+		}
+
+		// 团队业务
+		.imgCont {
+			display: flex;
+			justify-content: space-between;
+			margin: 0 10px 0 10px;
+
+			.left,
+			.right {
+				width: calc(50% - 5px);
+				height: 40px;
+				background: #ffffff;
+				padding: 20px;
+				border-radius: 10px;
+				position: relative;
+
+				.topBg {
+					position: absolute;
+					right: 0;
+					top: 0;
+					height: 75px;
+				}
+
+				.topImg {
+					height: 15px;
+				}
+
+				.leftImg {
+					position: absolute;
+					left: 20px;
+					bottom: 15px;
+					height: 15px;
+				}
+
+				.rightImg {
+					position: absolute;
+					right: 0;
+					bottom: 0;
+					height: 71px;
+				}
+			}
+
+			.left {
+				background: #E0E4F8;
+			}
+
+			.right {
+				background: #FAE8DA;
+				margin-left: 10px;
+			}
+		}
+
+		.shopCont {
+			margin: 0 10px 30px 10px;
+			display: flex;
+			flex-wrap: wrap;
+
+			.shop {
+				border-radius: 10px;
+				margin-top: 10px;
+				width: calc(50% - 5px);
+
+				&:nth-child(2n) {
+					margin-left: 10px
+				}
+
+				.img-cont {
+					text-align: center;
+					border-radius: 10px;
+					overflow: hidden;
+					position: relative;
+					height: 0;
+					padding-bottom: 100%;
+					background: #FFFFFF;
+
+					&::after {
+						position: absolute;
+						content: '';
+						left: 15px;
+						right: 15px;
+						bottom: 0;
+						height: 1px;
+						background: #F0F6FC;
+					}
+
+					.saleNum {
+						position: absolute;
+						top: 0;
+						left: 0;
+						z-index: 1;
+						color: #444444;
+						line-height: 22px;
+						padding: 0 10px;
+						background: linear-gradient(#d4e2f0 0%, #eaf2f9 100%);
+						border-radius: 10px 0px 10px 0px;
+					}
+
+					.shop-img {
+						position: absolute;
+						top: 50%;
+						left: 50%;
+						transform: translate(-50%, -50%);
+						max-width: calc(100% - 30px);
+						max-height: calc(100% - 30px);
+					}
+				}
+
+				.bottom-cont {
+					background: #FFFFFF;
+					border-radius: 10px;
+					padding: 10px;
+
+					.name,
+					.from {
+						overflow: hidden;
+						text-overflow: ellipsis;
+						white-space: nowrap;
+					}
+
+					.name {
+						color: #444444;
+						font-size: 15px;
+					}
+
+					.from {
+						color: #9AA8B6;
+						margin-top: 5px;
+					}
+				}
+
+				.price-cont {
+					margin-top: 10px;
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+
+					.price {
+						color: #FF3371;
+						font-size: 15px;
+						font-weight: bold;
+					}
+
+					.new {
+						font-size: 12px;
+					}
+
+					.old {
+						font-size: 12px;
+						color: #D4E2F0;
+						text-decoration: line-through;
+					}
+
+					img {
+						height: 20px;
+					}
+				}
+
+
+			}
+		}
+
+		// 团队业绩item
+		.yejiItem {
+			margin-top: 10px;
+			background: #FFFFFF;
+			border-radius: 10px;
+
+			.header {
+				display: flex;
+				justify-content: space-around;
+				align-items: center;
+				padding: 15px;
+				border-bottom: 1px solid #F0F6FC;
+
+				.peoplePic,
+				.goodsPic {
+					height: 41px;
+					border-radius: 50%;
+					border: 2px solid #F0F7FC;
+				}
+
+				.cartLine {
+					height: 25px;
+				}
+			}
+
+			.listItem {
+				padding: 15px;
+				display: flex;
+				justify-content: space-between;
+
+				div {
+					display: flex;
+					align-items: center;
+
+					.title {
+						margin-left: 5px;
+						font-size: 13px;
+						color: #9AA8B6;
+					}
+
+					img {
+						height: 20px;
+					}
+				}
+			}
+		}
+
+		// 我的团队item
+		.stateItem {
+			margin-top: 10px;
+			background: #FFFFFF;
+			border-radius: 10px;
+
+			.header {
+				display: flex;
+				align-items: center;
+				padding: 15px;
+				border-bottom: 1px solid #F0F6FC;
+
+				.headerImg {
+					width: 20px;
+				}
+
+				.title {
+					font-size: 14px;
+					margin-left: 5px;
+				}
+
+				.tip {
+					line-height: 16px;
+					padding: 0 5px;
+					border-radius: 14px;
+					margin-left: 5px;
+
+					&.tip1 {
+						color: #3B6AF1;
+						background: #e2f4ff;
+						border: 1px solid #3b6af1;
+					}
+
+					&.tip2 {
+						color: #9AA8B6;
+						background: #F0F6FC;
+						border: 1px solid #D9E1E9;
+					}
+				}
+			}
+
+			.listItem {
+				display: flex;
+				justify-content: space-around;
+
+				div {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					flex-direction: column;
+					padding: 15px 0;
+
+					.top {
+						font-size: 14px;
+						color: #444444;
+						position: relative;
+
+						.tip {
+							font-size: 12px;
+							line-height: 18px;
+							background: #3B6AF1;
+							color: #FFFFFF;
+							padding: 0 4px;
+							border-radius: 8px 8px 8px 0;
+							position: absolute;
+							top: -8px;
+							transform: scale(0.8);
+							width: 38px;
+						}
+					}
+
+					.bottomTitle {
+						margin-top: 10px;
+						color: #9AA8B6;
+					}
+				}
+			}
+		}
+
+		// 选择合作社
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+		}
+
+	}
+</style>

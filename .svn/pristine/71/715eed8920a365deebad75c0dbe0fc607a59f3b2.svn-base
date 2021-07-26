@@ -1,0 +1,304 @@
+<template>
+	<div class="applyCardDetail" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="银行卡信息" left-arrow fixed @click-left="leftBack" />
+		<div class="cardCont">
+			<div class="item" :class="{
+				'blue':(info.open_bank_letter == 'CCB' || info.open_bank_letter == 'BC'),
+				'red':(info.open_bank_letter == 'BOC' ||info.open_bank_letter == 'CMB' ||info.open_bank_letter == 'GF' ||info.open_bank_letter == 'ICBC' ||info.open_bank_letter == 'CITIC'),
+				'green':(info.open_bank_letter == 'ABC' || info.open_bank_letter == 'CMBC' || info.open_bank_letter == 'YZ'),
+				'purple':info.open_bank_letter == 'CEB',
+				'orange':info.open_bank_letter == 'ZZBANK'}">
+				<img src="../../images/light3.png" class="itemBg" />
+				<img src="../../images/light2.png" class="itemBgAll" />
+				<div class="topCont">
+					<img :src="info.bank_log" alt="" />
+					<p class="title">{{info.open_bank}}</p>
+					<p class="tip">{{info.bank_type}}</p>
+				</div>
+				<p class="carnum">{{carNum}}</p>
+			</div>
+		</div>
+		<div class="inputGroup">
+			<p class="title">银行卡类型</p>
+			<van-field v-model="cardType" clearable
+				:right-icon="require('../../images/card2.png')" placeholder="请输入银行卡类型" readonly />
+
+			<p class="title phone">银行预留手机号</p>
+			<van-field v-model="phone" type="number" :class="ifInPhone? 'inInput' : ''" clearable
+				:right-icon="require('../../images/phone.png')" placeholder="请输入银行预留手机号" @input="ifInPhone = true" @blur="ifInPhone = false"  />
+			<p class="tip">查看<span>《用户协议》</span></p>
+		</div>
+		<van-button :icon='require("../../images/xieyi.png")' type="info" block class="addBtn" v-if="hidshowFooter"
+			@click="userChangeBank()">
+			同意协议并绑卡
+		</van-button>
+	</div>
+</template>
+<script>
+	export default {
+		name: "applyCardDetail",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 90,
+				carNum: '',
+				cardType: '',
+				info: '',
+				iconImg: '',
+				phone: '',
+				ifInPhone: false,
+
+				docmHeight: document.documentElement.clientHeight, //默认屏幕高度
+				showHeight: "0", //实时屏幕高度
+				hidshowFooter: true, //显示或者隐藏footer,
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			
+			this.carNum = this.$route.query.carNum
+			this.cardType = this.$route.query.cardType
+			this.info = JSON.parse(this.$route.query.info)
+
+			window.onresize = () => { // 实时屏幕高度
+				this.showHeight = document.body.clientHeight;
+			};
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			userChangeBank() {
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				let data = {}
+					// data.bank_id = '' // 银行卡id：修改时需要	
+					data.bank_remark = '' // 用户自定义银行卡备注
+					data.open_phone = this.phone // 银行开户手机号	
+					data.open_bank_letter = this.info.open_bank_letter // 开户行缩写字母
+					data.open_bank = this.info.open_bank // 开户行
+					data.bank_num = this.carNum // 银行卡号
+					data.bank_log = this.info.bank_log // 银行logo
+					data.bank_card_name = this.info.bank_card_name // 银行卡名称	
+					data.bank_type = this.info.bank_type // 银行卡类型
+				this.$api.user_change_bank(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.$toast("添加成功")
+						setTimeout(()=>{
+							this.$router.replace({
+								path: '/cooCardAcc'
+							})
+						})
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			}
+		},
+		watch: {
+			showHeight: function() {
+				if (this.docmHeight > this.showHeight) {
+					this.hidshowFooter = false;
+				} else {
+					this.hidshowFooter = true;
+				}
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.applyCardDetail {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		background: #F0F6FC;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.inputGroup {
+			padding-top: 30px;
+			height: calc(100% - 116px);
+			background: #FFFFFF;
+
+			input:-ms-input-placeholder {
+				color: #444444;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+			}
+
+			.title {
+				margin-left: 15px;
+				color: #9AA8B6;
+
+				&.phone {
+					margin-top: 25px;
+				}
+			}
+
+			.van-cell {
+				background: transparent;
+
+				&.inInput {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+
+			.tip {
+				margin: 20px 15px 0 15px;
+				font-size: 13px;
+
+				span {
+					color: #3B6AF1;
+				}
+			}
+		}
+
+
+		.cardCont {
+			margin: 0 10px;
+
+			.item {
+				margin-top: 10px;
+				height: 120px;
+				color: #FFFFFF;
+				border-radius: 10px 10px 0 0;
+				position: relative;
+				background: linear-gradient(#3799fc 0%, #3d6be2 100%);
+
+				&.blue {
+					// 建行
+					background: linear-gradient(#3799fc 0%, #3d6be2 100%);
+				}
+
+				&.red {
+					// 工商银行
+					background: linear-gradient(#ff717e 0%, #f73c57 100%);
+				}
+
+				&.green {
+					// 民生银行
+					background: linear-gradient(#09beaa 0%, #00aa95 100%);
+				}
+
+				&.purple {
+					// 广大
+					background: linear-gradient(#aa91fc 0%, #755ddf 100%);
+				}
+
+				&.orange{ 
+					background: linear-gradient(#ffa500  0%, #ff8917 100%);
+				}
+
+				.itemBg {
+					position: absolute;
+					right: 0;
+					top: 0;
+					height: 45px;
+				}
+
+				.itemBgAll {
+					position: absolute;
+					left: 0;
+					bottom: 0;
+					max-width: 290px;
+				}
+
+				.topCont {
+					display: flex;
+					align-items: center;
+					padding: 20px 15px 0 15px;
+
+					img {
+						width: 30px;
+						height: 30px;
+						border-radius: 50%;
+					}
+
+					.title {
+						margin-left: 10px;
+						font-size: 17px;
+					}
+
+					.tip {
+						font-size: 13px;
+						color: #eeeeee;
+						margin-left: 5px;
+						padding: 1px 8px;
+						line-height: 20px;
+						border-radius: 40px;
+						background: rgba(225, 225, 225, 0.2);
+					}
+
+				}
+
+				.carnum {
+					margin-top: 30px;
+					margin-right: 20px;
+					font-family: DIN Bold, DIN Bold-Bold;
+					font-weight: bold;
+					font-size: 22px;
+					text-align: right;
+				}
+			}
+		}
+
+		.null {
+			img {
+				max-width: 100%;
+			}
+		}
+
+		.van-loading {
+			padding: 10px 0;
+			text-align: center;
+		}
+
+		.addBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+	}
+</style>

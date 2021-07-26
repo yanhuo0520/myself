@@ -1,0 +1,49 @@
+<template>
+  <div class="props">
+    <van-field v-model="xjdi" type="textarea" :border="false" :label="label" input-align="right" placeholder="请选择"  rows="1" readonly is-link autosize
+      @click="showGender = true" />
+    <van-popup v-model="showGender" round position="bottom" :style="{ height: '30%' }" />
+    <van-popup class="picker-con" v-model="showGender" round position="bottom" :style="{ height: '50%' }">
+      <van-picker show-toolbar :columns="propContent" @confirm="genderConfirm" @cancel="showGender = false" />
+    </van-popup>
+  </div>
+</template>
+
+<script>
+  export default {
+    name: 'props',
+    data() {
+      return {
+        radio: "1",
+        showGender: false,
+        genderInput: '',
+        genderIndex: 0,
+      }
+    },
+    props: {
+      propContent: Array,
+      label: String,
+      xjdi: String,
+      indexs: Number
+    },
+    created() {
+      this.genderInput = this.xjdi;
+      this.genderIndex = this.indexs;
+    },
+    methods: {
+      genderConfirm(value, index) {
+        this.genderIndex = (index + 1);
+        this.genderInput = value;
+        this.$emit("update:indexs", this.genderIndex);
+        this.$emit("update:xjdi", this.genderInput);
+        this.showGender = false
+      },
+    }
+  }
+</script>
+
+<style lang="less">
+ .van-field__label {
+      width: 39%;
+    }
+</style>

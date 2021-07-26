@@ -1,0 +1,24 @@
+<template>
+	<div class="accouInFaileRedirect">
+		<!-- 支付支付 - 失败跳转重定向地址 -->
+	</div>
+</template>
+<script>
+	export default {
+		name: "accouInFaileRedirect",
+		data() {
+			return {
+				
+			};
+		},
+		mounted(){
+			this.$router.replace({
+				path: '/accouIn',
+			})
+		},
+		
+	}
+</script>
+<style lang="less">
+
+</style>

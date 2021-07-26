@@ -1,0 +1,300 @@
+<template>
+	<div class="accouIn" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="转入" left-arrow fixed @click-left="leftBack" />
+		<template v-if="radioPayItem.length > 0">
+			<van-cell :title="cardNameNum" class="bankCont" is-link @click="show = true">
+				<template #icon>
+					<img :src="cardImg" class="leftIcon" />
+				</template>
+			</van-cell>
+		</template>
+		<template v-else>
+			<van-cell title="添加支付方式" class="bankCont" is-link @click="show = true">
+				<template #icon>
+					<img src="../../images/addqian.png" class="leftIcon" />
+				</template>
+			</van-cell>
+		</template>
+
+		<div class="inCont">
+			<p class="m-title">转入金额(元)</p>
+			<van-field v-model="money" clearable :class="ifIn? 'ifIn' : ''" placeholder="" @input="ifIn = true">
+				<template #left-icon>
+					<img src="../../images/qian4.png" alt="" class="iconImg" />
+				</template>
+			</van-field>
+			<br />
+		</div>
+
+		<van-button :icon='require("../../images/in1.png")' type="info" block class="sendBtn" @click="goPay()">
+			立即转入
+		</van-button>
+
+		<!-- 选择银行 -->
+		<van-action-sheet v-model="show" title="选择付款方式" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadio">
+				<template>
+					<van-cell clickable v-for="(item, index) in radioPayItem" :key="index"
+						@click="selRadio = item.pay_type, selImg = item.icon, selTitle = item.bank_num_str"
+						:class="selRadio == item.pay_type ? 'active' : ''">
+						<template #icon>
+							<img :src="item.icon" alt="" class="logoIcon" />
+						</template>
+						<template #title>
+							<span class="custom-title">{{item.bank_num_str}}</span>
+						</template>
+						<template #right-icon>
+							<van-radio :name="item.pay_type">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</template>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel()">确定</van-button>
+		</van-action-sheet>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "accouIn",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				cardType: '',
+				cardImg: '',
+				cardNameNum: '',
+
+				money: '',
+				ifIn: false,
+				show: false,
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				selRadio: '',
+				selImg: '',
+				selTitle: '',
+				radioPayItem: []
+			};
+		},
+		mounted() {
+			this.getPayType()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getPayType() {
+				// 用户账户存入显示支付方式
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.userSelectPayType().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						res.data.forEach(ele => {
+							if (ele.pay_type == 2) {
+								ele.icon = require("../../images/wei.png")
+							} else if (ele.pay_type == 3) {
+								ele.icon = require("../../images/zhi.png")
+							} else if (ele.pay_type == 4) {
+								ele.icon = require("../../images/yun.png")
+							}
+						})
+						this.cardType = res.data[0].pay_type
+						this.cardImg = res.data[0].icon
+						this.cardNameNum = res.data[0].bank_num_str
+
+						this.selRadio = res.data[0].pay_type
+						this.selImg = res.data[0].icon
+						this.selTitle = res.data[0].bank_num_str
+						this.radioPayItem = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			sureSel() {
+				this.cardType = this.selRadio
+				this.cardImg = this.selImg
+				this.cardNameNum = this.selTitle
+				this.show = false
+			},
+
+			goPay() {
+				if (this.money < 0) {
+					this.$toast("请输入转入金额")
+					return
+				}
+				this.$toast.loading({
+					message: '支付中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				let data = {}
+				data.pay_type = this.cardType
+				data.pay_money = this.money
+				this.$api.userWalletPay(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if (this.cardType == 2) { // 微信支付(银联渠道)
+							if (typeof android != "undefined") {
+								android.unionWxPay(res.data);
+							}
+						} else if (this.cardType == 3) { // 支付宝支付(银联渠道)
+							if (typeof android != "undefined") {
+								android.unionAliPay(res.data);
+							}
+						} else if (this.cardType == 4) { // 云闪付
+							if (typeof android != "undefined") {
+								android.unionPay(res.data);
+							}
+						}
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+
+		}
+	}
+</script>
+<style lang="less">
+	.accouIn {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		overflow: auto;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.bankCont {
+			background: #F0F6FC;
+
+			.leftIcon {
+				width: 24px;
+				height: 24px;
+				margin-right: 5px;
+			}
+		}
+
+		.inCont {
+			background: #ffffff url(../../images/radiustop1.png) no-repeat top center;
+			background-size: 100% 30px;
+			padding: 15px;
+
+			.m-title {
+				color: #9AA8B6;
+			}
+
+			.van-cell {
+				margin-top: 15px;
+				padding: 0;
+
+				&.ifIn {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				&::after {
+					left: 0;
+					right: 0;
+				}
+
+				input {
+					font-size: 21px;
+				}
+
+				img {
+					height: 10px;
+					margin-top: 10px;
+				}
+			}
+		}
+
+		// 选择框
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.van-tag {
+				border: 1px solid #3b6af1;
+				background: #e2f4ff;
+				color: #3B6AF1;
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.logoIcon {
+				width: 20px;
+				height: 20px;
+				margin: 3px 5px 0 0;
+			}
+
+			.img-icon {
+				width: 20px;
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+		}
+
+		.sendBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+	}
+</style>

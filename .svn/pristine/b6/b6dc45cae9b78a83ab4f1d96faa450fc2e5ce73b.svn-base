@@ -1,0 +1,252 @@
+<template>
+	<div class="accountIndex">
+		<van-nav-bar title="账户管家" left-arrow fixed @click-left="leftBack" />
+		<div class="top">
+			<div class="cont">
+				<div class="topTitle">
+					<img src="../../images/accountTop1.png" class="img1" />
+					<img src="../../images/accountTop2.png" class="img2" /><span class="num">{{walletNum.seven_year_rate}}</span>
+					<img src="../../images/light1.png" class="img3" />
+				</div>
+				<p class="title">我的资产</p>
+				<div class="zichan">
+					<p class="price">{{walletNum.wallet}}<span>元</span></p>
+					<div class="zhuanyi">
+						<img src="../../images/in.png" class="in" @click="$router.push('/accouIn')" />
+						<img src="../../images/out.png" class="out"  @click="goOut()" />
+					</div>
+				</div>
+				<p class="ingMoney" v-if="walletNum.on_the_way_wallet>0">正在打款中的金额￥{{walletNum.on_the_way_wallet}}</p>
+				<div class="line"></div>
+				<div class="shouyi">
+					<div class="left">
+						<span>昨日收益</span> + {{walletNum.new_profit}}
+					</div>
+					<div class="left">
+						<span>累积收益</span> + {{walletNum.all_profit}}
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="cell-cont">
+			<van-cell title="交易明细" is-link  @click="$router.push('/jiaoyiList')">
+				<template #icon>
+					<img src="../../images/date6.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+			<van-cell title="收益记录" is-link  @click="$router.push('/shouyiList')">
+				<template #icon>
+					<img src="../../images/qian13.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+			<van-cell title="我的银行卡" :value="walletNum.bank_count +'张'" is-link  @click="$router.push('/cooCardAcc')">
+				<template #icon>
+					<img src="../../images/card.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+			<van-cell title="我的合作社账户" :value="walletNum.coopera_count + '张'" is-link @click="$router.push('/cooperativeAcc')">
+				<template #icon>
+					<img src="../../images/zhanghao.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+		</div>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "accountIndex",
+		data() {
+			return {
+				walletNum: {
+					wallet: 0, // 账户余额
+					all_profit: 0, //总收益
+					new_profit: 0, // 最新收益
+					bank_count: 0, //银行卡数 
+					coopera_count: 0, //合作社个数
+				},
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			this.userWallet(); // 账户管家资产和收益
+		},
+		methods: {
+			leftBack() {
+				// this.$router.go(-1);
+				this.$router.replace('/')
+			},
+			// 账户管家资产和收益
+			userWallet(){
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.user_wallet({}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.walletNum = res.data;	
+					} else {
+						this.$toast(res.errmsg)	
+					}
+
+				}).catch(err=>{
+					this.$toast.clear()
+				})
+			},
+			// 转出
+			goOut(){
+				this.$router.push({
+					path: '/accouOut',
+					query: {
+						wallet: this.walletNum.can_out_wallet
+					}
+				})
+			},
+		}
+	}
+</script>
+<style lang="less">
+	.accountIndex {
+		padding-top: 46px;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+
+		.top {
+			padding-top: 10px;
+			height: 196px;
+			background: #F0F6FC;
+
+			.cont {
+				color: #FFFFFF;
+				background: linear-gradient(#252c3a 0%, #3a4254 100%);
+				margin: 0 10px;
+				padding: 15px;
+				border-radius: 15px 15px 0 0;
+
+				.topTitle {
+					background: linear-gradient(#fcc87e 0%, #f8daaf 100%);
+					border-radius: 8px 8px 0 0;
+					padding: 10px;
+					display: flex;
+					align-items: center;
+					position: relative;
+					.img1{
+						height: 18px;
+					}
+					.img2 {
+						margin-left: 5px;
+						height: 14px;
+					}
+					.num{
+						color: #935803;
+						font-size: 15px;
+						font-weight: bold;
+						margin-left: 1px;
+					}
+
+					.img3 {
+						position: absolute;
+						height: 38px;
+						right: 0;
+						top: 0;
+					}
+				}
+
+				.title {
+					margin: 20px 0 12px 0;
+				}
+
+				.line {
+					height: 1px;
+					margin-top: 10px;
+					background: linear-gradient(#374057 0%, #515b75 100%);
+				}
+
+				.zichan {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					.price {
+						font-size: 28px;
+						font-weight: bold;
+						position: relative;
+						font-family: DIN Medium, DIN Medium-Medium;
+
+						span {
+							position: absolute;
+							top: -8px;
+							font-weight: normal;
+							background: #CFA972;
+							font-size: 12px;
+							transform: scale(0.8);
+							padding: 2px 4px;
+							border-radius: 8px 8px 8px 0;
+						}
+					}
+
+					.zhuanyi {
+						display: flex;
+						.in, .out{
+							height: 40px;
+						}
+					}
+				}
+				.ingMoney{
+					color: #9AA6BF;
+				}
+
+				.shouyi {
+					margin-top: 15px;
+					margin-bottom: 5px;
+					display: flex;
+					justify-content: space-between;
+					color: #b9c6e2;
+					font-family: DIN Medium, DIN Medium-Medium;
+					font-size: 13px;
+
+					span {
+						font-size: 12px;
+						background: #202633;
+						padding: 5px 10px;
+						border-radius: 15px;
+						margin-right: 5px;
+					}
+				}
+			}
+		}
+
+		.cell-cont {
+			margin-top: 10px;
+			.van-cell{
+				padding: 10px;
+			}
+			.van-cell::after {
+				border: none;
+			}
+
+			.iconImg {
+				height: 15px;
+				margin-top: 4px;
+				margin-right: 6px;
+			}
+		}
+
+
+	}
+</style>

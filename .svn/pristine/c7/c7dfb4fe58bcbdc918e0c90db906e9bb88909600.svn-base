@@ -1,0 +1,401 @@
+<template>
+	<div class="ucenter" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="个人中心" fixed />
+		<div class="header" @click="$router.push('/myInfo')">
+			<div>
+				<img :src="imgPhote" />
+				<div class="change">
+					<p>修改</p>
+				</div>
+				<!-- <van-uploader :after-read="afterRead" class="change">
+					<p>修改</p>
+				</van-uploader> -->
+			</div>
+			<p class="name">{{userName}}</p>
+			<p class="tipId">ID:{{user_tg_id}}</p>
+		</div>
+		
+		<div class="mTop">
+			<div>
+				<img src="../../images/uceIcon1.png" />
+				<p>信用额度<span>{{ucenterNum.credit_line}}</span>元</p>
+			</div>
+			<div>
+				<img src="../../images/uceIcon2.png" />
+				<p>信用评分<span>{{ucenterNum.credit_score}}</span>分</p>
+			</div>
+		</div>
+		<div class="content">
+			<div class="module">
+				<div>
+					<p class="num">{{ucenterNum.cartNum}}</p>
+					<p class="title">购物车</p>
+				</div>
+				<div>
+					<p class="num">{{ucenterNum.quanNum}}</p>
+					<p class="title">优惠券</p>
+				</div>
+				<div>
+					<p class="num">{{ucenterNum.collNUm}}</p>
+					<p class="title">我的收藏</p>
+				</div>
+				<div>
+					<p class="num">{{ucenterNum.dontaiNum}}</p>
+					<p class="title">我的动态</p>
+				</div>
+			</div>
+			<van-cell title="业绩顾问" is-link @click="$router.push('/yeji')">
+				<template #icon>
+					<img class="img-icon" src="../../images/person6.png" />
+				</template>
+			</van-cell>
+			<van-cell title="登录令牌" is-link @click="$router.push('/loginPw')">
+				<template #icon>
+					<img class="img-icon" src="../../images/lingpaiIcon.png" />
+				</template>
+			</van-cell>
+			<van-cell title="密码设置" is-link @click="$router.push('/pasSet')">
+				<template #icon>
+					<img class="img-icon" src="../../images/pasIcon.png" />
+				</template>
+			</van-cell>
+			<van-cell title="系统设置" is-link @click="goItem()">
+				<template #icon>
+					<img class="img-icon" src="../../images/setIcon.png" />
+				</template>
+			</van-cell>
+			<van-cell title="意见反馈" is-link @click="$router.push('/feedback')">
+				<template #icon>
+					<img class="img-icon" src="../../images/inIcon.png" />
+				</template>
+			</van-cell>
+			<van-cell title="客服电话" is-link>
+				<template #default>
+					<a :href="'tel:400-8365-960'" class="phone">
+						400-8365-960
+					</a>
+				</template>
+				<template #icon>
+					<img class="img-icon" src="../../images/kefu.png" />
+				</template>
+			</van-cell>
+		</div>
+		<van-button type="info" block round class="logOut" @click="logOut">退出登录</van-button>
+
+		<bottom :idx="3"></bottom>
+	</div>
+</template>
+<script>
+	import bottom from "@/components/bottom";
+	export default {
+		name: "ucenter",
+		components: {
+			bottom,
+		},
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 50,
+				userName: '',
+				user_tg_id: '',
+				imgPhote: require("../../images/header.png"),
+				ucenterNum: {
+					credit_line: 0, // 信用评分
+					credit_score: 0, // 信用积分
+					cartNum: 0, // 购物车
+					quanNum: 0, // 优惠券
+					collNUm: 0, // 我的收藏
+					dontaiNum: 0, // 我的动态
+				}
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack
+			// 我的基本信息
+			this.$toast.loading({
+				message: '加载中...',
+				forbidClick: true,
+				duration: 0,
+			});
+			this.$api.userInfo().then(res => {
+				this.$toast.clear()
+				if (res.errno == 0) {
+					this.userName = res.data.name
+					this.user_tg_id = res.data.user_tg_id
+					this.ucenterNum.credit_line = res.data.credit_line
+					this.ucenterNum.credit_score = res.data.credit_score
+					if (res.data.photo) {
+						this.imgPhote = res.data.photo
+					} else {
+						this.imgPhote = require("../../images/header.png")
+					}
+				} else {
+					this.$toast(res.errmsg)
+				}
+
+			}).catch(err => {
+				this.$toast.clear()
+			})
+
+			this.$api.user_center_info().then(res => {
+				if (res.errno == 0) {
+					this.ucenterNum.cartNum = res.data.cart_count
+					this.ucenterNum.collNUm = res.data.col_count
+				} else {
+					this.$toast(res.errmsg)
+				}
+
+			}).catch(err => {
+
+			})
+		},
+		methods: {
+			// 主页面返回退出应用
+			leftBack(){
+				let that = this
+				var first = null
+				window.leftBack = function(){
+					if(!first){
+					first = new Date().getTime();
+					that.$toast("再按一次退出应用");
+					setTimeout(function() {
+						first = null;
+					}, 1500);
+					}else{
+					if(new Date().getTime() - first < 1500){
+						android.closeWindow();
+					}
+					}
+				}
+			},
+			// 退出登录
+			logOut() {
+				// 清除所有缓存
+				let cookiesObject = this.$Cookies.get()
+				for(let key  in cookiesObject){
+					if(key != 'loginPhone' && key != 'loginPas'){
+						this.$Cookies.remove(key);
+					}
+				}
+				this.$router.replace('/login')
+			},
+			// 修改头像
+			afterRead(file){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				let token = this.$Cookies.get('token');
+				formdata.append("file", file.file);
+				formdata.append("token", token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						let photoUrl = res.data.data.url
+						this.$api.update_user_photo({'photo': photoUrl}).then(res => {
+							if (res.errno == 0) {
+								this.imgPhote = photoUrl
+							} else {
+								this.$toast(res.errmsg)
+							}
+						}).catch(err => {
+						
+						})
+					} else {
+						this.$toast(res.errmsg);
+					}
+				});
+			},
+			goItem(){
+				this.$toast("暂未开放，敬请期待")
+			}
+
+		},
+
+
+	}
+</script>
+<style lang="less">
+	.ucenter {
+		padding-top: 46px;
+		background: url(../../images/bgHeader5.png) no-repeat;
+		background-size: 100% 227px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader5.png) no-repeat top center;
+			background-size: 100% 227px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.header {
+			margin: 10px calc(50% - 28px);
+			text-align: center;
+
+			div {
+				width: 56px;
+				height: 56px;
+				position: relative;
+
+				img {
+					width: 50px;
+					height: 50px;
+					border: 2px solid #FFFFFF;
+					border-radius: 50%;
+				}
+
+				.change {
+					color: #EEEEEE;
+					line-height: 14px;
+					position: absolute;
+					bottom: 3px;
+					width: 100%;
+					left: 0;
+					background: url(../../images/bg.png) no-repeat center bottom;
+					background-size: calc(100% - 8px) 18px;
+					p{
+						padding-top: 40px;
+					}
+				}
+			}
+
+			.name {
+				margin-top: 6px;
+				font-size: 16px;
+			}
+			.tipId{
+				margin-top: 4px;
+				color: #8DA6AA;
+			}
+		}
+
+		.mTop {
+			display: flex;
+			justify-content: space-between;
+			height: 50px;
+			margin: 0 20px;
+
+			div {
+				width: 100%;
+				position: relative;
+				&:last-child{
+					width: calc(100% - 50px);
+				}
+
+				img {
+					position: absolute;
+					left: 0;
+					top: 0;
+					z-index: 2;
+					width: 38px;
+				}
+
+				p {
+					position: absolute;
+					left: 10px;
+					top: 10px;
+					z-index: 1;
+					background: #FFFFFF;
+					line-height: 20px;
+					padding: 0 10px 0 25px;
+					border-radius: 15px;
+					color: #9AA8B6;
+					background: #FFFFFF;
+
+					span {
+						color: #444444;
+					}
+				}
+			}
+		}
+
+		.content {
+			padding-top: 15px;
+			background: #FFFFFF;
+			border-radius: 10px 10px 0 0;
+
+			.module {
+				display: flex;
+				justify-content: space-between;
+				margin: 0 5% 15px 5%;
+
+				div {
+					margin-top: 10px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					flex-direction: column;
+
+					.num {
+						font-size: 20px;
+						font-weight: bold;
+						position: relative;
+						font-family: DIN Medium, DIN Medium-Medium;
+
+						&::before {
+							position: absolute;
+							top: -5px;
+							left: calc(100% + 2px);
+							content: '';
+							min-width: 14px;
+							height: 10px;
+						}
+					}
+
+					.title {
+						margin-top: 12px;
+					}
+
+					&:nth-child(1) .num::before {
+						background: url(../../images/jian.png) no-repeat;
+						background-size: auto 10px;
+					}
+
+					&:nth-child(2) .num::before {
+						background: url(../../images/zhang.png) no-repeat;
+						background-size: auto 10px;
+					}
+
+					&:nth-child(3) .num::before,
+					&:nth-child(4) .num::before {
+						background: url(../../images/tiao.png) no-repeat;
+						background-size: auto 10px;
+					}
+				}
+			}
+
+			.van-cell {
+				&::after {
+					border: none;
+				}
+				
+				.img-icon {
+					height: 14px;
+					margin: 4px 5px 0 0;
+				}
+
+				.phone{
+					color: #9AA8B6;
+				}
+			}
+		}
+
+		.logOut {
+			margin: 20px 20px 0 20px;
+			width: calc(100% - 40px);
+		}
+
+
+
+	}
+</style>

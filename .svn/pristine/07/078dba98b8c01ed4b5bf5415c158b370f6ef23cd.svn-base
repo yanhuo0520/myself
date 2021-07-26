@@ -1,0 +1,95 @@
+<template>
+  <div class="bottom">
+    <van-tabbar
+        active-color="#0a79ea"
+        inactive-color="#333"
+        router
+        fixed
+    >
+        <van-tabbar-item v-for="(item,index) of items" @click="toRouter(item.push)" :key="index">
+            <span :style="{color: index == idx ? '#30B39C' : '#99A1AE'}">{{item.name}}</span>
+            <img
+                slot="icon"
+                slot-scope="props"
+                :src="index === idx ?item.iconSelect: item.icon"
+            >
+        </van-tabbar-item>
+    </van-tabbar>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "bottom",
+  props: ["idx"],
+  data() {
+    return {
+      items: [
+        {
+          name: "",
+          push: "/",
+          icon: require("../images/tab/index.png"),
+          iconSelect: require("../images/tab/index-h.png")
+        },
+        {
+          name: "合作经济",
+          push: "/",
+          icon: require("../images/tab/hzjj.png"),
+          iconSelect: require("../images/tab/hzjj-h.png")
+        },
+        {
+          name: "互助圈子",
+          push: "/",
+          icon: require("../images/tab/hzjj.png"),
+          iconSelect: require("../images/tab/hzjj-h.png")
+        },
+        {
+          name: "个人中心",
+          push: "/",
+          icon: require("../images/tab/hzjj.png"),
+          iconSelect: require("../images/tab/hzjj-h.png")
+        }
+      ]
+    };
+  },
+  methods: {
+    toRouter(path) {
+      this.$router.push(path);
+    }
+  }
+};
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style lang="less">
+.bottom {
+  height: 50px;
+  .van-tabbar {
+    // box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    height: 50px;
+    background-size: 100% 100%;
+    .van-tabbar-item {
+      justify-content: flex-end;
+      padding-bottom: 5px;
+    }
+    .van-tabbar-item:first-of-type {
+      padding-bottom: 0;
+      .van-tabbar-item__icon{
+          margin-bottom: 0;
+      }
+      img {
+        height: 70px;
+      }
+    }
+    .van-tabbar-item--active {
+      background: transparent;
+    }
+  }
+  .van-hairline--top-bottom::after,
+  .van-hairline-unset--top-bottom::after {
+    border-width: 0;
+  }
+}
+</style>
+

@@ -1,0 +1,317 @@
+<template>
+  <div class="userCepings">
+    <van-nav-bar title="人行征信流程" left-arrow fixed @click-left="leftBack" />
+    <van-steps :active="active" finish-icon="checked" inactive-icon="warning-o" active-icon="info-o"
+      active-color="#38f">
+      <van-step>基本信息</van-step>
+      <van-step>工作信息</van-step>
+      <van-step>资产信息</van-step>
+      <van-step>负债比</van-step>
+    </van-steps>
+    <div v-if="active == 0">
+      <!-- 年龄 -->
+      <props :propContent="ageList" :xjdi.sync="age" :indexs.sync="ageindex" :label="agelabel" />
+      <!-- 婚姻状况 -->
+      <props :propContent="marriageList" :xjdi.sync="marriage" :indexs.sync="marrindex" :label="marrlabel" />
+      <!-- 户籍 -->
+      <props :propContent="hujiList" :xjdi.sync="huji" :indexs.sync="hujiindex" :label="hujilabel" />
+      <!-- 学历 -->
+      <props :propContent="xueliList" :xjdi.sync="xueli" :indexs.sync="xueliindex" :label="xuelilabel" />
+      <!-- 现居住地 -->
+      <props :propContent="xjdiList" :xjdi.sync="xjdi" :indexs.sync="xjdiindex" :label="xjdilabel" />
+      <div style="width: 30%; height: 40px;margin: 0 auto;margin-top: 50px;">
+        <van-button style="width: 100%; height: 40px; border-radius: 5px;" type="info" @click="nextStep">下一步
+        </van-button>
+      </div>
+    </div>
+    <div v-else-if="active == 1">
+      <!-- 工作单位 -->
+      <props :propContent="jobList" :xjdi.sync="job" :indexs.sync="jobindex" :label="joblabel" />
+      <!-- 职级 -->
+      <props :propContent="zhijiList" :xjdi.sync="zhiji" :indexs.sync="zhijiindex" :label="zhijilabel" />
+      <!-- 职称 -->
+      <props :propContent="zhichengList" :xjdi.sync="zhicheng" :indexs.sync="zhichengindex" :label="zhichenglabel" />
+      <!-- 现单位工作时间 -->
+      <props :propContent="workingList" :xjdi.sync="working" :indexs.sync="workingindex" :label="workinglabel" />
+      <div style="width: 30%; height: 40px;margin: 0 auto;margin-top: 50px;">
+        <van-button style="width: 100%; height: 40px; border-radius: 5px;" type="info" @click="nextTwo">下一步</van-button>
+      </div>
+    </div>
+    <div v-else-if="active == 2">
+      <!-- 房产信息 -->
+      <props :propContent="houseList" :xjdi.sync="house" :indexs.sync="houseindex" :label="houselabel" />
+      <!-- 存款 -->
+      <props :propContent="depoistList" :xjdi.sync="depoist" :indexs.sync="depoistindex" :label="depoistlabel" />
+      <!-- 保险信息 -->
+      <props :propContent="insuranceList" :xjdi.sync="insurance" :indexs.sync="insuranceindex" :label="insurancelabel" />
+      <div style="width: 30%; height: 40px;margin: 0 auto;margin-top: 50px;">
+        <van-button style="width: 100%; height: 40px; border-radius: 5px;" type="info" @click="nextThree">下一步
+        </van-button>
+      </div>
+    </div>
+    <div v-else-if="active == 3">
+      <!-- 负债比 -->
+      <props :propContent="liabilitiesList" :xjdi.sync="liabilities" :indexs.sync="liabilitiesindex"
+        :label="liabilitieslabel"></props>
+      <!-- 家庭年收入 -->
+      <props :propContent="incomeList" :xjdi.sync="income" :indexs.sync="incomeindex" :label="incomelabel"></props>
+      <div style="width: 30%; height: 40px;margin: 0 auto;margin-top: 50px;">
+        <van-button style="width: 100%; height: 40px; border-radius: 5px;" type="info" @click="nextFour">提交
+        </van-button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import props from "@/pages/credit/props";
+  export default {
+    name: "userCepings",
+    components: {
+      props
+    },
+    data() {
+      return {
+        active: 0,
+        // 第一部分 基础信息
+        ageList: ['18-24', '25-29', '30-44', '45-54', '55-59', '60以上'],
+        agelabel: '年龄 (周岁)',
+        age: '',
+        ageindex: 0,
+
+        marrlabel: '婚姻状况',
+        marriage: '',
+        marrindex: 0,
+        marriageList: ['未婚', '已婚', '已婚有子女', '已婚无子女', '离异有子女', '离异无子女'],
+        xueliList: ['研究生及以上', '本科', '大专', '高中及中专', '其他'],
+        xuelilabel: '学历',
+        xueli: '',
+        xueliindex: 0,
+        hujiList: ['本地户籍', '外地户籍'],
+        hujilabel: '户籍',
+        huji: '',
+        hujiindex: 0,
+        xjdiList: ['1年以内', '1-3年间', '3-5年间', '5年以上'],
+        xjdilabel: '现居住地址（年）',
+        xjdi: '',
+        xjdiindex: 0,
+        // 第二部分 工作信息
+        jobList: ['公务员、事业单位、教师、医师、银行、银证从业人员', '国企大型上市企业员工', '公检法系统人员', '一般上市企业、股份制企业、私企', '个体户及个体户从业人员', '自由职业者（无业人员）'],
+        joblabel: '工作单位',
+        job: '',
+        jobindex: 0,
+        zhijiList: ['高级领导', '中级领导', '普通员工'],
+        zhijilabel: '职级',
+        zhiji: '',
+        zhijiindex: 0,
+        zhichengList: ['高级职称', '中级职称', '初级职称'],
+        zhichenglabel: '职称',
+        zhicheng: '',
+        zhichengindex: 0,
+        workingList: ['6个月以内', '6个月-1年间', '1-3年间', '3-5年间', '5年以上', '无单位'],
+        workinglabel: '现单位工作时间',
+        working: '',
+        workingindex: 0,
+        // 第二部分 资产信息
+        houseList: ['自有全款房', '自有按揭房', '自建房', '租房'],
+        houselabel: '房产信息',
+        house: '',
+        houseindex: 0,
+        depoistList: ['50万以下', '50-100万间', '100-200 万间', '200万以上'],
+        depoistlabel: '固有资产、不动产、 动产、存款（万元）',
+        depoist: '',
+        depoistindex: 0,
+        insuranceList: ['购买人寿、医疗、健康、分红、理财保险1年间', '购买人寿、医疗、健康、分红、理财保险1-2年间', '购买人寿、医疗、健康、分红、理财保险2年以上', '参加五险', '参加五险一金'],
+        insurancelabel: '保险信息',
+        insurance: '',
+        insuranceindex: 0,
+        // 第三部分 负债比
+        liabilitiesList: ['10%以内', '10%-20%间', '20%-40%间', '40%-60%间', '60%-80%间', '80%以上'],
+        liabilitieslabel: '负债比',
+        liabilities: '',
+        liabilitiesindex: 0,
+        incomeList: ['5万元以下', '6-9万间', '10-15万间', '16-20万间', '20-30万间', '30万元以上'],
+        incomelabel: '家庭年收入',
+        income: '',
+        incomeindex: 0,
+        peopleId: '',
+      };
+    },
+    mounted() {},
+    methods: {
+      leftBack() {
+        this.$router.go(-1);
+      },
+      // 第一部分
+      nextStep() {
+        let that = this;
+        if (that.age == "") {
+          that.$toast('请选择年龄')
+          return
+        } else if (that.marriage == "") {
+          that.$toast('请选择婚姻状况')
+          return
+        } else if (that.huji == "") {
+          that.$toast('请选择户籍')
+          return
+        } else if (that.xueli == "") {
+          that.$toast('请选择学历')
+          return
+        } else if (that.xjdi == "") {
+          that.$toast('请选择现居住地址')
+          return
+        } else {
+          that.$api.bankCreditAddOne({
+            age: that.ageindex,
+            marriage_status: that.marrindex,
+            cunsus: that.hujiindex,
+            edu: that.xueliindex,
+            current: that.xjdiindex,
+          }).then(res => {
+            if (res.errno == 0) {
+              that.peopleId = res.data;
+              that.active = 1;
+            } else {
+              that.$toast(res.errmsg)
+            }
+          }).catch(err => {})
+        }
+      },
+      // 第二部分
+      nextTwo() {
+        let that = this;
+        if (that.job == "") {
+          that.$toast('请选择工作单位')
+          return
+        } else if (that.zhiji == "") {
+          that.$toast('请选择职级')
+          return
+        } else if (that.zhicheng == "") {
+          that.$toast('请选择职称')
+          return
+        } else if (that.working == "") {
+          that.$toast('请选择现单位工作时间')
+          return
+        } else {
+          that.$api.bankCreditAddTwo({
+            work: that.jobindex,
+            rank: that.zhijiindex,
+            profes: that.zhichengindex,
+            work_hous: that.workingindex,
+            bank_credit_id: that.peopleId,
+          }).then(res => {
+            if (res.errno == 0) {
+              that.active = 2;
+            } else {
+              that.$toast(res.errmsg)
+            }
+          }).catch(err => {
+
+          })
+        }
+      },
+      // 第三部分
+      nextThree() {
+        let that = this;
+        if (that.house == "") {
+          that.$toast('请选择房产信息')
+          return
+        } else if (that.depoist == "") {
+          that.$toast('请选择资产信息')
+          return
+        } else if (that.insurance == "") {
+          that.$toast('请选择保险信息')
+          return
+        } else {
+          that.$api.bankCreditAddThree({
+            house: that.houseindex,
+            asset: that.depoistindex,
+            insure: that.insuranceindex,
+            bank_credit_id: that.peopleId,
+          }).then(res => {
+            if (res.errno == 0) {
+              that.active = 3;
+            } else {
+              that.$toast(res.errmsg)
+            }
+          }).catch(err => {})
+        }
+      },
+      // 第四部分
+      nextFour() {
+        let that = this;
+        if (that.liabilities == "") {
+          that.$toast('请选择负债比')
+          return
+        } else if (that.income == "") {
+          that.$toast('请选择家庭年收入')
+          return
+        } else {
+          that.$api.bankCreditAddFour({
+            debt: that.liabilitiesindex,
+            house_income: that.incomeindex,
+            bank_credit_id: that.peopleId,
+          }).then(res => {
+            if (res.errno == 0) {
+              that.$toast(res.errmsg)
+              that.getmycredit();
+            } else {
+              that.$toast(res.errmsg)
+            }
+          }).catch(err => {
+
+          })
+        }
+      },
+      getmycredit() {
+        let that = this;
+        that.$api.mycredit({}).then(res => {
+          if (res.errno == 0) {
+            if (res.data > 0) {
+              localStorage.setItem('isUnreviewed', '已出分数');
+              localStorage.setItem('mycredit', res.data);
+              that.$router.push('/creditScore')
+            } else {
+              localStorage.setItem('isUnreviewed', '未评价');
+            }
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {})
+      }
+    },
+  }
+</script>
+
+<style lang="less">
+  .userCepings {
+    padding-top: 50px;
+
+    .van-steps {
+      width: 90%;
+      margin: auto;
+
+      .van-step--horizontal .van-step__title {
+        text-align: center;
+        margin: 10px 0;
+        font-size: 15px;
+        ;
+      }
+
+      .van-step--horizontal .van-step__icon {
+        font-size: 18px;
+      }
+
+      .van-step--horizontal .van-step__circle-container,
+      .van-step--horizontal .van-step__line {
+        top: 50px;
+      }
+    }
+
+
+
+    .van-picker-column__item {
+      font-size: 15px;
+    }
+  }
+</style>

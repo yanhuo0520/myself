@@ -1,0 +1,481 @@
+<template>
+	<div class="huzhuIn" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="互助金存入" left-arrow fixed @click-left="leftBack" />
+		<div class="top">
+			<img src="../../images/light3.png" alt="" class="bgTop" />
+			<img src="../../images/logoBg.png" alt="" class="bgLogo" />
+			<img src="../../images/xiexianBg.png" alt="" class="bgBottom" />
+			<div class="title">
+				<p>互助金金额</p>
+				<div class="right" @click="$router.push('/huzhuList')">
+					<p>互助金明细</p>
+					<img src="../../images/rightGo.png" alt="" />
+				</div>
+			</div>
+			<p class="money">{{totalMoney}}</p>
+			<div class="line"></div>
+			<p class="cardNum">卡号:{{infoDetail.card}}</p>
+		</div>
+
+		<van-cell-group>
+			<van-field v-model="selratName" label="存入期限" readonly input-align="right" clearable placeholder="请选择存入期限"
+				@click="showQixian = true">
+				<template #left-icon>
+					<img src="../../images/time.png" class="iconIMg" />
+				</template>
+				<template #right-icon>
+					<img src="../../images/right1.png" class="iconIMgRight" />
+				</template>
+			</van-field>
+			<van-field v-model="selratStr" label="互助金利率" readonly input-align="right" clearable placeholder="请选择存入期限">
+				<template #left-icon>
+					<img src="../../images/yearlilv.png" class="iconIMg" />
+				</template>
+			</van-field>
+			<van-field v-model="cardNum" label="付款方式" readonly input-align="right" clearable placeholder="请选择付款方式"
+				@click="showPay = true">
+				<template #left-icon>
+					<img src="../../images/qian14.png" class="iconIMg" />
+				</template>
+				<template #right-icon>
+					<img src="../../images/right1.png" class="iconIMgRight" />
+				</template>
+			</van-field>
+			<van-field v-model="money" label="存入金额" input-align="right" clearable placeholder="请输入存入金额">
+				<template #left-icon>
+					<img src="../../images/qian15.png" class="iconIMg" />
+				</template>
+			</van-field>
+		</van-cell-group>
+		<p class="tip">预计收益到账时间<span>10-20(周二)</span></p>
+
+
+		<p class="btnRound" @click="goPay()">确认存入</p>
+
+		<!-- 存入期限 -->
+		<van-action-sheet v-model="showQixian" title="选择存入期限" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadio1">
+				<template>
+					<van-cell clickable v-for="(item, index) in qixianList" :key="index"
+						@click="selRadio1 = item.id, rate_str = item.rate_str, rate_name = item.rate_name"
+						:class="selRadio1 == item.id ? 'active' : ''">
+						<template #title>
+							<p class="custom-title">{{item.rate_name}}<span class="min-title">
+									(利率:{{item.rate_str}})</span></p>
+						</template>
+						<template #right-icon>
+							<van-radio :name="item.id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</template>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(1)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择付款方式 -->
+		<van-action-sheet v-model="showPay" title="选择付款方式" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadio2">
+				<template>
+					<van-cell clickable v-for="(item, index) in radioPayItem" :key="index"
+						@click="selRadio2 = item.pay_type, selImg = item.icon, selTitle = item.bank_num_str"
+						:class="selRadio2 == item.pay_type ? 'active' : ''">
+						<template #icon>
+							<img :src="item.icon" alt="" class="logoIcon" />
+						</template>
+						<template #title>
+							<span class="custom-title">{{item.bank_num_str}}</span>
+						</template>
+						<template #right-icon>
+							<van-radio :name="item.pay_type">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</template>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(2)">确定</van-button>
+		</van-action-sheet>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "huzhuIn",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				totalMoney: '',
+				infoDetail: '',
+
+				showQixian: false,
+				qixianId: '',
+				selratName: '',
+				selratStr: '请先选择存入期限',
+				selRadio1: '',
+				rate_str: '',
+				rate_name: '',
+				qixianList: [],
+
+				showPay: false,
+				cardNum: '',
+				pay_type: '',
+				selRadio2: '',
+				selTitle: '',
+				radioPayItem: [],
+
+				money: '',
+			};
+		},
+		mounted() {
+			this.totalMoney = this.$route.query.money
+			this.passbookIndex()
+			this.getPayType()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			passbookIndex() {
+				// 用户账户存入显示支付方式
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.passbookIndex().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.infoDetail = res.data
+						this.selRadio1 = res.rate[0].id
+						this.rate_name = res.rate[0].rate_name
+						this.rate_str = res.rate[0].rate_str
+
+						this.qixianId = res.rate[0].id
+						this.selratName = res.rate[0].rate_name
+						this.selratStr = res.rate[0].rate_str
+						this.qixianList = res.rate
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+
+			getPayType() {
+				// 用户账户存入显示支付方式
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.selectPayType().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						res.data.forEach(ele => {
+							if (ele.pay_type == 3 || ele.pay_type == 5) {
+								ele.icon = require("../../images/wei.png")
+							} else if (ele.pay_type == 4 || ele.pay_type == 6) {
+								ele.icon = require("../../images/zhi.png")
+							} else if (ele.pay_type == 7) {
+								ele.icon = require("../../images/yun.png")
+							}
+						})
+						this.pay_type = res.data[0].pay_type
+						this.cardNum = res.data[0].bank_num_str
+
+						this.selRadio2 = res.data[0].pay_type
+						this.selTitle = res.data[0].bank_num_str
+						this.radioPayItem = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			sureSel(id) {
+				if (id == 1) {
+					this.selratName = this.rate_name
+					this.selratStr = this.rate_str
+					this.qixianId = this.selRadio1
+					this.showQixian = false
+				} else {
+					this.pay_type = this.selRadio2
+					this.cardNum = this.selTitle
+					this.showPay = false
+				}
+
+			},
+
+			goPay() {
+				if (this.selratStr == '' || this.selratStr == null || this.selratStr == undefined || this.selratStr ==
+					'请先选择存入期限') {
+					this.$toast("请选择存入期限")
+					return
+				}
+				if (this.money <= 0) {
+					this.$toast("请输入存入金额")
+					return
+				}
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				let data = {}
+				data.pay_type = this.pay_type
+				data.id = this.qixianId
+				data.pay_money = this.money
+				this.$api.passbookDepositByAll(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						// 支付方式：3微信4支付宝5微信（银联渠道）6支付宝（银联渠道）7云闪付
+						if (this.pay_type == 5) { // 微信支付(银联渠道)
+							if (typeof android != "undefined") {
+								android.unionWxPay(res.data);
+							}
+						} else if (this.pay_type == 6) { // 支付宝支付(银联渠道)
+							if (typeof android != "undefined") {
+								android.unionAliPay(res.data);
+							}
+						} else if (this.pay_type == 7) { // 云闪付
+							if (typeof android != "undefined") {
+								android.unionPay(res.data);
+							}
+						}
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+
+		}
+	}
+</script>
+<style lang="less">
+	.huzhuIn {
+		padding-top: 46px;
+		overflow: auto;
+		background: #ffffff url(../../images/bgHeader8.png) no-repeat;
+		background-size: 100% 170px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader8.png) no-repeat top center;
+			background-size: 100% 170px;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.top {
+			color: #FFFFFF;
+			background: linear-gradient(#3799fc 0%, #3d6be2 100%);
+			height: 85px;
+			margin: 0 10px;
+			padding: 20px 15px 10px 15px;
+			border-radius: 15px 15px 0 0;
+			position: relative;
+
+			.bgTop {
+				position: absolute;
+				top: 0;
+				right: 0;
+				width: 200px;
+				z-index: 0;
+			}
+
+			.bgLogo {
+				position: absolute;
+				left: -40px;
+				bottom: -20px;
+				width: 110px;
+				z-index: 0;
+			}
+
+			.bgBottom {
+				position: absolute;
+				left: 0;
+				bottom: 0;
+				width: 300px;
+				z-index: 0;
+			}
+
+			.title {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+
+				.right {
+					position: absolute;
+					top: 20px;
+					right: 15px;
+					z-index: 10;
+					display: flex;
+					align-items: center;
+
+					img {
+						margin-left: 5px;
+						width: 10px;
+						height: 10px;
+					}
+				}
+			}
+
+			.money {
+				font-size: 25px;
+				font-family: DIN, DIN-Medium;
+				margin-top: 10px;
+			}
+
+			.line {
+				margin-top: 15px;
+				height: 1px;
+				background: linear-gradient(#77a5fc 0%, #527df8 100%);
+			}
+
+			.cardNum {
+				margin-top: 10px;
+			}
+
+		}
+
+		.van-cell-group {
+			padding-top: 10px;
+
+			.iconIMg {
+				width: 15px;
+				height: 15px;
+				margin: 5px 0 0 0;
+			}
+
+			.iconIMgRight {
+				width: 9px;
+				height: 15px;
+				line-height: 0;
+				margin-top: 6px;
+			}
+
+			.van-field__label {
+				color: #323233;
+			}
+		}
+
+		.tip {
+			margin: 10px 10px 0 10px;
+			color: #9AA8B6;
+			font-size: 15px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.noBank {
+			margin: 0 10px;
+			height: 40px;
+			padding-left: 10px;
+			border-radius: 10px;
+			background: #FFFFFF;
+			display: flex;
+			align-items: center;
+			font-size: 14px;
+
+			img {
+				width: 16px;
+				margin-right: 5px;
+			}
+		}
+
+		// 选择框
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.van-tag {
+				border: 1px solid #3b6af1;
+				background: #e2f4ff;
+				color: #3B6AF1;
+			}
+
+			.min-title {
+				font-size: 12px;
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.logoIcon {
+				width: 20px;
+				height: 20px;
+				margin: 3px 5px 0 0;
+			}
+
+			.img-icon {
+				width: 20px;
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+		}
+
+
+		.btnRound {
+			margin: 40px 15px 10px 15px;
+			text-align: center;
+			line-height: 36px;
+			color: #FFFFFF;
+			border-radius: 30px;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+	}
+</style>

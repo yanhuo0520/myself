@@ -1,0 +1,82 @@
+
+export default {
+	/**
+    * 日期格式转换
+    * @param fmt 要处理成的日期格式 例: 'yyyy-MM-dd hh:mm:ss'
+    * fmt参数传递 hh-12小时制 HH-24小时
+    * @param date 要处理的日期，需Date类型
+    */
+    dateFormat(fmt, date) {
+        date = date ? date : new Date();
+        let o = {
+            "M+": date.getMonth() + 1, //月份
+            "d+": date.getDate(), //日
+            "h+": date.getHours() % 12 === 0 ? 12 : date.getHours() % 12, //小时
+            "H+": date.getHours(), //小时
+            "m+": date.getMinutes(), //分
+            "s+": date.getSeconds(), //秒
+            "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+            "S": date.getMilliseconds() //毫秒
+        };
+        let week = {
+            "0": "/u65e5",
+            "1": "/u4e00",
+            "2": "/u4e8c",
+            "3": "/u4e09",
+            "4": "/u56db",
+            "5": "/u4e94",
+            "6": "/u516d"
+        };
+        if (/(y+)/.test(fmt)) {
+            fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+        }
+        if (/(E+)/.test(fmt)) {
+            fmt = fmt.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + week[date.getDay() + ""]);
+        }
+        for (let k in o) {
+            if (new RegExp("(" + k + ")").test(fmt)) {
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            }
+        }
+        return fmt;
+    },
+    /**
+    * 发圈时间处理
+    * 24小时内显示几小时前
+    * 7天内显示几天前
+    * 传递时间与当前时间不属于同年 超过7天显示年月日 否则显示月日
+    * @param time 传递的发圈日期时间戳 例: 1624414559552
+    */
+    getTimeResult (time){
+        let curTime = new Date().getTime()/1000 // 当前时间戳
+        let curYear = new Date(curTime).getFullYear() // 当前时间年份
+        let addYear = new Date(time).getFullYear() // 发圈时间年份
+        let differenceTime = curTime - time // 时间差 = 当前时间戳-传入的时间戳
+        let day = Math.floor(differenceTime/3600/24) // 把时间差转换成天数
+        if (day >= 1 && day < 7) { //如果天数大于等于1小于7
+            return day+ '天前'
+        }
+        if(day < 1) {
+            let hour = Math.floor(differenceTime/3600)
+            if(hour < 1){
+                let minute = Math.floor(differenceTime/60)
+                if (minute < 1) {
+                    return '刚刚'
+                } else {
+                    return minute+'分钟前'
+                }
+            }else{
+                return hour+'小时前'
+            }
+        }
+        if(day >= 7) {
+            if (curYear == addYear) {
+                let month = this.dateFormat('MM-dd', new Date(time));
+                return month;
+            } else {
+                let month = this.dateFormat('yyyy-MM-dd', new Date(time));
+                return month;
+            }
+        }
+    }
+}

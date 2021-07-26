@@ -1,0 +1,106 @@
+<template>
+	<div class="message">
+		<van-nav-bar title="消息" left-arrow fixed @click-left="leftBack" />
+		<van-cell-group class="msgCont">
+			 <van-cell title="账户通知" value="昨天"  label="积分过期提醒">
+				 <template #icon>
+					 <div class="leftIcon">
+						 <img src="../../images/search.png" alt="" class="iconImg" />
+						 <van-tag>1</van-tag>
+					 </div>
+				</template>
+			 </van-cell>
+			 <van-cell title="社区互动" value=""  label="暂无消息">
+			 		<template #icon>
+			 			 <div class="leftIcon">
+			 				 <img src="../../images/search.png" alt="" class="iconImg" />
+			 			 </div>
+			 		</template>
+			 </van-cell>
+			 <van-cell title="系统消息" value=""  label="暂无消息">
+			 		<template #icon>
+			 			 <div class="leftIcon">
+			 				 <img src="../../images/search.png" alt="" class="iconImg" />
+			 			 </div>
+			 		</template>
+			 </van-cell>
+		</van-cell-group>
+	</div>
+</template>
+<script>
+	export default {
+		name: "message",
+		data() {
+			return {
+				
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+
+		}
+	}
+</script>
+<style lang="less">
+	.message {
+		padding-top: 46px;
+		background: #F0F6FC;
+		min-height: calc(100% - 46px);
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+		
+		.msgCont{
+			.leftIcon{
+				position: relative;
+				width: 56px;
+				.iconImg{
+					width: 40px;
+					height: 40px;
+					border-radius: 50%;
+				}
+				.van-tag{
+					position: absolute;
+					left: 28px;
+					top: -4px;
+					text-align: center;
+					min-width: 8px;
+					height: 16px;
+					color: #FFFFFF;
+					background: red;
+					border: 2px solid #FFFFFF;
+					border-radius: 50%;
+				}
+			}
+			.van-cell__title{
+				font-size: 15px;
+				font-weight: bold;
+			}
+			.van-cell__label{
+				margin-top: 0;
+				font-weight: normal;
+			}
+		}
+
+
+
+	}
+</style>

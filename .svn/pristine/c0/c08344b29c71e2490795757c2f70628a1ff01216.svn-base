@@ -1,0 +1,312 @@
+<template>
+	<div class="untimeHuan" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="按期还款" left-arrow fixed @click-left="leftBack" />
+		<div class="header">
+			<template v-if="baseDetail.if_should_repaid == 1">
+				<p class="title">本期应还总额</p>
+				<p class="num"><span>¥</span>{{baseDetail.all_repaid}}</p>
+			</template>
+			<template v-else-if="baseDetail.if_should_repaid == 2">
+				<p class="title">还款未到期</p>
+				<p class="num"><span>¥</span>{{baseDetail.all_repaid}}</p>
+				<p class="tip">请您于{{baseDetail.should_back_date}}前两日或当天还款</p>
+			</template>
+		</div>
+		<van-radio-group class="huanCont">
+			<van-cell :title="baseDetail.rate_explain" :value="baseDetail.loan_rate">
+				<template #icon>
+					<img src="../../images/yearlilv.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="利息" :value="baseDetail.back_interest">
+				<template #icon>
+					<img src="../../images/jielixi.png" alt="" />
+				</template>
+			</van-cell>
+			<van-cell title="利息天数" :value="baseDetail.overdue_number">
+				<template #icon>
+					<img src="../../images/lixiDay.png" alt="" />
+				</template>
+			</van-cell>
+			<template>
+				<van-cell title="逾期滞纳金" :value="baseDetail.overdue_rate">
+					<template #icon>
+						<img src="../../images/qian2.png" alt="" />
+					</template>
+				</van-cell>
+				<van-cell title="逾期天数" :value="baseDetail.overdue_number">
+					<template #icon>
+						<img src="../../images/date.png" alt="" />
+					</template>
+				</van-cell>
+				<van-cell title="未还本金" :value="baseDetail.back_principal">
+					<template #icon>
+						<img src="../../images/qian3.png" alt="" />
+					</template>
+				</van-cell>
+			</template>
+		</van-radio-group>
+
+		<template v-if="baseDetail.if_should_repaid == 1">
+			<van-radio-group v-model="radioPayMeth" class="selGroup">
+				<van-cell :title="item.bank_num_str" clickable v-for="(item, index) in radioPayItem" :key="index"
+					@click="radioPayMeth = item.pay_type" :class="radioPayMeth == item.pay_type ? 'active' : ''">
+					<template #icon>
+						<img :src="item.icon" alt="" class="iconImg" />
+					</template>
+					<template #right-icon>
+						<van-radio :name="item.pay_type">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			
+			<p class="btnRound">立即还款</p>
+		</template>
+		
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "untimeHuan",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				backCode: '',
+				baseDetail: '',
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				radioPayMeth: '',
+				radioPayItem: [],
+			};
+		},
+		mounted() {
+			this.backCode = this.$route.query.backCode
+			this.$toast.loading({
+				message: '加载中...',
+				forbidClick: true,
+				duration: 0,
+			});
+			this.getDetail()
+			this.getPayType()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getDetail() { // 我要还款--还款计划未还款的还款详情
+				this.$api.myPrepaidLoanBackDetail({
+					"back_code": this.backCode
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.baseDetail = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			toggle(index) {
+				this.$refs.checkboxes[index].toggle();
+			},
+			getPayType() { // 我要还款--还款时显示支付方式
+				this.$api.loanBackSelectPayType().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						res.data.forEach(ele => {
+							if (ele.pay_type == 1) {
+								ele.icon = require("../../images/card1.png")
+							} else if (ele.pay_type == 3 || ele.pay_type == 5) {
+								ele.icon = require("../../images/wei.png")
+							} else if (ele.pay_type == 4 || ele.pay_type == 6) {
+								ele.icon = require("../../images/zhi.png")
+							} else if (ele.pay_type == 7) {
+								ele.icon = require("../../images/yun.png")
+							}
+						})
+						this.radioPayMeth = res.data[0].pay_type
+						this.radioPayItem = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+		},
+	}
+</script>
+<style lang="less">
+	.untimeHuan {
+		padding-top: 46px;
+		background: #f0f6fc url(../../images/bgHeader6.png) no-repeat;
+		background-size: 100% 170px;
+		overflow: auto;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader6.png) no-repeat top center;
+			background-size: 100% 170px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.header {
+			margin: 0 10px;
+			padding: 25px 0;
+			text-align: center;
+
+			.num {
+				font-size: 30px;
+				margin-top: 10px;
+				font-family: DIN, DIN-Medium;
+
+				span {
+					font-size: 14px;
+					font-weight: bold;
+					padding-right: 5px;
+				}
+			}
+
+			.tip {
+				margin-top: 10px;
+				color: #9AA8B6;
+				background: #ffffff;
+				border-radius: 30px;
+				display: inline-block;
+				line-height: 20px;
+				padding: 0 15px;
+				position: relative;
+
+				&::before {
+					content: '';
+					position: absolute;
+					left: 8px;
+					top: 9px;
+					width: 2px;
+					height: 2px;
+					border-radius: 50%;
+					background: #9AA8B6;
+				}
+
+				&::after {
+					content: '';
+					position: absolute;
+					right: 8px;
+					top: 9px;
+					width: 2px;
+					height: 2px;
+					border-radius: 50%;
+					background: #9AA8B6;
+				}
+			}
+		}
+
+		.huanCont {
+			margin: 0 10px;
+			.van-cell {
+				&:first-child {
+					border-radius: 10px 10px 0 0;
+				}
+				&:nth-last-of-type(1) {
+						border-radius: 0 0 10px 10px;
+				}
+
+
+				img {
+					width: 15px;
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+
+				.van-cell__title {
+					flex: 0.5;
+					color: #444444;
+					font-size: 15px;
+				}
+
+				.van-cell__value {
+					font-size: 15px;
+					color: #9AA8B6;
+				}
+			}
+
+			.tip {
+				margin-top: 20px;
+				display: flex;
+				align-items: center;
+				background: #FDF7ED;
+				color: #AA9C8B;
+				line-height: 18px;
+
+				img {
+					width: 58px;
+					margin-right: 5px;
+				}
+
+			}
+
+		}
+
+		.selGroup {
+			margin: 10px;
+
+			.van-cell {
+				&:first-child {
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+				}
+
+				&:nth-last-of-type(1) {
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
+				}
+
+				.img-icon {
+					width: 15px;
+					height: 15px;
+				}
+
+				img {
+					width: 15px;
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+			}
+		}
+
+
+
+
+		.btnRound {
+			margin: 20px 15px 10px 15px;
+			text-align: center;
+			line-height: 36px;
+			color: #FFFFFF;
+			border-radius: 30px;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+
+	}
+</style>

@@ -1,0 +1,552 @@
+// 导入封装好的axios实例
+import {
+	get,
+	post,
+	put
+} from "./request"
+
+let reqHttp = 'http://coopera.xfd365.com'
+// let reqHttp = 'http://172.168.0.50' // 周凯本地地址
+
+export const server = {
+	// 获取工银理财登陆url
+	yiNongUrl: function(paramObj) {
+		return post('http://pay.xfd365.com/icbc/getUrl', paramObj)
+		// return post('http://172.168.0.39:8087/icbc/getUrl', paramObj)  // 耿强本地地址
+	},
+
+	// -------------  登录 ---------------
+
+	// 根据账号判断用户有没有密码
+	frontCheckPwd: function(paramObj) { // 登录前用的--必传手机号
+		return post(reqHttp + '/api/index/front_check_pwd', paramObj)
+	},
+	// 通用--判断用户之前有没有设置过密码（errno 有多个情况返回）
+	userCheckPwd: function(paramObj) { // 啥都不用传
+		return post(reqHttp + '/api/user/user_check_pwd', paramObj)
+	},
+	// 通用--用户第一次设置密码或使用旧密码修改密码
+	userSetPwd: function(paramObj) { // 登录前用的--必传手机号
+		return post(reqHttp + '/api/user/user_set_pwd', paramObj)
+	},
+	// 发送验证码
+	getCode: function(paramObj) {
+		return post(reqHttp + '/api/index/get_code', paramObj)
+	},
+	// 绑定微信--验证码登录或注册
+	loginCode: function(paramObj) {
+		return post(reqHttp + '/api/index/login_code', paramObj)
+	},
+	// 绑定微信--手机号密码登录（可用于商城登录）
+	login: function(paramObj) {
+		return post(reqHttp + '/api/login', paramObj)
+	},
+	// 微信登录--微信授权后绑定手机号（绑定微信或手机号）
+	wxBindPhone: function(paramObj) {
+		return post(reqHttp + '/api/wechat/wx_bind_phone', paramObj)
+	},
+	// 微信登录--微信注册登录（绑定微信或手机号）
+	wechatLogin: function(paramObj) {
+		return post(reqHttp + '/api/wechat/login', paramObj)
+	},
+
+	// -------------  首页  ---------------
+
+	// 用户首页个人信息
+	userIndex: function(paramObj) {
+		return post(reqHttp + '/api/user/user_index', paramObj)
+	},
+	// 益农宝--检测用户实名认证信息
+	checkUseRealInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/check_user_real_info', paramObj)
+	},
+	// 益农宝--保存用户实名认证信息
+	updateUseRealInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/update_user_real_info', paramObj)
+	},
+
+
+
+	// -------------  个人中心  ---------------
+
+	// 用户个人中心
+	userInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/user_info', paramObj)
+	},	
+	// 图片上传
+	uploadImg: function(paramObj) {
+		return post(reqHttp + '/user/auth/uploadImg', paramObj)
+	},
+	// 修改头像
+	updateUserPhoto: function(paramObj) {
+		return post(reqHttp + '/api/user/update_user_photo', paramObj)
+	},
+	// 用户个人中心购物车和收藏信息
+	userCenterInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/user_center_info', paramObj)
+	},
+	// 提交意见反馈
+	addFeedback: function(paramObj) {
+		return post(reqHttp + '/api/user/add_feedback', paramObj)
+	},
+
+
+	// -------------  账号管家  ---------------
+
+	// 用户账户管家资产和收益
+	userWallet: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet', paramObj)
+	},
+	// 用户账户存入显示支付方式
+	userSelectPayType: function(paramObj) {
+		return post(reqHttp + '/api/user/user_select_pay_type', paramObj)
+	},
+	// 用户账户存入支付
+	userWalletPay: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet_pay', paramObj)
+	},
+	// 用户账户存入支付结果查询
+	userWalletPayOrderQuery: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet_pay_orderQuery', paramObj)
+	},
+	// 用户账户提现到微信的微信用户信息
+	userWxInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wx_info', paramObj)
+	},
+	// 微信提现--绑定微信openid
+	wechatbindLogin: function(paramObj) {
+		return post(reqHttp + '/api/wechatbind/login', paramObj)
+	},
+	// 用户账户转出提交申请
+	walletTakeOutApply: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet_take_out_apply', paramObj)
+	},
+	// 查看用户账户转出申请详情
+	walletTakeOutDetail: function(paramObj) {
+		return post(reqHttp + '/api/user/wallet_take_out_detail', paramObj)
+	},
+	// 查看用户账户转出申请列表
+	walletTakeOutLists: function(paramObj) {
+		return post(reqHttp + '/api/user/wallet_take_out_lists', paramObj)
+	},
+	// 用户账户交易明细
+	userWalletLog: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet_log', paramObj)
+	},
+	// 用户账户收益明细
+	userWalletProfitLog: function(paramObj) {
+		return post(reqHttp + '/api/user/user_wallet_profit_log', paramObj)
+	},
+
+
+
+
+	// -------------  账号管家 - 银行卡  ---------------
+
+	// 通用--用户银行卡包
+	userBank: function(paramObj) {
+		return post(reqHttp + '/api/user/user_bank', paramObj)
+	},
+	// 通用--用户添加、编辑银行卡
+	userChangeBank: function(paramObj) {
+		return post(reqHttp + '/api/user/user_change_bank', paramObj)
+	},
+	// 通用--用户银行卡详情
+	userBankDetail: function(paramObj) {
+		return post(reqHttp + '/api/user/user_bank_detail', paramObj)
+	},
+	// 通用--用户根据银行卡号获取所属银行
+	userGetBankByBanknum: function(paramObj) {
+		return post(reqHttp + '/api/user/user_get_bank_by_banknum', paramObj)
+	},
+	// 通用--用户删除银行卡
+	userDelBank: function(paramObj) {
+		return post(reqHttp + '/api/user/user_del_bank', paramObj)
+	},
+
+	// -------------  账号管家 - 合作社  ---------------
+
+	// 显示用户所有合作社账户
+	myCooperAccount: function(paramObj) {
+		return post(reqHttp + '/api/user/my_coopera_account', paramObj)
+	},
+	// 用户在合作社的股金明细
+	userCooperaStockLog: function(paramObj) {
+		return post(reqHttp + '/api/user/user_coopera_stock_log', paramObj)
+	},
+	// 用户在合作社收益明细
+	cooperaPassbookLog: function(paramObj) {
+		return post(reqHttp + '/api/user/user_coopera_passbook_log', paramObj)
+	},
+	// 我的股金
+	myStockMoney: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_stock_money', paramObj)
+	},
+
+
+	// -------------  加入合作社/合作联社申请  ---------------
+
+	// 社员开户认证手机号-- 社员注册
+	userAc: function(paramObj) {
+		return post(reqHttp + '/user/auth/UserAc', paramObj)
+	},
+	// 获取省市区和合作社
+	addresss: function(paramObj) {
+		return post(reqHttp + '/user/auth/addresss', paramObj)
+	},
+	// 加入合作社--第一步用户选择加入的合作社或合作联社
+	UserSeleCoopera: function(paramObj) {
+		return post(reqHttp + '/api/user/UserSeleCoopera', paramObj)
+	},
+	// 身份证ocr识别身份证号
+	idcardOcr: function(paramObj) {
+		return post(reqHttp + '/user/auth/idcard_ocr', paramObj)
+	},
+	// 上传照片查询
+	authImgDetail: function(paramObj) {
+		return post(reqHttp + '/user/auth/img_detail', paramObj)
+	},
+	// 获取民族列表
+	nation: function(paramObj) {
+		return post(reqHttp + '/user/auth/nation', paramObj)
+	},
+	// 学历列表
+	edu: function(paramObj) {
+		return post(reqHttp + '/user/auth/edu', paramObj)
+	},
+	// 政治面貌列表
+	politicalList: function(paramObj) {
+		return post(reqHttp + '/user/auth/politicalList', paramObj)
+	},
+	// 加入合作社--第二步添加或修改用户社员基本信息
+	newUserAuth: function(paramObj) {
+		return post(reqHttp + '/api/user/newUserAuth', paramObj)
+	},
+	// 行业列表
+	occList: function(paramObj) {
+		return post(reqHttp + '/user/auth/occList', paramObj)
+	},
+	// 加入合作社--第三步添加或修改用户社员职业信息
+	career: function(paramObj) {
+		return post(reqHttp + '/api/user/career', paramObj)
+	},
+	// 加入合作社--显示用户社员信息详情
+	userInfoDetail: function(paramObj) {
+		return post(reqHttp + '/api/user/user_info_detail', paramObj)
+	},
+
+	// -------------  身份模块  ---------------
+
+	// 用户身份
+	userRole: function(paramObj) {
+		return post(reqHttp + '/api/user/user_role', paramObj)
+	},
+	// 用户进入已加入的合作社或合作联社显示所在合作社列表
+	userCooperaLists: function(paramObj) {
+		return post(reqHttp + '/api/user/user_coopera_lists', paramObj)
+	},
+	// 根据所选合作社展示所有身份
+	userAllJobInCoopera: function(paramObj) {
+		return post(reqHttp + '/api/coopera/user_all_job_in_coopera', paramObj)
+	},
+	// 选择合作社跟身份进入app（请求参数有改动）
+	userSelectCoopera: function(paramObj) {
+		return post(reqHttp + '/api/coopera/user_select_coopera', paramObj)
+	},
+	// 用户是否是团长判断（我所拥有的团队）
+	userTeamOwnerCheck: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_owner_check', paramObj)
+	},
+	// 用户身为团长所建的团队信息
+	userTeamInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_info', paramObj)
+	},
+	// 用户作为团员的所有所在团队列表
+	userAsMemberTeamLists: function(paramObj) {
+		return post(reqHttp + '/api/user/user_as_member_team_lists', paramObj)
+	},
+
+	// -------------  申请创建群众团体 、 申请加入群众团体  ---------------
+
+	// 获取团队成员数量列表
+	userTeamNumbers: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_numbers', paramObj)
+	},
+	// 用户创建团队或加入团队时自己的基本信息
+	userTeamBaseInfo: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_base_info', paramObj)
+	},
+	// 用户添加保存所建团队
+	userTeamAdd: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_add', paramObj)
+	},
+	// 根据搜索的团队名称联想出来类似的团队名称
+	srcTeamNameLists: function(paramObj) {
+		return post(reqHttp + '/api/user/src_team_name_lists', paramObj)
+	},
+	// 用户根据条件显示团队列表
+	userSrcTeamLists: function(paramObj) {
+		return post(reqHttp + '/api/user/user_src_team_lists', paramObj)
+	},
+	// 用户选择加入团队
+	userJoinTeam: function(paramObj) {
+		return post(reqHttp + '/api/user/user_join_team', paramObj)
+	},
+
+	// -------------  互助金  ---------------
+
+	// 互助金--互助金存入首页（返回参数去掉银行卡列表，加上定期、收益账户）
+	passbookIndex: function(paramObj) {
+		return post(reqHttp + '/api/coopera/passbook_index', paramObj)
+	},
+	// 互助金--互助金明细（余额进出明细）（加入总条数总页数）（记录类型有变化）
+	passbookLog: function(paramObj) {
+		return post(reqHttp + '/api/coopera/passbook_log', paramObj)
+	},
+	// 互助金--互助金存入（微信支付宝银联）
+	passbookDepositByAll: function(paramObj) {
+		return post(reqHttp + '/api/coopera/passbook_deposit_by_all', paramObj)
+	},
+	// 互助金--互助金存入查询订单支付状态
+	orderQuery: function(paramObj) {
+		return post(reqHttp + '/api/coopera/orderQuery', paramObj)
+	},
+	// 互助金--互助金取出提交申请
+	submitPassbookTakeOut: function(paramObj) {
+		return post(reqHttp + '/api/coopera/submit_passbook_take_out', paramObj)
+	},
+	// 互助金--社员的定期互助金列表
+	regularLists: function(paramObj) {
+		return post(reqHttp + '/api/coopera/regular_lists', paramObj)
+	},
+	// 互助金--互助金转账提交申请
+	submitPassbookTurn: function(paramObj) {
+		return post(reqHttp + '/api/coopera/submit_passbook_turn', paramObj)
+	},
+
+
+
+	// -------------  我要借款  ---------------
+
+	// 我要借款--借款首页的借款产品（加入总条数总页数）
+	loanIndexLoanProduct: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_index_loan_product', paramObj)
+	},
+	// 我要借款--借款首页我的借款信息（加入总条数总页数）
+	loanIndexMyloan: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_index_myloan', paramObj)
+	},
+	// 我要借款--我的基本信息
+	myInfo: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_info', paramObj)
+	},
+	// 我要借款--根据产品获取对应的借款时长、利率、最高借款金额、利率名称（进入申请借款页面使用）（请求参数改变）
+	getLoanRate: function(paramObj) {
+		return post(reqHttp + '/api/coopera/get_loan_rate', paramObj)
+	},
+	// 我要借款--获取借款用途
+	getLoanUse: function(paramObj) {
+		return post(reqHttp + '/api/coopera/get_loan_use', paramObj)
+	},
+	// 我要借款--获取还款方式
+	getRepayment: function(paramObj) {
+		return post(reqHttp + '/api/coopera/get_repayment', paramObj)
+	},
+	// 我要借款--根据还款方式，借款时长利率id跟借款金额计算利息
+	getInterestByRate: function(paramObj) {
+		return post(reqHttp + '/api/coopera/get_interest_by_rate', paramObj)
+	},
+	// 我要借款--选择担保人（带搜索）（加入总条数总页数）
+	selectGuarantee: function(paramObj) {
+		return post(reqHttp + '/api/coopera/select_guarantee', paramObj)
+	},
+	// 我要借款--提交借款申请（担保借款）
+	submitLoanApply: function(paramObj) {
+		return post(reqHttp + '/api/coopera/submit_loan_apply', paramObj)
+	},
+	// 我要借款--借款详情
+	userLoanDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/user_loan_detail', paramObj)
+	},
+
+
+	// -------------  我要还款  ---------------
+
+	// 我要还款--当前总剩余应还贷款本金总额（返回参数修改）
+	myAllLeftBackPrincipal: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_all_left_back_principal', paramObj)
+	},
+	// 我要还款--我要还款首页贷款列表（返回参数修改）（加入总条数总页数）
+	myUserLoanBackIndex: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_user_loan_back_index', paramObj)
+	},
+	// 我要还款--待还款时我的还款计划（请求参数有增加）
+	myRepaidLoanBackPlan: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_repaid_loan_back_plan', paramObj)
+	},
+	// 我要还款--已结清时我的还款记录（返回参数修改）
+	myClearLoanBackLog: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_clear_loan_back_log', paramObj)
+	},
+	// 我要还款--已结清时我的提前还款记录中包含的逾期和未还的还款计划【已结清--提前还款】
+	myPrebackLogIncludePlan: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_preback_log_include_plan', paramObj)
+	},
+	// 我要还款--已还详情（修改返回参数）
+	myLoanBackDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_loan_back_detail', paramObj)
+	},
+	// 我要还款--还款计划未还款的还款详情
+	myPrepaidLoanBackDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_prepaid_loan_back_detail', paramObj)
+	},
+	// 我要还款--按期还款显示所还明细【点击某一期--按期还款】
+	loanBackByPlanDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_back_by_plan_detail', paramObj)
+	},
+	// 我要还款--提前还款显示所还明细【点击---提前还款】
+	loanBackByClearDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_back_by_clear_detail', paramObj)
+	},
+	// 我要还款--提前还款支付（使用合作社卡、微信、支付宝、银联）
+	payLoanBackClearByPassbook: function(paramObj) {
+		return post(reqHttp + '/api/coopera/pay_loan_back_clear_by_passbook', paramObj)
+	},
+	// 我要还款--待还款时我的还款计划中的多期待还---按期还款--多期待还（可选模块）---点击---按期还款
+	myRepaidLoanBackPlanTogether: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_repaid_loan_back_plan_together', paramObj)
+	},
+	// 我要还款--按期还款支付（使用合作社卡、微信、支付宝、银联）---某一期支付
+	payLoanBackPlanByPassbook: function(paramObj) {
+		return post(reqHttp + '/api/coopera/pay_loan_back_plan_by_passbook', paramObj)
+	},
+	// 我要还款--按期或提前还款）贷款还款查询还款支付状态（微信支付宝银联）---- 提前或者某一期
+	loanBackOrderQuery: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_back_orderQuery', paramObj)
+	},
+	// 我要还款--计算待还款时我的还款计划中的选中的多期待还总金额--切换选择计算总金额
+	myRepaidLoanBackPlanTogetherChoose: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_repaid_loan_back_plan_together_choose', paramObj)
+	},
+	// 我要还款--多期待还合并按期还款支付（使用合作社卡、微信、支付宝、银联）---多期支付
+	payLoanBackPlanByPassbookTogether: function(paramObj) {
+		return post(reqHttp + '/api/coopera/pay_loan_back_plan_by_passbook_together', paramObj)
+	},
+	// 我要还款--多期待还合并按期还款查询还款支付状态（微信支付宝银联）
+	loanBackTogetherOrderQuery: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_back_together_orderQuery', paramObj)
+	},
+	// 我要还款--还款时显示支付方式
+	loanBackSelectPayType: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_back_select_pay_type', paramObj)
+	},
+	
+
+	// -------------  我要担保  ---------------
+
+	// 我要担保--我的社内担保额度
+	myGuaranteeLimit: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_guarantee_limit', paramObj)
+	},
+	// 我要担保--我的担保列表（加入总条数总页数）
+	myGuaranteeLists: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_guarantee_lists', paramObj)
+	},
+	// 我要担保--担保借款详情
+	guaranteeLoanDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/guarantee_loan_detail', paramObj)
+	},
+	// 我要担保--借款人历史借款信息
+	userLoanHistory: function(paramObj) {
+		return post(reqHttp + '/api/coopera/user_loan_history', paramObj)
+	},
+	// 我要担保--我的某一担保详情
+	myGuaranteeDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/my_guarantee_detail', paramObj)
+	},
+	// 我要担保--确认担保借款（同意或拒绝）
+	goLoanGuarantee: function(paramObj) {
+		return post(reqHttp + '/api/coopera/go_loan_guarantee', paramObj)
+	},
+	// 我要担保--担保资产证明分类  房产 type_id=1   车产 type_id=2   其他 type_id=3
+	loanGuaranteeType: function(paramObj) {
+		return post(reqHttp + '/api/coopera/loan_guarantee_type', paramObj)
+	},
+	// 我要担保--获取我已上传的资产类型担保信息
+	getTypeLoanGuaranteeAssets: function(paramObj) {
+		return post(reqHttp + '/api/coopera/get_type_loan_guarantee_assets', paramObj)
+	},
+	// 我要担保--房产类型
+	houseType: function(paramObj) {
+		return post(reqHttp + '/api/coopera/house_type', paramObj)
+	},
+	// 我要担保--上传资产担保信息（选择资产担保同意担保提交前使用）
+	submitLoanGuaranteeAssets: function(paramObj) {
+		return post(reqHttp + '/api/coopera/submit_loan_guarantee_assets', paramObj)
+	},
+	// 我要担保--修改我已上传的该类资产担保信息
+	updateLoanGuaranteeAssets: function(paramObj) {
+		return post(reqHttp + '/api/coopera/update_loan_guarantee_assets', paramObj)
+	},
+	// 我要担保--删除我已上传的资产担保信息
+	deleteLoanGuaranteeAssets: function(paramObj) {
+		return post(reqHttp + '/api/coopera/delete_loan_guarantee_assets', paramObj)
+	},
+	// 我要担保--查看我上传的某一个资产担保详情
+	oneLoanGuaranteeAssetsDetail: function(paramObj) {
+		return post(reqHttp + '/api/coopera/one_loan_guarantee_assets_detail', paramObj)
+	},
+	// 我要担保--上传资产证明图片
+	uploadGuaranteeImg: function(paramObj) {
+		return post(reqHttp + '/api/coopera/upload_guarantee_img', paramObj)
+	},
+	// 我要担保--删除资产证明图片（上传后修改图片删除之前上传的图片时）
+	deleteGuaranteeImg: function(paramObj) {
+		return post(reqHttp + '/api/coopera/delete_guarantee_img', paramObj)
+	},
+
+	// -------------  团队  ---------------
+
+	// 用户进入团队首页展示团队基本信息和推广统计信息
+	userTeamIndex: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_index', paramObj)
+	},
+	// 团队业务--团队中显示的团队分销商品一级分类
+	teamFirstCategory: function(paramObj) {
+		return post(reqHttp + '/api/user/team_first_category', paramObj)
+	},
+	// 团队业务--团队中分销商品列表（带分类带搜索）
+	teamGoodslists: function(paramObj) {
+		return post(reqHttp + '/api/user/team_goodslists', paramObj)
+	},
+	// 团队业务--获取团员加密后的主键id
+	getTeamLockMemId: function(paramObj) {
+		return post(reqHttp + '/api/user/get_team_lock_mem_id', paramObj)
+	},
+	// 团队业务--用户进入团队显示团队业务
+	teamBusiness: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_business', paramObj)
+	},
+
+	// 团队业绩--业务收益统计
+	teamProfitStatistics: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_profit_statistics', paramObj)
+	},
+	// 团队业绩--实时动态
+	teamBusinessLog: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_business_log', paramObj)
+	},
+	// 团队业绩--实时动态下推广详情
+	teamBusinessLogDetail: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_business_log_detail', paramObj)
+	},
+
+	// 我的团队--团队人数统计
+	teamMemberStatistics: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_member_statistics', paramObj)
+	},
+	// 我的团队--团队成员状态
+	teamMemberStatus: function(paramObj) {
+		return post(reqHttp + '/api/user/user_team_member_status', paramObj)
+	},
+}

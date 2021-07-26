@@ -1,0 +1,232 @@
+import axios from 'axios';
+import qs from 'QS'
+import Cookies from 'js-cookie' // js-cookie 引入
+
+// 使用vant toast做消息提醒
+import {
+	Toast
+} from 'vant';
+import router from '../router'
+
+axios.defaults.timeout = 10000; // 超时时间10s
+axios.defaults.baseURL = '/baiduApi'
+// axios.defaults.baseURL ='http://coopera.xfd365.com';
+// axios.defaults.baseURL ='http://172.168.0.50'; // 周凯本地地址
+
+
+// 请求拦截器
+axios.interceptors.request.use(
+	config => {
+		// 发送请求前做的一些处理，数据转换，配置请求头，设置token，设置loading等
+
+		// config.data 形式根据后台需要
+		// config.data = JSON.stringify(config.data); // json类型的传参
+		config.data = qs.stringify(config.data); // qs转换会转换成为键值对拼接的字符串形式
+
+		// config.headers = { 'Content-Type':'application/x-www-form-urlencoded' }请求头内容的配置，也是不同的，application/x-www-form-urlencoded ：form表单数据被编码为key/value格式发送到服务器（表单默认的提交数据的格式），你可以根据实际情况去配置自己需要的；
+		config.headers = {
+			'Content-Type': 'application/x-www-form-urlencoded'
+		}
+
+		//注意使用token的时候需要引入cookie方法或者用本地localStorage等方法，推荐js-cookie
+		// 每次发送请求之前判断是否存在token
+		// 如果存在，则统一在http请求的header都加上token，这样后台根据token 判断你的登录状况
+		// 即使本地存在token，也可能token是过期的，所以在响应拦截器中要对返回的状态进行判断
+		// const token = localStorage.getItem('token')
+		let token = '';
+		if((typeof android != 'undefined') && android.load("token")){
+			token = android.load("token")
+		}else if(Cookies.get('token')){
+			token = Cookies.get('token')
+		}else{
+			token = localStorage.getItem('token')
+		}
+		if (token) {
+			config.params = {
+				'token': token // 如果要求携带在参数中
+			}
+			// config.headers.token = token; // 如果要求携带在请求头中
+		} else {
+			// toLogin()
+		}
+		return config;
+	},
+	error => {
+		Promise.reject(error);
+	}
+);
+
+/**提示函数
+ * 禁止点击蒙层、显示一秒后关闭 */
+const tip = msg => {
+	Toast({
+		message: msg,
+		duration: 1000,
+		forbidClick: true
+	});
+}
+
+/**  跳转登录页
+ * 携带当前页面路由，以期在登录页面完成登录后返回当前页面*/
+const toLogin = () => {
+	router.replace({
+		path: '/login',
+		// query: {
+		// 	redirect: router.currentRoute.fullPath // 跳转登录页面，并将要浏览的页面fullPath传过去，登录成功后跳转需要访问的页面
+		// }
+	});
+}
+
+//响应拦截器即异常处理
+axios.interceptors.response.use(response => {
+	//接收到响应数据并成功后的一些共有的处理，关闭loading等
+	// return response
+	if (response.status === 200) {
+		return Promise.resolve(response);
+	} else {
+		return Promise.reject(response);
+	}
+}, error => {
+	/***** 接收到异常响应的处理开始 *****/
+	if (error && error.response) {
+		// 1.公共错误处理
+		// 2.根据响应码具体处理
+		switch (error.response.status) {
+			case 401: // 401: 未登录
+				toLogin();
+				break;
+			case 403: // 403 token过期
+				tip('登录过期，请重新登录');
+				Cookies.remove('token'); // 清除token
+				localStorage.clear()
+				setTimeout(() => {
+					toLogin();
+				}, 1000);
+				break;
+			case 404:
+				tip('请求的资源不存在')
+				Promise.reject(response);
+				break;
+      case 500:
+        tip('服务器异常')
+		Promise.reject(response);
+        break;
+			default:
+				tip(`连接错误${error.response.status}`)
+		}
+	}else if(error.message.indexOf('Network') != -1){
+		tip('网络异常')
+	}else if(error.message.indexOf('timeout') != -1){
+		tip('请求超时')
+	}else{
+		// 超时处理
+		if (JSON.stringify(error).includes('timeout')) {
+			Toast({
+				message: '服务器响应超时，请刷新当前页',
+				duration: 1500,
+				forbidClick: true
+			})
+		}
+		tip('连接服务器失败')
+	}
+	// tip(error.message)
+
+
+	/***** 处理结束 *****/
+	//如果不需要错误处理，以上的处理过程都可省略
+	return Promise.resolve(error.response)
+})
+
+
+/**
+ * 封装get方法
+ * @param url
+ * @param data
+ * @returns {Promise}
+ */
+
+export function get(url, params = {}) {
+	return new Promise((resolve, reject) => {
+		axios.get(url, {
+				params: params
+			})
+			.then(res => {
+				if (res.data.errno == 100) {
+					toLogin();
+				} else {
+					resolve(res.data);
+				}
+			})
+			.catch(err => {
+				tip('服务异常,请稍后重试')
+				reject(err)
+			})
+	})
+}
+
+
+/**
+ * 封装post请求
+ * @param url
+ * @param data
+ * @returns {Promise}
+ */
+
+export function post(url, data = {}) {
+	return new Promise((resolve, reject) => {
+		axios.post(url, data)
+			.then(res => {
+				if (res.data.errno == 100) {
+					toLogin();
+				} else {
+					resolve(res.data);
+				}
+			}, err => {
+				reject(err)
+			})
+	})
+}
+
+/**
+ * 封装patch请求
+ * @param url
+ * @param data
+ * @returns {Promise}
+ */
+
+export function patch(url, data = {}) {
+	return new Promise((resolve, reject) => {
+		axios.patch(url, data)
+			.then(res => {
+				if (res.data.errno == 100) {
+					toLogin();
+				} else {
+					resolve(res.data);
+				}
+			}, err => {
+				reject(err)
+			})
+	})
+}
+
+/**
+ * 封装put请求
+ * @param url
+ * @param data
+ * @returns {Promise}
+ */
+
+export function put(url, data = {}) {
+	return new Promise((resolve, reject) => {
+		axios.put(url, data)
+			.then(res => {
+				if (res.data.errno == 100) {
+					toLogin();
+				} else {
+					resolve(res.data);
+				};
+			}, err => {
+				reject(err)
+			})
+	})
+}

@@ -1,0 +1,169 @@
+<template>
+	<div class="applyCard" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="添加银行卡" left-arrow fixed @click-left="leftBack" />
+		<p class="m-title">仅限<span>本人</span>持有的银行卡</p>
+		<div class="groupCont">
+			<p class="title">银行卡号</p>
+			<van-field v-model="cardNum" clearable :class="ifIn? 'ifIn' : ''" :right-icon="require('../../images/camera.png')" placeholder="请输入银行卡号"
+				@input="blurInput" />
+			<div class="cardCont">
+				<img src="../../images/ccb.png" />
+				<p>中国建设银行</p>
+			</div>
+		</div>
+
+		<van-button :icon='require("../../images/add.png")' type="info" block class="sendBtn" @click="sendApply()">
+			立即添加
+		</van-button>
+
+
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "applyCard",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 90,
+				cardNum: '',
+				ifIn: false
+			}
+		},
+		mounted() {
+
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			blurInput() {
+				this.ifIn = true
+			},
+
+			// 提交
+			sendApply() {
+				this.$router.push({
+					path: '/applyCardDetail'
+				})
+			}
+
+		},
+	}
+</script>
+<style lang="less">
+	.applyCard {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		background: #f0f6fc url(../../images/applyBg.png) no-repeat right 46px;
+		background-size: auto 36px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.m-title {
+			margin: 0 10px;
+			padding-top: 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.groupCont {
+			background: #ffffff;
+			margin-top: 10px;
+			padding-top: 20px;
+			border-radius: 10px 10px 0 0;
+			height: calc(100% - 30px);
+
+			input:-ms-input-placeholder {
+				color: #444444;
+				font-size: 12px;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+				font-size: 12px;
+			}
+
+			.title {
+				margin-left: 15px;
+				color: #9AA8B6;
+
+				&.yzTil {
+					margin-top: 25px;
+				}
+			}
+
+			.van-cell {
+				background: transparent;
+				&::after{
+					border: none;
+				}
+				&.ifIn{
+					.van-field__value{
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+				.van-field__value{
+					border-bottom: 1px solid #F0F6FC;
+					input{
+						line-height: 32px;
+						font-family: DIN, DIN-Medium;
+						font-size: 20px;
+					}
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+			.cardCont{
+				display: flex;
+				align-items: center;
+				margin: 0 12px;
+				font-size: 15px;
+				img{
+					height: 20px;
+					margin-right: 5px;
+				}
+			}
+		}
+
+
+
+		.sendBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+
+
+	}
+</style>

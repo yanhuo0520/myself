@@ -1,0 +1,106 @@
+<template>
+	<div class="loginPw">
+		<van-nav-bar title="登录令牌" left-arrow fixed @click-left="leftBack" />
+		<div class="content">
+			<p class="num">{{num}}</p>
+			<p class="time"><span>{{times}}秒</span>后失效</p>
+		</div>
+		<p class="tip">6位动态码60秒后自动刷新，实时保护您的账号安全</p>
+	</div>
+</template>
+<script>
+	export default {
+		name: "loginPw",
+		data() {
+			return {
+				num: 123456,
+				times: 60,
+			}
+		},
+		mounted() {
+			this.getCode()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getCode() {
+				return
+				this.$api.addFeedback().then(res => {
+					if (res.errno == 0) {
+						this.num = res.data
+						this.timer = setInterval(() => {
+							this.times--
+							if (this.times === 0) {
+								this.times = 60
+								clearInterval(this.timer)
+								this.getCode()
+							}
+						}, 1000)
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+
+				})
+			}
+
+		},
+	}
+</script>
+<style lang="less">
+	.loginPw {
+		padding-top: 46px;
+		height: calc(100% - 46px);
+		overflow-y: scroll;
+		background: #f0f6fc;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+
+		.content {
+			margin: 10px;
+			padding: 10px;
+			border-radius: 10px;
+			background: #FFFFFF;
+			text-align: center;
+			color: #222222;
+			.num{
+				padding: 20px 0;
+				font-family: DIN, DIN-Medium;
+				font-size: 28px;
+				font-weight: bold;
+				letter-spacing: 10px;
+			}
+			.time{
+				border-top: 1px solid #eeeeee;
+				text-align: right;
+				padding-top: 10px;
+				span{
+					color: #3B6AF1;
+				}
+			}
+		}
+		.tip {
+			margin: 0 10px;
+		}
+	}
+</style>

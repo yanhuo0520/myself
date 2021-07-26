@@ -1,0 +1,96 @@
+<template>
+	<div class="myAccount">
+		<van-nav-bar title="我的账户" left-arrow fixed @click-left="leftBack" />
+		<div class="cell-cont">
+			<van-cell title="交易明细" value="测试">
+				<template #icon>
+					<img src="../../images/date6.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+			<van-cell title="收益记录">
+				<template #icon>
+					<img src="../../images/qian13.png" alt="" class="iconImg" />
+				</template>
+			</van-cell>
+		</div>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "myAccount",
+		data() {
+			return {
+				
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			this.userWallet(); // 账户管家资产和收益
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 账户管家资产和收益
+			userWallet(){
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.userWallet({}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.walletNum = res.data;	
+					} else {
+						this.$toast(res.errmsg)	
+					}
+
+				}).catch(err=>{
+					this.$toast.clear()
+				})
+			},
+		}
+	}
+</script>
+<style lang="less">
+	.myAccount {
+		padding-top: 46px;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+
+
+		.cell-cont {
+			margin-top: 10px;
+			.van-cell{
+				padding: 10px;
+			}
+			.van-cell::after {
+				border: none;
+			}
+
+			.iconImg {
+				height: 15px;
+				margin-top: 4px;
+				margin-right: 6px;
+			}
+		}
+
+
+	}
+</style>

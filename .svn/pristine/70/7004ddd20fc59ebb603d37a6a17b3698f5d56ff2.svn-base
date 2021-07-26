@@ -1,0 +1,369 @@
+<template>
+  <div class="creditIndex">
+    <van-nav-bar title="信用评分" left-arrow fixed @click-left="leftBack" />
+    <div class="center">
+      <div class="center_box">
+        <div v-if="!isUnreviewed" class="text"></div>
+        <div v-else class="text1">
+          <img src="../../images/credit/fen.png" alt="" class="fen">
+          <p class="credit_fen">{{mycredit}}</p>
+        </div>
+
+      </div>
+      <div style="background: #fff;">
+        <div class="ceping1" @click="$router.push('/userCepings')">
+          <img v-if="!isUnreviewed" src="../../images/credit/cp-btn1.png" alt="">
+          <img v-else src="../../images/credit/cp-btn2.png" alt="">
+        </div>
+        <div class="cp_text">测评据中国人民银行权威数据标准制定<br /> 具有认可性和有效性</div>
+      </div>
+      <div class="cp_bottom">
+        <div class="you_can">
+          <div class="yc_title"></div>
+          <div class="border"></div>
+        </div>
+        <div class="tuanti" @click="insideMark">
+          <img src="../../images/credit/cp-tuanti1.png" alt="" class="leftImg">
+          <img src="../../images/credit/cp-tuanti2.png" alt="" class="centerImg">
+          <img src="../../images/credit/cp-tuanti3.png" alt="" class="rightImg">
+          <img src="../../images/light3.png" alt="" class="right-top">
+        </div>
+        <div class="tuanti ziping" v-if="isUnreviewed" @click="getCreaitList">
+          <img src="../../images/credit/cp-ziping1.png" alt="" class="leftImg">
+          <img src="../../images/credit/cp-ziping2.png" alt="" class="centerImg">
+          <img src="../../images/credit/cp-ziping3.png" alt="" class="rightImg">
+          <img src="../../images/light3.png" alt="" class="right-top">
+        </div>
+      </div>
+      <div style="height: 20px;background-color: #F0F6FC;"></div>
+    </div>
+    <!-- 解除绑定 -->
+		<van-popup v-model="ifTipJie" class="tipCont">
+			<img src="../../images/credit/cp-tip.png" class="IMg" />
+      <img src="../../images/credit/tanhao.png" alt="" class="tan">
+			<p class="tipTitle">未加入合作社组织或团体<br /> 不能进行团体人员打分?</p>
+			<div class="btnCont">
+				<p class="btn cancel" @click="ifTipJie = false">我知道了</p>
+			</div>
+
+      <img src="../../images/close.png" @click="ifHasReal = false" class="closeIMg" />
+		</van-popup>
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "creditIndex",
+    data() {
+      return {
+        isUnreviewed: false,
+        mycredit: '',
+        ifTipJie: false,
+      };
+    },
+    created() {
+      this.getmycredit()
+    },
+    methods: {
+      leftBack() {
+        this.$router.push('/');
+      },
+      insideMark() {
+        let that = this;
+        that.$api.creditistc({}).then(res => {
+          if (res.errno == 0) {
+            //is_c 是否加入合作社 is_team 是否加入团队 1加入 2未加入 
+            if (res.data.is_c == 2 && res.data.is_team == 2) {
+             that.ifTipJie = true;
+            } else {
+              // 1社员2团队
+              if (res.data.is_c == 1 && res.data.is_team == 2) {
+                console.log('合作社成员');
+                localStorage.setItem('is_group', 1)
+              } else if (res.data.is_c == 2 && res.data.is_team == 1) {
+                console.log('团队成员');
+                localStorage.setItem('is_group', 2)
+              } else if (res.data.is_c == 1 && res.data.is_team == 1) {
+                console.log('团队成员');
+                localStorage.setItem('is_group', 2)
+              }
+              that.$router.push('/eachOthers')
+            }
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {})
+      },
+      // 查看自评列表
+      getCreaitList() {
+        let that = this;
+        that.$api.myCreditLists({}).then(res => {
+          if (res.errno == 0) {
+            console.log(res.data);
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {
+
+        })
+      },
+      getmycredit() {
+        let that = this;
+        that.$api.mycredit({}).then(res => {
+          if (res.errno == 0) {
+            if (res.data > 0) {
+              that.mycredit = res.data;
+              localStorage.setItem('mycredit', res.data)
+              that.isUnreviewed = true;
+            } else {
+               that.isUnreviewed = false;
+            }
+          } else {
+            that.$toast(res.errmsg)
+          }
+        }).catch(err => {})
+      }
+    },
+  }
+</script>
+
+<style lang="less">
+  .creditIndex {
+    min-height: 100%;
+    padding-top: 46px;
+    background-color: #F0F6FC;
+
+    .van-nav-bar {
+      background: #F0F6FC;
+
+      .van-icon {
+        color: #222222;
+
+      }
+
+      .van-nav-bar__title {
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+    }
+
+    .van-hairline--bottom::after {
+      border-bottom-width: 0
+    }
+
+    .center {
+      height: 300px;
+      position: relative;
+
+      .center_box {
+
+        height: 100%;
+        margin: auto;
+        text-align: center;
+        background-image: url(../../images/credit/bg.png);
+        background-size: 100% 100%;
+
+        .text {
+          position: absolute;
+          width: 260px;
+          height: 90%;
+          background-image: url(../../images/credit/cp-xyy.png);
+          background-size: 100% 100%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: #fff;
+        }
+
+        .text1 {
+          position: absolute;
+          width: 260px;
+          height: 90%;
+          background-image: url(../../images/credit/cp-xyy1.png);
+          background-size: 100% 100%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+
+          .fen {
+            position: absolute;
+            width: 14px;
+            height: 10px;
+            top: 80px;
+            right: 89px;
+          }
+
+          .credit_fen {
+            position: absolute;
+            top: 32%;
+            right: 40%;
+            font-size: 45px;
+            font-weight: 700;
+            color: #fff;
+
+          }
+        }
+
+
+
+      }
+
+      .ceping1 {
+        width: 240px;
+        height: 55px;
+        margin: 0 auto;
+
+        img {
+          width: 100%;
+          height: 100%;
+        }
+      }
+
+      .ceping2 {
+        width: 70%;
+        height: 55px;
+        margin: 0 auto;
+        margin-top: 20px;
+      }
+
+      .cp_text {
+        width: 70%;
+        margin: 0 auto;
+        margin-top: 15px;
+        padding-bottom: 20px;
+        line-height: 18px;
+        text-align: center;
+        font-family: Microsoft YaHei;
+        color: #9AA8B6;
+        font-size: 12px;
+      }
+
+      .cp_bottom {
+        padding: 20px 0;
+        background: #F0F6FC;
+
+        .you_can {
+          .yc_title {
+            width: 63px;
+            height: 15px;
+            margin: 0 auto;
+            background-image: url(../../images/credit/cp-yc.png);
+            background-size: 100% 100%;
+          }
+
+          .border {
+            width: 30px;
+            height: 4px;
+            margin: 0 auto;
+            margin-top: 13px;
+            border-radius: 2px;
+            background-color: #3B6AF1;
+          }
+        }
+
+        .tuanti {
+          width: calc(86%);
+          position: relative;
+          background: #FFE2DC;
+          height: 85px;
+          margin: 0 auto;
+          margin-top: 20px;
+          border-radius: 10px;
+
+          .leftImg {
+            position: absolute;
+            left: 5px;
+            top: 18px;
+            height: 58px;
+          }
+
+          .centerImg {
+            height: 36px;
+            position: absolute;
+            left: 90px;
+            top: 26px;
+          }
+
+          .rightImg {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            height: 18px;
+          }
+
+          .right-top {
+            position: absolute;
+            height: 50px;
+            right: 0;
+            top: 0;
+          }
+        }
+
+        .ziping {
+          background: #C7F9E9;
+        }
+      }
+
+
+
+    }
+
+    .tipCont {
+			width: calc(100% - 50px);
+			max-width: 510px;
+			border-radius: 10px;
+			background-size: 100% auto;
+			text-align: center;
+			font-size: 15px;
+			color: #444444; 
+      overflow-y: visible;
+
+			.IMg {
+				width: 100%;
+			}
+      .tan {
+        position: absolute;
+        right: 45px;
+        top: -20px;
+        width: 50px;
+        height: 50px;
+      }
+			.tipTitle {
+				background: #FFFFFF;
+				padding: 20px 0;
+				line-height: 20px;
+			}
+
+			.btnCont {
+				display: flex;
+				justify-content: space-around;
+				background: #FFFFFF;
+				padding: 10px 0 20px 0;
+        border-bottom-right-radius: 10px;
+        border-bottom-left-radius: 10px;
+				.btn {
+					border-radius: 30px;
+					line-height: 34px;
+					width: calc(50% - 20px);
+
+					&.cancel {
+						color: #fff;
+						background: #3B6AF1;
+					}
+
+					&.sure {
+						color: #FFFFFF;
+						background: #3B6AF1;
+					}
+				}
+			}
+
+      .closeIMg {
+        position: relative;
+        bottom: -50px;
+				width: 20px;
+			}
+		}
+  }
+</style>

@@ -1,0 +1,218 @@
+<template>
+	<div class="accouIn" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="账户转入" left-arrow fixed @click-left="leftBack" />
+		<div class="inCont">
+			<p class="m-title">转入金额(元)</p>
+			<van-field v-model="money" clearable placeholder="">
+				<template #left-icon>
+					<img src="../../images/qian4.png" alt="" class="iconImg" />
+				</template>
+			</van-field>
+			<p></p>
+		</div>
+
+		<van-radio-group v-model="radioBanType" class="selGroup payGroup">
+			<van-cell :title="item.bank_num_str" clickable v-for="(item, index) in radioPayItem" :key="index"
+				@click="radioBanType = item.pay_type"
+				:class="radioBanType == item.pay_type ? 'active' : ''">
+				<template #icon>
+					<img :src="item.icon" alt="" class="iconImg" />
+				</template>
+				<template #right-icon>
+					<van-radio :name="item.pay_type">
+						<template #icon="props">
+							<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+						</template>
+					</van-radio>
+				</template>
+			</van-cell>
+		</van-radio-group>
+
+		<p class="btnRound" @click="goPay()">确定存入</p>
+		
+	</div>
+</template>
+<script>
+	export default {
+		name: "accouIn",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				money: '',
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				radioBanType: '',
+				radioPayItem: [],
+			};
+		},
+		mounted() {
+			this.getPayType()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			getPayType() {
+				// 用户账户存入显示支付方式
+				this.$api.userSelectPayType().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						res.data.forEach(ele => {
+							 if (ele.pay_type == 2) {
+								ele.icon = require("../../images/wei.png")
+							} else if (ele.pay_type == 3) {
+								ele.icon = require("../../images/zhi.png")
+							} else if (ele.pay_type == 4) {
+								ele.icon = require("../../images/yun.png")
+							}
+						})
+						this.radioBanType = res.data[0].pay_type
+						this.radioPayItem = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			goPay() {
+				if(this.money <= 0){
+					this.$toast("请输入转入金额")
+					return
+				}
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.userWalletPay({pay_type: this.radioBanType, pay_money: this.money}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						// nongAliPay,农行支付宝渠道.，unionAliPay云闪付支付宝渠道，unionPay云闪付，unionWxPay云闪付微信渠道
+						if(this.radioBanType == 2){ // 2银联微信
+							if (typeof android != "undefined") {
+								android.unionWxPay(res.data);
+							}
+						}else if(this.radioBanType == 3){ // 3银联支付宝
+							if (typeof android != "undefined") {
+								android.unionAliPay(res.data);
+							}
+						}else if(this.radioBanType == 4){ // 4银联云闪付
+							if (typeof android != "undefined") {
+								android.unionPay(res.data);
+							}
+						}
+						// if(this.radioBanType == 3){ // 支付宝支付
+						// 	window.location.href = "alipays://platformapi/startapp?saId=10000007&clientVersion=3.7.0.0718&qrcode="+ JSON.parse(res.data).qrCode
+						// }
+						else{
+							let data = JSON.parse(res.data)
+							this.weChatPay(data)
+						}
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+			
+		}
+	}
+</script>
+<style lang="less">
+	.accouIn {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+		.inCont {
+			background: #FFFFFF;
+			margin: 10px;
+			padding: 15px;
+			border-radius: 10px;
+
+			.m-title{
+				color: #9AA8B6;
+			}
+
+			.van-cell {
+				margin-top: 15px;
+				padding: 0;
+
+				&::after {
+					left: 0;
+					right: 0;
+				}
+
+				input {
+					font-size: 21px;
+				}
+
+				img {
+					height: 10px;
+					margin-top: 10px;
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+					font-size: 13px;
+				}
+			}
+		}
+
+	
+		.selGroup {
+			margin: 10px;
+
+			.van-cell {
+				&:first-child {
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+				}
+				&:nth-last-of-type(1) {
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
+				}
+
+				.img-icon {
+					width: 16px;
+					height: 16px;
+				}
+				img {
+					width: 15px;
+					height: 15px;
+					margin: 3.5px 5px 0 0;
+				}
+			}
+		}
+
+		.btnRound {
+			margin: 20px 15px 10px 15px;
+			text-align: center;
+			line-height: 36px;
+			color: #FFFFFF;
+			border-radius: 30px;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+	}
+</style>

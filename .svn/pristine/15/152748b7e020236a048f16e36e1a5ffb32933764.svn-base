@@ -1,0 +1,51 @@
+<template>
+	<div class="yinongbao">
+        <iframe class="yinong-iframe" :src="url" frameborder="0"></iframe>
+        <div class="back-btn" @click.stop="toRouter('/')">返回三位一体</div>
+	</div>
+</template>
+<script>
+	export default {
+		name: "yinongbao",
+		data() {
+			return {
+                url: ''
+			};
+		},
+		mounted() {
+            let url = this.$route.query.url ? this.$route.query.url : ''
+            if (url) {
+                this.url = url
+            } else {
+                this.$router.push('/')
+            }
+		},
+		methods: {
+            toRouter (path) {
+                this.$router.push(path)
+            },
+		}
+	};
+</script>
+<style lang="less">
+	.yinongbao {
+        height: 100%;
+        .yinong-iframe {
+            width: 100%;
+            height: 100%;
+        }
+        .back-btn {
+            position: absolute;
+            top: 28%;
+            left: 0;
+            transform: translateY(-50%);
+            background: #1989fa;
+            color: #fff;
+            font-size: 13px;
+            text-align: center;
+            width: 90px;
+            padding: 8px 0;
+            border-radius: 0 100px 100px 0;
+        }
+	}
+</style>

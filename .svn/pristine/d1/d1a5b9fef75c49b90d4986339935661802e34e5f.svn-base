@@ -1,0 +1,163 @@
+<template>
+	<div class="message" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="消息" left-arrow fixed @click-left="leftBack" />
+		<van-grid class="grid" :column-num="4" :border="false">
+			<van-grid-item v-for="(item, index) in grid" :key="index" @click="goGridItem(item.path)">
+				<img :src="item.icon" alt="" />
+				<p class="title" :class="girdId==item.id ? 'active' : ''">{{ item.name }}</p>
+			</van-grid-item>
+		</van-grid>
+		<div class="msgCont">
+			<div class="item">
+				<img src="../../images/messLeft2.png" class="leftIcon" />
+				<div class="content">
+					<div class="top">
+						<p class="title">账户通知</p>
+						<p class="time">2020-6-26</p>
+					</div>
+					<p class="desc">尊敬的客户您好，您的账户于25日转入5928元您的账户于25日转入5928元，请您…</p>
+				</div>
+			</div>
+			<div class="item">
+				<img src="../../images/messLeft2.png" class="leftIcon" />
+				<div class="content">
+					<div class="top">
+						<p class="title">账户通知</p>
+						<p class="time">2020-6-26</p>
+					</div>
+					<p class="desc">尊敬的客户您好，您的账户于25日转入5928元您的账户于25日转入5928元，请您…</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</template>
+<script>
+	export default {
+		name: "message",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				girdId: 1,
+				grid: [{
+						name: "全部消息",
+						icon: require("../../images/messIcon1.png"),
+						id: 1,
+					},
+					{
+						name: "账户通知",
+						icon: require("../../images/messIcon2.png"),
+						id: 2,
+					},
+					{
+						name: "圈子互动",
+						icon: require("../../images/messIcon3.png"),
+						id: 3
+					},
+					{
+						name: "系统消息",
+						icon: require("../../images/messIcon4.png"),
+						id: 4
+					},
+				],
+			};
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+
+		}
+	}
+</script>
+<style lang="less">
+	.message {
+		padding-top: 46px;
+		background: #F0F6FC;
+		min-height: calc(100% - 46px);
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+		.grid{
+			margin: 0 10px;
+			width: calc(100% - 20px);
+			.van-grid-item {
+				width: 25%;
+			}
+			.van-grid-item__content {
+				padding: 6px 8px;
+				background: transparent;
+			
+				img {
+					width: 53px;
+					height: 53px;
+				}
+				.title{
+					color: #9AA8B6;
+					line-height: 20px;
+					padding: 0 5px;
+					border-radius: 30px;
+					&.active{
+						color: #5B646C;
+						background: #FFFFFF;
+					}
+				}
+			}
+		}
+		
+		.msgCont{
+			height: calc(100% - 85px);
+			overflow: auto;
+			background: #FFFFFF;
+			border-radius: 10px 10px 0 0;
+			.item{
+				margin: 0 10px;
+				padding: 10px 0;
+				border-bottom: 1px solid #F0F6FC;
+				display: flex;
+				.leftIcon{
+					width: 40px;
+					height: 40px;
+					margin-right: 10px;
+				}
+				.top{
+					display: flex;
+					justify-content: space-between;
+				}
+				.title{
+					font-size: 15px;
+					color: #444444;
+				}
+				.content{
+					color: #9AA8B6;
+					width: calc(100% - 50px);
+				}
+				.desc{
+					margin-top: 10px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					
+				}
+			}
+		}
+
+
+
+	}
+</style>

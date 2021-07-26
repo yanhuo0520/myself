@@ -1,0 +1,433 @@
+<template>
+	<div class="huzhuList" @scroll="scrollEvent($event)" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="互助金明细" left-arrow fixed @click-left="leftBack" />
+		<div class="content">
+			<van-sticky :offset-top="46">
+				<div class="searchCont">
+					<div class="itemSea" @click="dateShow = true">
+						<img src="../../images/date2.png" class="icon" />
+						<p>{{searchDate}}</p>
+					</div>
+					<div class="itemSea" @click="selectShow = true">
+						<img src="../../images/jieStu.png" class="icon" />
+						<p>{{loanStatusText}}</p>
+					</div>
+				</div>
+			</van-sticky>
+
+			<div class="item" v-for="(item, index) in proList" :key="index">
+				<div class="header">
+					<p class="time">{{item.log_date}}</p>
+				</div>
+				<van-grid class="grid" :column-num="2" :border="false">
+					<van-grid-item>
+						<p class="num">{{item.log_money}}</p>
+						<p class="title">{{item.log_type_str}}</p>
+					</van-grid-item>
+					<van-grid-item>
+						<p class="num">{{item.last_money}}</p>
+						<p class="title">余额</p>
+					</van-grid-item>
+				</van-grid>
+			</div>
+			<!-- 加载中 -->
+			<van-loading v-if="isLoading" size="24px">{{deviceTip}}</van-loading>
+			<!-- 没有更多了 -->
+			<p v-if="!isLoading" class="noMore">{{deviceTip}}</p>
+		</div>
+
+		<van-calendar v-model="dateShow" :min-date="minDate" color="#3B6AF1" title="选择借款日期" type="range"
+			@confirm="onConfirm" />
+
+
+		<!-- 选择状态 -->
+		<van-action-sheet v-model="selectShow" title="选择状态" class="selSheet" :closeable="false">
+			<van-radio-group v-model="radioId">
+				<van-cell :title="item1.name" clickable v-for="(item1, index1) in logTypeList" :key="index1"
+					@click="radioId = item1.id, radioSelStatus = item1.status, radioStatusText = item1.name"
+					:class="radioId == item1.id ? 'active' : ''">
+					<template #right-icon>
+						<van-radio :name="item1.id">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel()">确定</van-button>
+		</van-action-sheet>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "huzhuList",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				selectShow: false,
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+				radioId: 1,
+				radioSelId: 1,
+				loanStatus: 0,
+				radioSelStatus: 0,
+				loanStatusText: '全部',
+				radioStatusText: '全部',
+				// log_type 	查询的记录类型：0全部，10存款，1取款，2贷款，3还款，5转入，6转出，14定期存入，15定期取出
+				logTypeList: [{
+					name: '全部',
+					id: 1,
+					status: 0
+				}, {
+					name: '取款',
+					id: 2,
+					status: 1
+				}, {
+					name: '贷款',
+					id: 3,
+					status: 2
+				}, {
+					name: '还款',
+					id: 4,
+					status: 3
+				}, {
+					name: '转入',
+					id: 5,
+					status: 5
+				}, {
+					name: '转出',
+					id: 6,
+					status: 6
+				}, {
+					name: '存款',
+					id: 7,
+					status: 10
+				}, {
+					name: '定期存入',
+					id: 8,
+					status: 14
+				}, {
+					name: '定期取出',
+					id: 9,
+					status: 15
+				}],
+
+				minDate: new Date(2021, 0, 1),
+				startDate: '',
+				endDate: '',
+				searchDate: '选择借款日期',
+				dateShow: false,
+				proList: [],
+				pageSize: 10, //每页显示
+				page: 1, //当前页
+				totalNum: 0, //总条数
+				totalPage: 1, //总页数
+				ifFinish: false, //是否加载完成
+				isLoading: true, //是否加载更多
+				deviceTip: ''
+			};
+		},
+		mounted() {
+			this.getList()
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 页面滚动
+			scrollEvent(e) {
+				if (e instanceof Event) {
+					let el = e.target;
+					let scrollTop = el.scrollTop;
+					let clientHeight = el.clientHeight; // 获取可视区的高度
+					let scrollHeight = el.scrollHeight; // 获取滚动条的总高度
+					let height = 50;
+
+					if (scrollTop > 138) {
+						this.ifFixed = true
+					} else {
+						this.ifFixed = false
+					}
+
+					//到底了
+					// console.log(this.isLoading, this.ifFinish);
+					// console.log(scrollTop, clientHeight, scrollHeight);
+					//是否继续加载且已完成加载
+					if (scrollTop + clientHeight >= scrollHeight && this.isLoading && !this.ifFinish && this.page <= this
+						.totalPage) {
+						// 把距离顶部的距离加上可视区域的高度 等于或者大于滚动条的总高度就是到达底部
+						this.isLoading = true;
+						// console.log("到底了");
+						setTimeout(() => {
+							this.getList();
+						}, 1000);
+					}
+
+				}
+			},
+			getList() {
+				let data = {}
+				data.log_type = this.loanStatus
+				data.page = this.page
+				data.size = this.pageSize
+				data.start_date = this.startDate
+				data.end_date = this.endDate
+				this.$api.passbookLog(data).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.totalNum = res.data.count;
+						this.totalPage = res.data.total_page
+						if (this.totalNum == 0) {
+							// console.log("没有数据");
+							this.isLoading = false;
+							this.ifFinish = true;
+							this.page = 1;
+							this.deviceTip = "暂无数据";
+							return false;
+						}
+						this.proList = this.proList.concat(res.data.log);
+						// console.log(this.page, this.totalPage);
+						if (this.page == this.totalPage) {
+							this.isLoading = false;
+							this.ifFinish = true;
+							// this.page = 1;
+							this.deviceTip = "没有更多了~";
+							// console.log("没有更多了");
+						} else {
+							// console.log("下一页");
+							this.isLoading = true;
+							this.ifFinish = false;
+							this.page++;
+							this.deviceTip = "正在加载中~";
+						}
+					} else {
+						this.proList = [];
+						this.isLoading = false;
+						this.ifFinish = true;
+						this.page = 1;
+						this.deviceTip = "数据加载失败~";
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				});
+			},
+
+			formatDate(date) {
+				return `${date.getMonth() + 1}/${date.getDate()}`;
+			},
+			formatDate1(date) {
+				return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+			},
+			onConfirm(date) {
+				const [start, end] = date;
+				this.dateShow = false;
+				this.startDate = this.formatDate1(start)
+				this.endDate = this.formatDate1(end)
+				this.searchDate = `${this.formatDate(start)} - ${this.formatDate(end)}`;
+				this.proList = []
+				this.page = 1
+				this.totalNum = 0
+				this.totalPage = 1
+				this.ifFinish = false
+				this.isLoading = true
+				this.deviceTip = ''
+				this.getList()
+			},
+			sureSel() {
+				this.selectShow = false
+				if (this.radioId != this.radioSelId) {
+					this.radioSelId = this.radioId;
+					this.loanStatus = this.radioSelStatus;
+					this.loanStatusText = this.radioStatusText;
+					this.proList = []
+					this.page = 1
+					this.totalNum = 0
+					this.totalPage = 1
+					this.ifFinish = false
+					this.isLoading = true
+					this.deviceTip = ''
+					this.getList()
+				}
+			},
+		}
+	}
+</script>
+<style lang="less">
+	.huzhuList {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.content {
+			.searchCont {
+				padding: 0 10px;
+				display: flex;
+				align-items: center;
+				background: #F0F6FC;
+
+				.itemSea {
+					display: flex;
+					align-items: center;
+					padding-left: 10px;
+					width: 130px;
+					height: 30px;
+					border-radius: 30px;
+					background: #FFFFFF url(../../images/down.png) no-repeat calc(100% - 10px) center;
+					background-size: 8px 5px;
+
+					&:last-child {
+						margin-left: 10px;
+					}
+
+					p {
+						margin-left: 5px;
+					}
+
+					.icon {
+						height: 14px;
+					}
+				}
+			}
+
+			.item {
+				margin: 10px 10px 0 10px;
+				border-radius: 10px;
+				background: #FFFFFF;
+
+				.header {
+					font-size: 15px;
+					display: flex;
+					align-items: center;
+					background: url(../../images/right1.png) no-repeat calc(100% - 10px) center;
+					background-size: 9px 15px;
+					height: 42px;
+					padding: 0 30px 0 15px;
+					position: relative;
+
+					&::before {
+						position: absolute;
+						top: 16px;
+						left: 8px;
+						content: '';
+						width: 3px;
+						height: 8px;
+						border-radius: 35%;
+						background: #3B6AF1;
+					}
+				}
+
+				.grid {
+					.van-grid-item {
+						border-top: 1px solid #F0F6FC;
+						border-right: 1px solid #F0F6FC;
+
+						&:nth-child(2n) {
+							border-right: none;
+						}
+
+						&:first-child {
+							.num {
+								&::before {
+									background: none;
+								}
+							}
+						}
+
+						.num {
+							font-size: 15px;
+							position: relative;
+
+							&::before {
+								position: absolute;
+								top: -5px;
+								left: calc(100% + 2px);
+								content: '';
+								min-width: 14px;
+								height: 10px;
+								background: url(../../images/yuan1.png) no-repeat;
+								background-size: auto 10px;
+							}
+						}
+
+						.title {
+							margin-top: 5px;
+							color: #9AA8B6;
+						}
+					}
+				}
+			}
+
+			.null {
+				text-align: center;
+
+				img {
+					max-width: 100%;
+				}
+			}
+
+			.van-loading,
+			.noMore {
+				padding: 10px 0;
+				text-align: center;
+			}
+		}
+
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+		}
+
+
+	}
+</style>

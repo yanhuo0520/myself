@@ -1,0 +1,1169 @@
+<template>
+	<div class="joinCooper" :style='{height: deviceHeight + "px"}'>
+		<img src="../../images/xiexianBg.png" class="bgxiexian" />
+		<img :src="MtitleImg" class="main-title" />
+		<van-grid class="grid" :column-num="3" :border="false">
+			<van-grid-item v-for="(item, index) in grid" :key="index" @click="$router.push(item.path)">
+				<img :src="item.icon" alt="" />
+				<p>{{ item.name }}</p>
+			</van-grid-item>
+		</van-grid>
+		<!-- 选择机构 -->
+		<div class="itemCont itemCont2" v-if="itemId == 1">
+			<van-collapse class="item2ApplyShow" v-model="activeNames" v-if="applyList.length > 0">
+			  <van-collapse-item title="正在申请的合作社" name="1">
+			    <p v-for="(item1, index1) in applyList" :key="index1">{{item1}}</p>
+			  </van-collapse-item>
+			</van-collapse>
+			<p class="m-title">选择合作(联)社</p>
+			<van-cell :title="sureTitle" is-link @click.stop="addreShow = true" />
+
+			<p class="btnTop" @click.stop="goNext(1)">保存并转至下一步</p>
+			<p class="btnBottom" @click.stop="backBefore(1)">返回</p>
+		</div>
+		
+		<!-- 提醒 -->
+		<div class="tipCont" v-if="hasApply">
+			<img src="../../images/tipImg.png" alt="" class="leftImg" />
+			您已经申请过该合作社,请选择其他合作社
+			<img src="../../images/guang.png" alt="" class="rightImg" />
+		</div>
+
+		<!-- 基本资料 -->
+		<div class="itemCont itemCont3" v-if="itemId == 2">
+			<div class="topTitle">
+				<p>上传照片</p>
+				<p><span>{{ifzIMg + iffIMg + ifhIMg}}</span>/3</p>
+			</div>
+
+			<div class="uploadCont">
+				<div class="left">
+					<img src="../../images/touxiangTitle.png" />
+					<p>请保持照片清晰可辨 <br />
+						不可缺失边框</p>
+				</div>
+				<van-uploader :after-read="afterRead1" :max-count="1">
+					<img src="../../images/cardImg1.png" class="rightImg" v-if="!zcardIdImg" />
+					<img :src="zcardIdImg" class="rightImg" v-else />
+				</van-uploader>
+				
+			</div>
+			<div class="uploadCont">
+				<div class="left">
+					<img src="../../images/guohuiTitle.png" />
+					<p>请保持照片清晰可辨 <br />
+						不可缺失边框</p>
+				</div>
+				<van-uploader :after-read="afterRead2" :max-count="1">
+					<img src="../../images/cardImg2.png" class="rightImg" v-if="!fcardIdIMg" />
+					<img :src="fcardIdIMg" class="rightImg" v-else />
+				</van-uploader>
+			</div>
+			<div class="uploadCont">
+				<div class="left">
+					<img src="../../images/benrenTitle.png" />
+					<p>正面头部照、人像清晰可辨 <br />
+						不可缺失边框
+					</p>
+				</div>
+				<van-uploader :after-read="afterRead3" :max-count="1">
+					<img src="../../images/cardImg3.png" class="rightImg" v-if="!headerIMg" />
+					<img :src="headerIMg" class="rightImg" v-else />
+				</van-uploader>
+			</div>
+
+			<van-cell-group>
+				<van-field v-model="name" clearable label="社员姓名" :left-icon="require('../../images/person1.png')"
+					placeholder="请输入社员姓名" />
+				<van-field v-model="sex" label="性别" :left-icon="require('../../images/sex.png')" input-align="right"
+					class="selRido">
+					<template #input>
+						<p @click="sex = 1" :class="sex == 1? 'active' : '' ">男</p>
+						<p @click="sex = 2" :class="sex == 2? 'active' : '' ">女</p>
+					</template>
+				</van-field>
+
+				<van-field v-model="address" clearable label="籍贯" :left-icon="require('../../images/native.png')"
+					placeholder="请输入籍贯" />
+				<van-field v-model="nation" readonly label="民族" :left-icon="require('../../images/nation.png')"
+					placeholder="请输入民族" @click="selecNationShow=true" :right-icon="require('../../images/right1.png')" />
+				<van-field v-model="permanent_type" label="户口类型" :left-icon="require('../../images/hukou.png')"
+					input-align="right" class="selRido">
+					<template #input>
+						<p @click="permanent_type = 1" :class="permanent_type == 1? 'active' : '' ">农业</p>
+						<p @click="permanent_type = 2" :class="permanent_type == 2? 'active' : '' ">城镇</p>
+					</template>
+				</van-field>
+				<van-field v-model="idNumber" clearable label="身份证号" :left-icon="require('../../images/person2.png')"
+					placeholder="请输入身份证号" />
+				<van-field v-model="dateBirth" readonly label="出生年月" :left-icon="require('../../images/date.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择出生年月" @click="selectDate=true" />
+				<van-field v-model="xueLi" readonly label="学历" :left-icon="require('../../images/xueli.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择学历"
+					@click="selectEduShow=true" />
+				<van-field v-model="mianMao" readonly label="政治面貌" :left-icon="require('../../images/mianmao.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择政治面貌"
+					@click="selectZZShow=true" />
+			</van-cell-group>
+
+			<p class="btnTop" @click.stop="goNext(2)">保存并转至下一步</p>
+			<p class="btnBottom" @click.stop="backBefore(2)">返回上一步</p>
+		</div>
+
+		<!-- 工作信息 -->
+		<div class="itemCont itemCont4" v-if="itemId == 3">
+			<van-cell-group>
+				<van-field v-model="work" clearable label="工作单位" :left-icon="require('../../images/person1.png')"
+					placeholder="请输入您所在工作单位"/>
+				<van-field v-model="position" clearable label="工作职位" :left-icon="require('../../images/native.png')"
+					placeholder="请输入您的职位" />
+				<van-field v-model="hangye" readonly label="从事行业" :left-icon="require('../../images/mianmao.png')"
+					:right-icon="require('../../images/right1.png')" placeholder="请选择从事行业"
+					@click="selectHYShow=true" />
+			</van-cell-group>
+
+			<p class="btnTop" @click.stop="goNext(3)">完成</p>
+			<p class="btnBottom" @click.stop="backBefore(3)">返回上一步</p>
+		</div>
+		<!-- 出生日期选择 -->
+		<van-calendar v-model="selectDate" :default-date="defaultDate" :min-date="minDate" color="#3B6AF1" title="请选择出生年月" @confirm="onConfirmDate" />
+
+		<van-popup v-model="addreShow" round position="bottom">
+			<van-cascader v-model="cascaderValue" title="请选择所在地区" :options="options" active-color="#1989fa"
+				@close="addreShow = false" @change="onChange" @finish="onFinish" />
+		</van-popup>
+
+		<!-- 选择民族 -->
+		<van-action-sheet v-model="selecNationShow" title="选择民族" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadioNation">
+				<van-cell :title="item.nation" v-for="(item, index) in nationList" :key="index" clickable
+					@click="selRadioNation = item.id, selTitleNation = item.nation"
+					:class="selRadioNation == item.id ? 'active' : ''">
+					<template #right-icon>
+						<van-radio :name="item.id">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(1)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择学历 -->
+		<van-action-sheet v-model="selectEduShow" title="选择学历" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadioEdu">
+				<van-cell :title="item.name" v-for="(item, index) in xueEduList" :key="index" clickable
+					@click="selRadioEdu = item.edu_id, selTitleEdu = item.name"
+					:class="selRadioEdu == item.edu_id ? 'active' : ''">
+					<template #right-icon>
+						<van-radio :name="item.edu_id">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(2)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择政治面貌 -->
+		<van-action-sheet v-model="selectZZShow" title="选择政治面貌" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadioZZ">
+				<van-cell :title="item.name" v-for="(item, index) in zhengZList" :key="index" clickable
+					@click="selRadioZZ = item.political_outlook_id, selTitleZZ = item.name"
+					:class="selRadioZZ == item.political_outlook_id ? 'active' : ''">
+					<template #right-icon>
+						<van-radio :name="item.political_outlook_id">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(3)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择从事行业 -->
+		<van-action-sheet v-model="selectHYShow" title="选择从事行业" class="selSheet" :closeable="false">
+			<van-radio-group v-model="selRadioHY">
+				<van-cell :title="item.name" v-for="(item, index) in hangYeList" :key="index" clickable
+					@click="selRadioHY = item.occ_id, selTitleHY = item.name"
+					:class="selRadioHY == item.occ_id ? 'active' : ''">
+					<template #right-icon>
+						<van-radio :name="item.occ_id">
+							<template #icon="props">
+								<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+							</template>
+						</van-radio>
+					</template>
+				</van-cell>
+			</van-radio-group>
+			<van-button round block type="info" @click="sureSel(4)">确定</van-button>
+		</van-action-sheet>
+	</div>
+</template>
+<script>
+	export default {
+		name: "joinCooper",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight,
+				grid: [{
+						name: "选择机构",
+						icon: require("../../images/joinIcon1.png"),
+					},
+					{
+						name: "基本资料",
+						icon: require("../../images/joinIcon2.png"),
+					},
+					{
+						name: "工作信息",
+						icon: require("../../images/joinIcon3.png"),
+					}
+				],
+				seltype: '',
+				itemId: 1,
+				MtitleImg: require("../../images/joinTitle1.png"),
+				phone: this.$Cookies.get('phone'),
+				hasApply: false,
+				activeNames: [],
+				applyList: [],
+
+				addreShow: false,
+				selectTitle: '',
+				cascaderValue: '',
+				optionId1: 0,
+				optionId2: 0,
+				optionId3: 0,
+				optionId4: 0,
+				optionId5: 0,
+				options: [{
+					text: '浙江省',
+					value: '330000',
+					children: [],
+				}, ],
+				cooperation_id: '',
+				user_id: '', // 用户ID
+
+				zcardIdImg: '',
+				ifzIMg: 0,
+				fcardIdIMg: '',
+				iffIMg: 0,
+				headerIMg: '',
+				ifhIMg: 0,
+
+				name: '',
+				sex: 1,
+				address: '',
+				permanent_type: 1,
+				idNumber: '',
+
+				dateBirth: '',
+				selectDate: false,
+				minDate: new Date(1900, 0, 1),
+				defaultDate: new Date(),
+				
+				nation: '',
+				nation_id: '',
+				nationList: [],
+				selecNationShow: false,
+				selRadioNation: 1,
+				selTitleNation: '',
+
+				xueLi: '',
+				edu_id: '',
+				xueEduList: [],
+				selectEduShow: false,
+				selRadioEdu: 1,
+				selTitleEdu: '',
+
+				mianMao: '',
+				political_outlook_id: '',
+				zhengZList: [],
+				selectZZShow: false,
+				selRadioZZ: 1,
+				selTitleZZ: '',
+
+				work: '',
+				position: '',
+				hangye: '',
+				occ_id: '',
+				hangYeList: [],
+				selectHYShow: false,
+				selRadioHY: 1,
+				selTitleHY: '',
+
+				sureTitle: '请选择想要加入的合作(联)社',
+				radioIcon: require("../../images/radio.png"),
+				radioActiveIcon: require("../../images/radioSel.png"),
+			};
+		},
+		mounted() {
+			this.seltype = this.$route.query.type
+			if (this.seltype == 0) {
+				this.sureTitle = "请选择想要加入的合作社"
+			} else if (this.seltype == 1) {
+				this.sureTitle = "请选择想要加入的合作联社"
+			}
+			this.getAddress(1)
+			this.userInfoDetail()
+			this.nationLi()
+			this.edu()
+			this.politicalList()
+			this.occList()
+		},
+		methods: {
+			getImgUrl() {
+				this.MtitleImg = require("../../images/joinTitle" + this.itemId + ".png")
+			},
+			userInfoDetail(){
+				this.$api.userInfoDetail().then(res => {
+						this.$toast.clear()
+						if (res.errno == 0) {
+							this.ifzIMg =  res.data.idcard_just ? 1 : 0
+							this.zcardIdImg = res.data.idcard_just
+							this.iffIMg =  res.data.idcard_reverse ? 1 : 0
+							this.fcardIdIMg = res.data.idcard_reverse
+							this.ifhIMg =  res.data.photo ? 1 : 0
+							this.headerIMg = res.data.photo
+							this.name = res.data.name
+							this.sex = res.data.sex ? res.data.sex : 1
+							this.address = res.data.native_place
+
+							this.nation_id = res.data.nation_id
+							this.nation = res.data.nation_name
+							this.selRadioNation = res.data.nation_id
+							this.selTitleNation = res.data.nation_name
+
+							this.permanent_type = res.data.permanent_type
+							this.idNumber = res.data.idcard
+							this.dateBirth = res.data.birth_date.substring(0, 10)
+
+							this.xueLi = res.data.edu_name
+							this.edu_id = res.data.edu_id
+							this.selTitleEdu = res.data.edu_name
+							this.selRadioEdu = res.data.edu_id
+
+							this.mianMao = res.data.political_outlook_name
+							this.political_outlook_id = res.data.political_outlook_id
+							this.selTitleZZ = res.data.political_outlook_name
+							this.selRadioZZ = res.data.political_outlook_id
+
+							this.work = res.data.work_unit
+							this.position = res.data.position
+
+
+							this.hangye = res.data.occ_name
+							this.occ_id = res.data.occ_id
+							this.selTitleHY = res.data.occ_name
+							this.selRadioHY = res.data.occ_id
+							
+							this.applyList = []
+							let coopera_lists = res.data.coopera_lists
+							if(coopera_lists.length > 0){
+								coopera_lists.forEach(ele=>{
+									// status 审核状态：0未审核1通过2拒绝3审核中
+									if(ele.status == 0 || ele.status == 3){
+										this.applyList.push(ele.coopera_name)
+									}
+								})
+							}
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+						this.$toast.clear()
+					})
+			},
+			goNext(id) {
+				if (id == 1) {
+					if (this.seltype == 0 && (this.sureTitle == "请选择想要加入的合作社" || !this.cooperation_id)) {
+						this.$toast("请选择想要加入的合作社")
+						return
+					} else if (this.seltype == 1 && (this.sureTitle == "请选择想要加入的合作联社" || !this.cooperation_id)) {
+						this.$toast("请选择想要加入的合作联社")
+						return
+					}
+					this.$api.UserSeleCoopera({cooperation_id: this.cooperation_id}).then(res => {
+						this.$toast.clear()
+						if (res.errno == 0) {
+							this.itemId = 2
+							this.getImgUrl()
+						} else if(res.errno == 1){ // 该合作社已经申请过，请选择其他合作社
+							this.hasApply = true
+							 setTimeout(() => {
+								this.hasApply = false;
+							}, 2000);
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+						this.$toast.clear()
+					})
+				} else if (id == 2) {
+					if(!this.zcardIdImg){
+						this.$toast("请上传身份证正面照片");
+						return
+					}
+					if(!this.fcardIdIMg){
+						this.$toast("请上传身份证反面照片");
+						return
+					}
+					if(!this.headerIMg){
+						this.$toast("请上传本人照片");
+						return
+					}
+					if(!this.name){
+						this.$toast("请输入社员姓名");
+						return
+					}
+					if(!this.nation_id){
+						this.$toast("请输入民族");
+						return
+					}
+					if (this.$validateIdCard(this.idNumber) != true) {
+						this.$toast(this.$validateIdCard(this.idNumber))
+						return
+					}
+					let data = {}
+						data.photo = this.headerIMg
+						data.idcard_just = this.zcardIdImg
+						data.idcard_reverse = this.fcardIdIMg
+						data.name = this.name
+						data.sex = this.sex
+						data.birth_date = this.dateBirth
+						data.native_place = this.address
+						data.idcard = this.idNumber
+						data.nation_id = this.nation_id
+						data.permanent_type = this.permanent_type
+						data.edu_id = this.edu_id
+						data.political_outlook_id = this.political_outlook_id
+					this.$api.newUserAuth(data).then(res => {
+						this.$toast.clear()
+						if (res.errno == 0) {
+							this.itemId = 3
+							this.getImgUrl()
+							this.$Cookies.set('userName', this.name, {
+								expires: 30,
+								path: ''
+							})
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+						this.$toast.clear()
+					})
+
+					this.itemId = 3
+				} else { // 完成
+					if(this.work.trim().length == 0){
+						this.$toast("请输入您所在工作单位");
+						return
+					}
+					if(this.position.trim().length == 0){
+						this.$toast("请输入您的职位");
+						return
+					}
+					if(this.hangye.trim().length == 0){
+						this.$toast("请选择从事行业");
+						return
+					}
+					let data = {}
+						data.work_unit = this.work
+						data.position = this.position
+						data.occ_id = this.occ_id
+					this.$api.career(data).then(res => {
+						this.$toast.clear()
+						if (res.errno == 0) {
+							this.$router.replace({
+								path: '/'
+							})
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+						this.$toast.clear()
+					})
+				}
+			},
+			backBefore(id) {
+				if (id == 1) {
+					this.$router.go(-1);
+				} else if (id == 2) {
+					this.itemId = 1
+					this.getImgUrl()
+				} else if (id == 3) {
+					this.itemId = 2
+					this.getImgUrl()
+				}
+			},
+			// 选择合作社地址
+			getAddress(level, code) {
+				this.$api.addresss({
+					level: level,
+					code: code,
+					type: this.seltype
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						for (let i = 0; i < res.data.length; i++) {
+							res.data[i].id = i
+							res.data[i].value = res.data[i].code
+							res.data[i].text = res.data[i].name
+							res.data[i].level = level
+							res.data[i].children = []
+						}
+						this.options = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			onChange({value, selectedOptions, tabIndex}) {
+				if (tabIndex == 0) {
+					this.optionId1 = selectedOptions[0].id
+				} else if (tabIndex == 1) {
+					this.optionId2 = selectedOptions[1].id
+				} else if (tabIndex == 2) {
+					this.optionId3 = selectedOptions[2].id
+				} else if (tabIndex == 3) {
+					this.optionId4 = selectedOptions[3].id
+				} else if (tabIndex == 4) {
+					this.optionId5 = selectedOptions[4].id
+				}
+				if (tabIndex > 4) {
+					return
+				}
+				this.$api.addresss({
+					level: tabIndex + 2,
+					code: value,
+					type: this.seltype
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if (res.data.length > 0) {
+							for (let i = 0; i < res.data.length; i++) {
+								res.data[i].id = i
+								res.data[i].value = res.data[i].code
+								res.data[i].text = res.data[i].name
+								res.data[i].level = tabIndex + 2
+								if (tabIndex < 4) {
+									res.data[i].children = []
+								}
+							}
+						} else {
+							let array = {}
+							array.id = 0
+							array.code = ''
+							array.value = '暂无'
+							array.text = '暂无'
+							array.name = '暂无'
+							array.level = tabIndex + 2
+							res.data.push(array)
+						}
+
+						this.$nextTick(() => {
+							if (tabIndex == 0) {
+								this.options[this.optionId1].children = res.data;
+							} else if (tabIndex == 1) {
+								let children1 = this.options[this.optionId1].children
+								children1[this.optionId2].children = res.data;
+							} else if (tabIndex == 2) {
+								let children1 = this.options[this.optionId1].children
+								let children2 = children1[this.optionId2].children
+								children2[this.optionId3].children = res.data;
+							} else if (tabIndex == 3) {
+								let children1 = this.options[this.optionId1].children
+								let children2 = children1[this.optionId2].children
+								let children3 = children2[this.optionId3].children
+								children3[this.optionId4].children = res.data;
+							} else if (tabIndex == 4) {
+								let children1 = this.options[this.optionId1].children
+								let children2 = children1[this.optionId2].children
+								let children3 = children2[this.optionId3].children
+								let children4 = children3[this.optionId4].children
+								children4[this.optionId5].children = res.data;
+							}
+						})
+
+
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			onFinish({selectedOptions}) {
+				this.cooperation_id = selectedOptions[5].code
+				this.addreShow = false;
+				this.sureTitle = selectedOptions.map((option) => option.text).join('/');
+			},
+			// 身份证头像面
+			afterRead1(file){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				let token = this.$Cookies.get('token');
+				formdata.append("file", file.file);
+				formdata.append("token", token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				this.$toast.loading({
+					message: '识别中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						this.zcardIdImg = res.data.data.url
+						this.ifzIMg = 1
+						this.$api.idcardOcr({'idcard_url': this.zcardIdImg}).then(res => {
+							this.$toast.clear()
+							if (res.errno == 0) {
+								this.name = res.data.partyName
+								this.sex = (res.data.gender == '男') ? 1 : 2
+								this.address = res.data.certAddress
+								this.nation = res.data.nation
+								this.selTitleNation = res.data.nation
+								this.nationList.forEach(ele => {
+									if(ele.nation.indexOf(res.data.nation) > -1){
+										this.nation_id = ele.id
+										this.selRadioNation = ele.id
+									}
+								});
+								this.idNumber = res.data.certNumber
+								this.dateBirth = res.data.bornDay.substring(0, 4) + '-' + res.data.bornDay.substring(4, 6) + '-' + res.data.bornDay.substring(6, 8)
+								let year = res.data.bornDay.substring(0, 4)
+								let day = (res.data.bornDay.substring(4, 5) == 0) ? res.data.bornDay.substring(5, 6) : res.data.bornDay.substring(4, 6)
+								let date = (res.data.bornDay.substring(6, 7) == 0) ? res.data.bornDay.substring(7, 8) : res.data.bornDay.substring(6, 8)
+								this.defaultDate = new Date(year, day, date)
+							} else {
+								this.$toast(res.errmsg)
+							}
+						}).catch(err => {
+							this.$toast.clear()
+						})
+					} else {
+						this.ifzIMg = 0
+						this.$toast(res.errmsg);
+					}
+				});
+
+			},
+			// 国徽面
+			afterRead2(file){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				let token = this.$Cookies.get('token');
+				formdata.append("file", file.file);
+				formdata.append("token", token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						this.fcardIdIMg = res.data.data.url
+						this.iffIMg = 1
+					} else {
+						this.iffIMg = 0
+						this.$toast(res.errmsg);
+					}
+				});
+			},
+			// 本人照片
+			afterRead3(file){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				let token = this.$Cookies.get('token');
+				formdata.append("file", file.file);
+				formdata.append("token", token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						this.headerIMg = res.data.data.url
+						this.ifhIMg = 1
+					} else {
+						this.ifhIMg = 0
+						this.$toast(res.errmsg);
+					}
+				});
+			},
+			formatDate(date) {
+				return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+			},
+			onConfirmDate(date) {
+				this.selectDate = false;
+				this.dateBirth = this.formatDate(date);
+			},
+			// 民族
+			nationLi() {
+				this.$api.nation().then(res => {
+					if (res.errno == 0) {
+						this.nationList = res.data;
+						this.selRadioNation = res.data[0].id
+						this.selTitleNation = res.data[0].nation
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			// 学历
+			edu() {
+				this.$api.edu().then(res => {
+					if (res.errno == 0) {
+						this.xueEduList = res.data;
+						this.selRadioEdu = res.data[0].edu_id
+						this.selTitleEdu = res.data[0].name
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			// 政治面貌
+			politicalList() {
+				this.$api.politicalList().then(res => {
+					if (res.errno == 0) {
+						this.zhengZList = res.data;
+						this.selRadioZZ = res.data[0].political_outlook_id
+						this.selTitleZZ = res.data[0].name
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			// 从事行业
+			occList() {
+				this.$api.occList().then(res => {
+					if (res.errno == 0) {
+						this.hangYeList = res.data;
+						this.selRadioHY = res.data[0].occ_id
+						this.selTitleHY = res.data[0].name
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			sureSel(id){
+				if(id == 1){ // 民族
+					this.nation = this.selTitleNation
+					this.nation_id = this.selRadioNation
+					this.selecNationShow = false
+				}else if(id == 2){ // 政治面貌
+					this.xueLi = this.selTitleEdu
+					this.edu_id = this.selRadioEdu
+					this.selectEduShow = false
+				}else if(id == 3){ // 政治面貌
+					this.mianMao = this.selTitleZZ
+					this.political_outlook_id = this.selRadioZZ
+					this.selectZZShow = false
+				}else if(id == 4){ // 从事行业
+					this.hangye = this.selTitleHY
+					this.occ_id = this.selRadioHY
+					this.selectHYShow = false
+				}
+			},
+
+		},
+
+
+	}
+</script>
+<style lang="less">
+	.joinCooper {
+		background: url(../../images/bgHeader4.png) no-repeat;
+		background-size: 100% 300px;
+		.bgxiexian{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 135px;
+		}
+		.main-title {
+			margin: 30px 0 0 15px;
+			width: 85px;
+		}
+
+		.grid {
+			width: calc(100% - 20px);
+			margin: 15px 10px 0 10px;
+
+			.van-grid-item {
+				&:first-child {
+					.van-grid-item__content {
+						&::before {
+							height: 0;
+						}
+					}
+				}
+
+				&:last-child {
+					.van-grid-item__content {
+						&::after {
+							height: 0;
+						}
+					}
+				}
+			}
+
+			.van-grid-item__content {
+				padding: 0;
+				background: transparent;
+				position: relative;
+
+				&::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: calc(50% - 15px);
+					height: 30px;
+					background: url(../../images/joinIconRight.png) no-repeat left;
+					background-size: auto 7px;
+				}
+
+				&::after {
+					content: '';
+					position: absolute;
+					top: 0;
+					right: -1px;
+					width: calc(50% - 15px);
+					height: 30px;
+					background: url(../../images/joinIconLeft.png) no-repeat right;
+					background-size: auto 7px;
+				}
+
+				img {
+					width: 48px;
+					height: 48px;
+				}
+
+				p {
+					margin-top: -5px;
+				}
+			}
+		}
+
+		.loginGroup {
+			.van-cell {
+				background: transparent;
+
+				&.ifInPhone {
+					&::after {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+		}
+
+
+
+		.m-title {
+			margin-left: 15px;
+			color: #9AA8B6;
+
+			&.yzTil {
+				margin-top: 25px;
+			}
+		}
+
+		.btnTop {
+			margin: 30px 30px 0 30px;
+			background: #3b6af1;
+			border-radius: 40px;
+			font-size: 15px;
+			line-height: 40px;
+			color: #FFFFFF;
+			text-align: center;
+		}
+
+		.btnBottom {
+			margin-top: 10px;
+			text-align: center;
+			font-size: 15px;
+			color: #9AA8B6;
+			line-height: 40px;
+		}
+
+		.itemCont {
+			background: #FFFFFF;
+			border-radius: 10px 10px 0 0;
+			margin-top: 15px;
+		}
+
+		.itemCont1 {
+			padding: 60px 20px 0 20px;
+
+			input:-ms-input-placeholder {
+				color: #444444;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+			}
+
+			.btnTop {
+				margin-top: 80px;
+			}
+		}
+
+		.itemCont2,
+		.itemCont3 {
+			input {
+				text-align: right;
+			}
+		}
+
+
+		input:-ms-input-placeholder {
+			color: #9AA8B6;
+		}
+
+		::-webkit-input-placeholder {
+			color: #9AA8B6;
+		}
+
+		.itemCont2 {
+			padding: 20px 20px 0 20px;
+
+			.m-title {
+				margin-top: 40px;
+			}
+
+			.item2ApplyShow {
+				background: #F6FAFE;
+				border-radius: 10px;
+				.van-cell{
+					background: #F6FAFE;
+					border-radius: 10px 10px 0 0;
+					&::before{
+						position: absolute;
+						content: '';
+						left: 10px;
+						top: 17px;
+						width: 3px;
+						height: 8px;
+						background: #3B6AF1;
+						border-radius: 5px;
+					}
+					&::after{
+						border: none;
+					}
+				}
+				&.van-hairline--top-bottom::after, 
+				&.van-hairline-unset--top-bottom::after{
+					border-color: #F6FAFE;
+				}
+				.van-collapse-item__content{
+					background: #F6FAFE;
+					padding: 0 16px 10px 16px;
+					p{
+						padding: 5px 0;
+						border-top: 1px solid #F6FAFE;
+					}
+				}
+				.van-collapse-item__wrapper{
+					border-radius: 0 0 10px 10px;
+				}
+			}
+		}
+
+		.itemCont3 {
+			padding: 15px 15px 0 15px;
+
+			.topTitle {
+				display: flex;
+				justify-content: space-between;
+				color: #9AA8B6;
+
+				span {
+					color: #3B6AF1;
+				}
+			}
+
+			.uploadCont {
+				border-radius: 10px;
+				padding: 0 20px;
+				margin-top: 10px;
+				height: 100px;
+				background: #F0F6FC;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+
+				.left {
+					img {
+						height: 22px;
+					}
+
+					p {
+						margin-top: 5px;
+						line-height: 18px;
+						color: #9AA8B6;
+					}
+				}
+
+				.rightImg {
+					width: 123px;
+					height: 78px;
+				}
+			}
+
+			.van-cell-group {
+				margin: 10px -15px;
+				background: #f0f6fc;
+				padding-top: 10px;
+
+				&.van-hairline--top-bottom::after,
+				.van-hairline-unset--top-bottom::after {
+					border-width: 0;
+				}
+
+				.van-cell {
+					align-items: center;
+
+					.van-field__label {
+						width: 4.2em;
+					}
+				}
+
+				.selRido {
+					p {
+						color: #9AA8B6;
+						line-height: 26px;
+						background: #F0F6FC;
+						padding: 0 15px;
+						border-radius: 20px;
+						margin-left: 10px;
+
+						&.active {
+							color: #FFFFFF;
+							background: #3B6AF1;
+						}
+					}
+				}
+			}
+		}
+
+		.itemCont4 {
+			padding: 15px 15px 0 15px;
+
+			.van-cell-group {
+				margin: 10px -15px;
+
+				&.van-hairline--top-bottom::after,
+				.van-hairline-unset--top-bottom::after {
+					border-width: 0;
+				}
+
+				.van-cell {
+					align-items: center;
+
+					.van-field__label {
+						width: 4.2em;
+					}
+				}
+			}
+
+			.btnTop {
+				margin-top: 60px;
+			}
+		}
+
+
+
+
+
+		// 选择框
+		.van-calendar__selected-day {
+			border-radius: 50%;
+		}
+
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+		}
+
+		.tipCont{
+			position: fixed;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #3A3F4E;
+			line-height: 40px;
+			height: 40px;
+			font-size: 14px;
+			color: #C3C8D8;
+			padding-left: 56px;
+			border-radius: 5px;
+			.leftImg{
+				position: absolute;
+				left: 2px;
+				bottom: 0;
+				width: 50px;
+				height: 50px;
+			}
+			.rightImg{
+				position: absolute;
+				right: 0;
+				top: 0;
+				height: 40px;
+			}
+		}
+	}
+</style>

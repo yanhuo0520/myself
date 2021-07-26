@@ -1,0 +1,246 @@
+<template>
+	<div class="applyCard" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="添加银行卡" left-arrow fixed @click-left="leftBack" />
+		<p class="m-title">仅限<span>本人</span>持有的银行卡</p>
+		<div class="groupCont">
+			<p class="title">银行卡号</p>
+			<van-field v-model="cardNum" clearable :class="ifIn? 'ifIn' : ''" placeholder="请输入银行卡号"
+				@input="ifIn = true" />
+			<van-uploader :after-read="afterRead" :max-count="1" class="upload" />
+		</div>
+		<van-button :icon='require("../../images/add.png")' type="info" block class="sendBtn" @click="sendApply()" v-if="hidshowFooter">
+			立即添加
+		</van-button>
+	</div>
+</template>
+<script>
+	export default {
+		name: "applyCard",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 90,
+				cardNum: '',
+				ifIn: false,
+				access_token: this.$Cookies.get('access_token'),
+
+				docmHeight: document.documentElement.clientHeight, //默认屏幕高度
+				showHeight: "0", //实时屏幕高度
+				hidshowFooter: true, //显示或者隐藏footer,
+			}
+		},
+		mounted() {
+			//获取百度图片识别的token
+			if(!this.access_token){
+				this.$axios.post(
+				'/oauth/2.0/token?grant_type=client_credentials&client_id=PnbUKoLG7YgIRGkvs0uuYHZ2&client_secret=izqv1atUOpodNfphsjYHQgxBq2H3g90v&', {}).then(res => {
+					if (res.status == 200) {
+						this.access_token = res.data.access_token;
+						this.$Cookies.set('access_token', res.data.access_token, {expires: 30, path: ''})
+					}else{
+						
+					}
+				})
+			}
+			window.onresize = () => { // 实时屏幕高度
+				this.showHeight = document.body.clientHeight;
+			};
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 银行卡识别
+			afterRead(file) {
+				var imgs = file.content.replace(/^data:image\/\w+;base64,/, "");//需去掉编码头
+				this.$axios.post('/rest/2.0/ocr/v1/bankcard', {
+					image: imgs,
+					access_token: this.access_token,
+				}).then(res => {
+					if (res.status == 200){
+						this.cardNum = res.data.result.bank_card_number
+					}
+				})
+			},
+			// 提交
+			sendApply() {
+				this.$toast.loading({
+					message: '加载中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.userGetBankByBanknum({
+					bank_num: this.cardNum
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.$router.push({
+							path: '/applyCardDetail',
+							query: {
+								carNum: this.cardNum,
+								cardType: res.data,
+								info: JSON.stringify(res.info)
+							}
+						})
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			}
+
+		},
+		watch: {
+			showHeight: function() {
+				if (this.docmHeight > this.showHeight) {
+					this.hidshowFooter = false;
+				} else {
+					this.hidshowFooter = true;
+				}
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.applyCard {
+		padding-top: 46px;
+		padding-bottom: 44px;
+		background: #f0f6fc url(../../images/applyBg.png) no-repeat right 46px;
+		background-size: auto 36px;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+
+		.m-title {
+			margin: 0 10px;
+			padding-top: 10px;
+
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+		.groupCont {
+			background: #ffffff;
+			margin-top: 10px;
+			padding-top: 20px;
+			border-radius: 10px 10px 0 0;
+			height: calc(100% - 30px);
+			position: relative;
+
+			input:-ms-input-placeholder {
+				color: #444444;
+				font-size: 12px;
+			}
+
+			::-webkit-input-placeholder {
+				color: #444444;
+				font-size: 12px;
+			}
+
+			.title {
+				margin-left: 15px;
+				color: #9AA8B6;
+
+				&.yzTil {
+					margin-top: 25px;
+				}
+			}
+
+			.van-cell {
+				background: transparent;
+
+				&::after {
+					border: none;
+				}
+
+				&.ifIn {
+					.van-field__value {
+						border-bottom: 1px solid #3B6AF1;
+					}
+				}
+
+				.van-field__right-icon {
+					color: #3B6AF1;
+				}
+
+				.van-field__value {
+					border-bottom: 1px solid #F0F6FC;
+
+					input {
+						line-height: 32px;
+						font-family: DIN, DIN-Medium;
+						font-size: 20px;
+					}
+				}
+
+				.iconImg {
+					width: 11px;
+					padding-right: 2px;
+				}
+			}
+
+			.upload {
+				position: absolute;
+				right: 5px;
+				top: 48px;
+
+				.van-uploader__upload {
+					width: 46px;
+					height: 26px;
+					background: transparent;
+					margin: 0;
+				}
+
+				.van-uploader__upload-icon {
+					font-size: 20px;
+					color: #3B6AF1;
+				}
+			}
+
+			.cardCont {
+				display: flex;
+				align-items: center;
+				margin: 0 12px;
+				font-size: 15px;
+
+				img {
+					height: 20px;
+					margin-right: 5px;
+				}
+			}
+		}
+
+
+
+		.sendBtn {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+
+
+
+	}
+</style>

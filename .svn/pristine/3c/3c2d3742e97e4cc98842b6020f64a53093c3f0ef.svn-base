@@ -1,0 +1,64 @@
+<template>
+	<div class="ontimeHuanNull" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="按期还款" left-arrow fixed @click-left="leftBack" />
+		<div class="content">
+			<img src="../../images/null.png" />
+		</div>
+	</div>
+</template>
+<script>
+	export default {
+		name: "ontimeHuanNull",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+			};
+		},
+		mounted() {
+
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+		},
+	}
+</script>
+<style lang="less">
+	.ontimeHuanNull {
+		padding-top: 46px;
+		background: #f0f6fc url(../../images/bgHeader6.png) no-repeat;
+		background-size: 100% 170px;
+		overflow: auto;
+
+		.van-nav-bar {
+			z-index: 10;
+			background: url(../../images/bgHeader6.png) no-repeat top center;
+			background-size: 100% 170px;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+		.content{
+			text-align: center;
+			img{
+				margin-top: 60px;
+				width: 100%;
+				max-width: 400px;
+			}
+		}
+
+
+
+	}
+</style>

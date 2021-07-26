@@ -1,0 +1,889 @@
+<template>
+	<div class="chooseIdentity" :style='{height: deviceHeight + "px"}'>
+		<div class="topTitle">
+			<img src="../images/xiexianBg.png" class="bgxiexian" />
+			<img src="../images/selTitle.png" class="leftImg" />
+			<img src="../images/selPng.png" class="rightImg" />
+		</div>
+		<div class="content">
+			<!-- 合作社 + 多种身份 -->
+			<template v-if="identityId == 2 ||identityId == 3 || identityId == 4 || identityId == 5 ">
+				<p class="m-title">选择机构类型</p>
+				<div class="sel-Title">
+					<div>
+						<p @click="selTitle = 1, onlyTitle = '每人仅限创建一个群众团体', clickTab1()" :class="{'active':selTitle == 1}">
+							合作(联)社 
+							<img src="../images/dui.png" class="selImg" v-if="selTitle == 1" /> </p>
+						<p @click="selTitle = 2, onlyTitle = '每人仅限创建一个群众团体', clickTab2()" :class="{'active':selTitle == 2}">
+							群众团体 
+							<img src="../images/dui.png" v-if="selTitle == 2" class="selImg" /> </p>
+					</div>
+				</div>
+			</template>
+
+			<template v-if="selTitle == 1 && (identityId == 2 ||identityId == 3 || identityId == 4 || identityId == 5)">
+				<p class="m-title">选择合作(联)社</p>
+				<div class="selCont selCont1">
+					<div class="item" @click="chIdentity(1)">
+						<img src="../images/selImg1.png" class="leftImg" />
+						<div>
+							<img src="../images/heuzoshe1.png" class="titleIMg" />
+							<p class="text">{{title1}}</p>
+						</div>
+						<img src="../images/light4.png" class="rightTop" />
+						<img src="../images/right2.png" class="rightBottom" />
+					</div>
+					<div class="item" @click="chIdentity(2)">
+						<img src="../images/selImg2.png" class="leftImg" />
+						<div>
+							<img src="../images/shenfen.png" class="titleIMg" />
+							<p class="text">{{title2}}</p>
+						</div>
+						<img src="../images/light4.png" class="rightTop" />
+						<img src="../images/right3.png" class="rightBottom" />
+					</div>
+				</div>
+
+				<p class="m-title">申请加入合作(联)社</p>
+				<div class="selCont selCont3">
+					<div class="item" @click="selSheLian = true">
+						<img src="../images/selImg5.png" class="leftImg" />
+						<div>
+							<img src="../images/applyHzuo.png" class="titleIMg" />
+							<p class="text">申请想要加入的合作(联)社</p>
+						</div>
+						<img src="../images/light4.png" class="rightTop" />
+						<img src="../images/right7.png" class="rightBottom" />
+					</div>
+				</div>
+			</template>
+			<template v-else-if="selTitle == 2">
+				<template v-if="identityId == 1 ||identityId == 3 || identityId == 4 || identityId == 5">
+					<p class="m-title">选择群众团体</p>
+					<div class="selCont selCont2">
+						<div class="item" @click="userAsMemberTeamLists()">
+							<img src="../images/selImg3.png" class="leftImg" />
+							<div>
+								<img src="../images/masstuandui.png" class="titleIMg" />
+								<p class="text">{{title3}}</p>
+							</div>
+							<img src="../images/light4.png" class="rightTop" />
+							<img src="../images/right4.png" class="rightBottom" />
+						</div>
+					</div>
+				</template>
+
+				<!-- 没有群众团体才可创建 -->
+				<template v-if="identityId == 1 || identityId == 2 || identityId == 4">
+					<p class="m-title">创建/申请群众团体</p>
+				</template>
+				<template v-else>
+					<p class="m-title">申请群众团体</p>
+				</template>
+				
+				
+				<template v-if="identityId == 1 || identityId == 2 || identityId == 4">
+					<div class="selCont selCont4">
+						<div class="item" @click="applyTeam()">
+							<img src="../images/selImg4.png" class="leftImg" />
+							<div>
+								<img src="../images/applyMass.png" class="titleIMg" />
+								<p class="text">{{onlyTitle}}</p>
+							</div>
+							<img src="../images/light4.png" class="rightTop" />
+							<img src="../images/right6.png" class="rightBottom" />
+						</div>
+					</div>
+				</template>
+				<div class="selCont selCont5">
+					<div class="item" @click="$router.push('/applymaSel')">
+						<img src="../images/selImg6.png" class="leftImg" />
+						<div>
+							<img src="../images/applyMass1.png" class="titleIMg" />
+							<p class="text">申请想要加入的群众团体</p>
+						</div>
+						<img src="../images/light4.png" class="rightTop" />
+						<img src="../images/right8.png" class="rightBottom" />
+					</div>
+				</div>
+
+			</template>
+
+			<van-button v-if="showBtn" round block class="sendBtn" type="info" @click="sureSelGo()">我已选好，立即进入
+			</van-button>
+		</div>
+
+		<!-- 提醒 -->
+		<div class="tipCont" v-if="hasApply">
+			<img src="../images/tipImg.png" alt="" class="leftImg" />
+			您申请创建的群众团体正在审核中,请耐心等待
+			<img src="../images/guang.png" alt="" class="rightImg" />
+		</div>
+
+
+		<!-- 选择合作社 -->
+		<van-action-sheet v-model="selectShow1" title="选择合作社" class="selSheet" :closeable="false">
+			<template v-if="sheetList.length > 0">
+				<van-radio-group v-model="radioSel1">
+					<van-cell :title="item.coopera_name" clickable v-for="(item, index) in sheetList" :key="index"
+						@click="radioSel1 = item.coopera_id,radiSel1Code = item.coopera_code,radiSel1Title = item.coopera_name"
+						:class="(radioSel1 == item.coopera_id) ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item.coopera_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+			<van-loading class="isLoadClass" v-if="isLoading" size="24px">加载中……</van-loading>
+			<p class="sheetNull" v-if="sheetList.length == 0 && !isLoading">暂无</p>
+			<van-button round block type="info" @click="sureSel(1)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择身份 -->
+		<van-action-sheet v-model="selectShow2" title="选择身份" class="selSheet" :closeable="false">
+			<template v-if="sheetList.length > 0">
+				<van-radio-group v-model="radioSel2">
+					<van-cell :title="item.post_name" clickable v-for="(item, index) in sheetList" :key="index"
+						@click="radioSel2 = item.job_id, radiSel2Title = item.post_name" :class="(radioSel2 == item.job_id) ? 'active' : ''">
+						<template #right-icon>
+							<van-radio :name="item.job_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+			<van-loading class="isLoadClass" v-if="isLoading" size="24px">加载中……</van-loading>
+			<p class="sheetNull" v-if="sheetList.length == 0 && !isLoading">暂无</p>
+			<van-button round block type="info" @click="sureSel(2)">确定</van-button>
+		</van-action-sheet>
+
+		<!-- 选择加入合作社类型 -->
+		<van-action-sheet v-model="selSheLian" title="选择类型" class="selSheet">
+			<div class="content">
+				<div class="item" @click="goin(0)">
+					<img src="../images/joinHezuo.png" alt="" />
+					<p>加入合作社</p>
+				</div>
+				<div class="item" @click="goin(1)">
+					<img src="../images/joinLIan.png" alt="" />
+					<p>加入合作联社</p>
+				</div>
+			</div>
+		</van-action-sheet>
+
+
+		<!-- 选择团队 -->
+		<van-action-sheet v-model="selectShow3" title="选择团队" class="selSheet" :closeable="false">
+			<template v-if="sheetList.length > 0">
+				<van-radio-group v-model="radioSel3">
+					<van-cell clickable v-for="(item, index) in sheetList" :key="index"
+						@click="radioSel3 = item.team_id, radiSel3Title = item.team_name, sel_if_team_owner = item.if_team_owner"
+						:class="(radioSel3 == item.team_id) ? 'active' : ''">
+						<template #title>
+							<span>{{item.team_name}}</span>
+							<van-tag round type="primary" v-if="item.if_team_owner == 1">团长</van-tag>
+						</template>
+						<template #right-icon>
+							<van-radio :name="item.team_id">
+								<template #icon="props">
+									<img class="img-icon" :src="props.checked ? radioActiveIcon : radioIcon" />
+								</template>
+							</van-radio>
+						</template>
+					</van-cell>
+				</van-radio-group>
+			</template>
+			<van-loading class="isLoadClass" v-if="isLoading" size="24px">加载中……</van-loading>
+			<p class="sheetNull" v-if="sheetList.length == 0 && !isLoading">暂无</p>
+			<van-button round block type="info" @click="sureSel(3)">确定</van-button>
+		</van-action-sheet>
+
+	</div>
+</template>
+<script>
+	export default {
+		name: "chooseIdentity",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				fromPath:'',
+				identityId: this.$Cookies.get('identityId'),
+				selTitle: 1,
+				showBtn: false,
+
+				selectShow1: false,
+				radioSel1: '', // coopera_id
+				radiSel1Code: '', // coopera_code
+				radiSel1Title: '选择本次要进入的合作社', // coopera_name
+				id1: '',
+				code1: '',
+				title1: '选择本次要进入的合作社',
+
+				selectShow2: false,
+				radioSel2: '', // job_id
+				radiSel2Title: '请选择本次要进入的身份', // post_name
+				id2: '',
+				title2: '请选择本次要进入的身份',
+
+				selSheLian: false,
+
+				selectShow3: false,
+				radioSel3: '', // team_id
+				radiSel3Title: '选择本次要进入的群众团体', // team_name
+				sel_if_team_owner: 0,
+				if_team_owner: 0,
+				id3: '',
+				title3: '选择本次要进入的群众团体',
+				
+				onlyTitle: '每人仅限创建一个群众团体',
+
+				sureId: '',
+				radioIcon: require("../images/radio.png"),
+				radioActiveIcon: require("../images/radioSel.png"),
+				sheetList: [],
+
+				isLoading: false,
+				hasApply: false
+			};
+		},
+		beforeRouteEnter (to, from, next){
+			next(vm => {// 通过 `vm` 访问组件实例,将值传入fromPath
+				vm.fromPath = from.path
+			})
+		},
+		mounted() {
+			this.$nextTick(()=>{
+				if(this.fromPath == '/applyMass' || this.fromPath == '/applymaSel'){
+					this.selTitle = 2
+				}else if(this.fromPath == '/joinCooper'){
+					this.selTitle = 1
+				}
+			})
+			
+			if (this.identityId == 1) { // 仅仅是团员身份
+				this.selTitle = 2
+			} else if (this.identityId == 2) { // // 仅仅是合作社身份
+				this.selTitle = 1
+			} else if (this.identityId == 3) { // 混合身份【合作社+团员】
+				this.selTitle = 1
+			}			
+			this.$api.user_role().then(res => {
+				// "if_qz": 0,//是否为群众：0否，1是（没有其他三种任何身份）
+				// "coopera_role": 0,//合作社身份：0社员1管理员账号2区域管理3联社社长4社长5员工10没有合作社
+				// "if_tz": 1,//是否为团长：0否，1是
+				// "if_ty": 0,//是否为团员：0否，1是
+				if (res.if_qz == 1) { //群众身份
+					this.$Cookies.remove('cooperaId');
+					this.$Cookies.remove('cooperaCode');
+					this.$Cookies.remove('jobId');
+					this.$Cookies.remove('organName');
+					this.$Cookies.remove('organIdentity');
+					this.$Cookies.remove('isOwnTeam');
+					this.$Cookies.remove('ownTeamId');
+					this.$Cookies.remove('teamId');
+					this.$Cookies.remove('teamName');
+					
+					this.$Cookies.set('isMass', 1, {expires: 30,path: ''})
+					this.$router.push('/hezuoIndexMass');
+				} else if (res.if_qz == 0 && res.coopera_role == 10 && res.if_tz == 1 && res.if_ty ==
+					0) { // 仅仅是团长身份
+					// 用户是否是团长判断（我所拥有的团队） ,,,有团长转让的情况
+					this.$api.user_team_owner_check().then(res => {
+						if (res.errno == 0) {
+							this.$Cookies.remove('isMass');
+							this.$Cookies.remove('cooperaId');
+							this.$Cookies.remove('cooperaCode');
+							this.$Cookies.remove('jobId');
+							this.$Cookies.remove('organName');
+							this.$Cookies.remove('organIdentity');
+							this.$Cookies.remove('teamId');
+							this.$Cookies.remove('teamName');
+							
+							this.$Cookies.set('isOwnTeam', 1, {expires: 30,path: ''})
+							this.$Cookies.set('ownTeamId', res.data.team_id, {expires: 30,path: ''})
+							
+							this.$router.push('/hezuoIndexState');
+						} else {
+							this.$router.push('/chooseIdentity');
+							// this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+
+				} else if (res.if_qz == 0 && res.coopera_role == 10 && res.if_tz == 0 && res.if_ty ==
+					1) { // 仅仅是团员身份
+					this.$Cookies.set('identityId', 1, {expires: 30,path: ''})
+					this.$router.push('/chooseIdentity'); // 进入选择合作社/合作联社页面--团员--选择页面
+				} else if (res.if_qz == 0 && res.coopera_role != 10 && res.if_tz == 0 && res.if_ty ==
+					0) { // 仅仅是合作社身份
+					this.$Cookies.set('identityId', 2, {expires: 30,path: ''})
+					this.$router.push('/chooseIdentity'); // 进入选择合作社/合作联社页面--团员--选择页面
+				} else { // 多种身份【团员+合作社】
+					if (res.if_tz == 1 && res.if_ty == 0) { // 团长，不在其他团长团队
+						this.$Cookies.set('identityId', 3, {expires: 30,path: ''})
+						this.$router.push('/chooseIdentity');
+					} else if (res.if_tz == 0 && res.if_ty == 1) { // 不是团长，只在其他团员团队
+						this.$Cookies.set('identityId', 4, {expires: 30,path: ''})
+						this.$router.push('/chooseIdentity');
+					} else { // 团长+团员+合作社
+						this.$Cookies.set('identityId', 5, {expires: 30,path: ''})
+						this.$router.push('/chooseIdentity');
+					}
+
+				}
+			})
+			
+			if(this.$Cookies.get('cooperaId')){
+				this.sureId = 1
+				this.selTitle = 1
+				this.id1 = this.$Cookies.get('cooperaId')
+				this.code1 = this.$Cookies.get('cooperaCode')
+				this.id2 = this.$Cookies.get('jobId')
+				this.title1 = this.$Cookies.get('organName')
+				this.title2 = this.$Cookies.get('organIdentity')
+				this.showBtn = true
+			}else if(this.$Cookies.get('teamId')){
+				this.sureId = 2
+				this.selTitle = 2
+				this.id3 = this.$Cookies.get('teamId')
+				this.title3 = this.$Cookies.get('teamName')
+				this.showBtn = true
+			}else if(this.$Cookies.get('ownTeamId')){
+				this.sureId = 2
+				this.if_team_owner = 1
+				this.selTitle = 2
+				this.id3 = this.$Cookies.get('ownTeamId')
+				this.title3 = this.$Cookies.get('teamName')
+				this.showBtn = true
+			}
+
+
+			
+		},
+		methods: {
+			goin(type) {
+				this.$router.push({
+					path: '/joinCooper',
+					query: {
+						type: type
+					}
+				})
+			},
+			// 获取合作社列表
+			chIdentityList() {
+				this.$api.user_coopera_lists({}).then(res => {
+					this.isLoading = false
+					if (res.errno == 0) {
+						this.sheetList = res.data;
+						res.data.forEach(ele => {
+							if (ele.is_select == 1) {
+								this.radioSel1 = ele.coopera_id
+								this.radiSel1Code = ele.coopera_code
+								this.radiSel1Title = ele.coopera_name
+							}else{
+								this.radioSel1 = res.data[0].coopera_id
+								this.radiSel1Code = res.data[0].coopera_code
+								this.radiSel1Title = res.data[0].coopera_name
+							}
+							
+						})
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.isLoading = false
+				})
+			},
+			// 根据所选合作社展示所有身份
+			userAllJobInCoopera() {
+				this.$api.user_all_job_in_coopera({
+					coopera_code: this.code1
+				}).then(res => {
+					this.isLoading = false
+					if (res.errno == 0) {
+						this.sheetList = res.data;
+						this.radioSel2 = res.data[0].job_id
+						this.radiSel2Title = res.data[0].post_name
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.isLoading = false
+				})
+			},
+			// 用户作为团员的所有所在团队列表
+			userAsMemberTeamLists() {
+				this.sheetList = []
+				this.selectShow3 = true
+				this.isLoading = true
+				this.$api.user_as_member_team_lists().then(res => {
+					this.isLoading = false
+					if (res.errno == 0) {
+						this.radioSel3 = res.data[0].team_id
+						this.radiSel3Title = res.data[0].team_name
+						this.sel_if_team_owner = res.data[0].if_team_owner
+						
+						this.sheetList = res.data;
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.isLoading = false
+				})
+			},
+			// 选择合作社
+			chIdentity(id) {
+				this.sheetList = []
+				this.isLoading = true
+				if (id == 1) { // 合作社
+					this.selectShow1 = true
+					this.chIdentityList();
+				} else if (id == 2) { // 身份
+					if (this.id1.length == 0) {
+						this.$toast("请先选择合作社");
+					} else {
+						this.selectShow2 = true
+						this.userAllJobInCoopera();
+					}
+				}
+			},
+			applyTeam() {
+				// 用户是否是团长判断（我所拥有的团队） ,,,有团长转让的情况
+				//  $map['team_status'] = ['in',[0,1,2]];//团队状态：0关闭团体，1审核通过，2待审核，3驳回
+				this.$api.user_team_owner_check().then(res => {
+					if (res.errno == 0) {
+						if (res.data.team_status == 2) {
+							this.hasApply = true
+							this.onlyTitle = res.data.team_name
+							setTimeout(() => {
+								this.hasApply = false;
+							}, 2000);
+						}
+					} else {
+						this.$router.push('/applyMass')
+						// this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			sureSel(id) {
+				this.selectShow1 = false
+				this.selectShow2 = false
+				this.selectShow3 = false
+				if (id == 1) { // 选择合作社
+					this.id1 = this.radioSel1
+					this.code1 = this.radiSel1Code
+					this.title1 = this.radiSel1Title
+
+					this.radioSel2 = ''
+					this.radiSel2Title = '请选择本次要进入的身份'
+					this.id2 = ''
+					this.title2 = '请选择本次要进入的身份'
+				} else if (id == 2) { // 选择身份
+					this.id2 = this.radioSel2
+					this.title2 = this.radiSel2Title
+					if(this.id2){
+						this.showBtn = true
+						this.sureId = 1
+					}
+				} else if (id == 3) { // 选择团队
+					this.id3 = this.radioSel3
+					this.title3 = this.radiSel3Title
+					this.if_team_owner = this.sel_if_team_owner
+					if(this.id3){
+						this.showBtn = true
+						this.sureId = 2
+					}
+				}
+			},
+			clickTab1(){
+				if(this.id1 && this.id2){
+					this.showBtn = true
+					this.sureId = 1
+				}else{
+					this.showBtn = false
+				}
+			},
+			clickTab2(){
+				if(this.id3){
+					this.showBtn = true
+					this.sureId = 2
+				}else{
+					this.showBtn = false
+				}
+			},
+			sureSelGo() {
+				if (this.sureId == 1) {
+					if(!this.code1){
+						this.$toast("请选择合作社/合作联社")
+						return
+					}else if(!this.id2){
+						this.$toast("请选择身份")
+						return
+					}
+					this.$api.user_select_coopera({
+						"coopera_code": this.code1,
+						"job_id": this.id2
+					}).then(res => {
+						if (res.errno == 0) {
+							this.$Cookies.remove('isOwnTeam');
+							this.$Cookies.remove('ownTeamId');
+							this.$Cookies.remove('teamId');
+							this.$Cookies.remove('teamName');
+							
+							this.$Cookies.set('cooperaId', this.id1, {expires: 30, path: ''})
+							this.$Cookies.set('cooperaCode', this.code1, {expires: 30,path: ''})
+							this.$Cookies.set('jobId', this.id2, {expires: 30,path: ''})
+							this.$Cookies.set('organName', this.title1, {expires: 30,path: ''})
+							this.$Cookies.set('organIdentity', this.title2, {expires: 30,path: ''})
+							this.$router.replace('/hezuoIndexPresid'); // 进入选择合作社/合作联社页面
+						} else {
+							this.$toast(res.errmsg)
+						}
+					}).catch(err => {
+
+					})
+				} else if (this.sureId == 2) {
+					if (this.if_team_owner == 1) { // 进入团长
+						this.$Cookies.remove('cooperaId');
+						this.$Cookies.remove('cooperaCode');
+						this.$Cookies.remove('jobId');
+						this.$Cookies.remove('organName');
+						this.$Cookies.remove('organIdentity');
+						this.$Cookies.remove('teamId');
+						
+						this.$Cookies.set('isOwnTeam', 1, {expires: 30,	path: ''})
+						this.$Cookies.set('ownTeamId', this.id3, {expires: 30,path: ''})
+						this.$Cookies.set('teamName', this.title3, {expires: 30,path: ''})
+						this.$router.push('/hezuoIndexState'); // 进入团长页面
+					} else {
+						this.$Cookies.remove('cooperaId');
+						this.$Cookies.remove('cooperaCode');
+						this.$Cookies.remove('jobId');
+						this.$Cookies.remove('organName');
+						this.$Cookies.remove('organIdentity');
+						this.$Cookies.remove('isOwnTeam');
+						this.$Cookies.remove('ownTeamId');
+						this.$Cookies.set('teamId', this.id3, {expires: 30,path: ''})
+						this.$Cookies.set('teamName', this.title3, {expires: 30,path: ''})
+						this.$router.push('/indexYuan'); // 进入团员页面
+					}
+				}
+			}
+		},
+
+
+	}
+</script>
+<style lang="less">
+	.chooseIdentity {
+		padding-top: 46px;
+		background: url(../images/bgHeader4.png) no-repeat;
+		background-size: 100% 300px;
+
+		.topTitle {
+			margin: 0 15px;
+			display: flex;
+			justify-content: space-between;
+
+			.bgxiexian {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 115px;
+			}
+
+			.leftImg {
+				width: 214px;
+				height: 46px;
+			}
+
+			.rightImg {
+				width: 69px;
+				height: 69px;
+			}
+		}
+
+		.content {
+			padding: 10px 20px;
+			background: #FFFFFF;
+			border-radius: 10px 10px 0 0;
+		}
+
+		.m-title {
+			margin-top: 15px;
+			color: #9AA8B6;
+		}
+
+		.sel-Title {
+			div {
+				margin: 15px;
+				display: flex;
+				justify-content: space-between;
+
+				p {
+					color: #9AA8B6;
+					background: #F0F6FC;
+					border: 1px solid #F0F6FC;
+					line-height: 38px;
+					width: calc(50% - 15px);
+					text-align: center;
+					font-size: 15px;
+					border-radius: 8px;
+
+					&.active {
+						color: #3B6AF1;
+						border: 1px solid #3b6af1;
+						position: relative;
+
+						.selImg {
+							position: absolute;
+							right: 0;
+							bottom: 0;
+							background: #3B6AF1;
+							width: 8px;
+							padding: 4px 10px;
+							border-radius: 8px 0 6px 0;
+						}
+					}
+
+				}
+			}
+		}
+
+		.selCont {
+			.item {
+				height: 85px;
+				margin-top: 15px;
+				border-radius: 15px 15px 10px 10px;
+				display: flex;
+				align-items: center;
+				position: relative;
+
+				.leftImg {
+					width: 101px;
+					margin-top: 15px;
+				}
+
+				div {
+					width: calc(100% - 120px);
+				}
+
+				.titleIMg {
+					height: 15px;
+				}
+
+				.text {
+					margin-top: 5px;
+					font-size: 14px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+
+				.rightTop {
+					position: absolute;
+					top: 0;
+					right: 0;
+					width: 141px;
+				}
+
+				.rightBottom {
+					position: absolute;
+					right: 0;
+					bottom: 0;
+					width: 30px;
+				}
+			}
+		}
+
+		.selCont1 {
+			.item {
+				&:nth-child(1) {
+					background: linear-gradient(#fff0e2 0%, #ffe2d6 100%);
+
+					.text {
+						color: #8F6B5D;
+					}
+				}
+
+				&:nth-child(2) {
+					background: linear-gradient(#e4fcff 0%, #d6f8ff 100%);
+
+					.text {
+						color: #5D868F;
+					}
+				}
+
+
+			}
+		}
+
+		.selCont2 {
+			.item {
+				background: linear-gradient(#dbe5ff 0%, #b7cafd 100%);
+
+				.text {
+					color: #5e78bc;
+				}
+			}
+		}
+
+		.selCont3 {
+			.item {
+				background: linear-gradient(#e2ebf8 0%, #e2ebf8 100%);
+
+				.text {
+					color: #476899;
+				}
+			}
+		}
+
+		.selCont4 {
+			.item {
+				background: linear-gradient(#ffeec6 0%, #ffe5a7 100%);
+
+				.text {
+					color: #AC7D39;
+				}
+			}
+		}
+		
+		.selCont5 {
+			.item {
+				background: linear-gradient(#c6f1ff 0%, #b7ecfd 100%);
+		
+				.text {
+					color: #4489a6;
+				}
+			}
+		}
+
+		.sendBtn {
+			margin: 30px 30px 0 30px;
+			width: calc(100% - 60px);
+			font-size: 15px;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+
+		// 选择
+		.selSheet {
+			.van-action-sheet__header {
+				font-size: 15px;
+				font-weight: bold;
+				position: relative;
+
+				&::after {
+					content: '';
+					position: absolute;
+					height: 3px;
+					width: 30px;
+					background: #3B6AF1;
+					border-radius: 2px;
+					bottom: 6px;
+					left: calc(50% - 15px);
+				}
+			}
+
+			.active {
+				.van-cell__title {
+					color: #3B6AF1;
+				}
+			}
+
+			.van-tag--primary {
+				background: #3B6AF1;
+				padding: 2px 6px;
+				transform: scale(0.9);
+			}
+
+			.img-icon {
+				height: 20px;
+			}
+
+			.van-button--info {
+				margin: 15px;
+				width: calc(100% - 30px);
+				height: 38px;
+				background: #3B6AF1;
+				border: 1px solid #3B6AF1;
+			}
+
+			.isLoadClass {
+				padding: 10px 0;
+				text-align: center;
+			}
+
+			.sheetNull {
+				margin: 20px 0;
+				color: #666666;
+				text-align: center;
+			}
+
+			.content {
+				padding: 20px 0;
+				display: flex;
+				justify-content: space-around;
+
+				.item {
+					text-align: center;
+
+					img {
+						width: 70px;
+					}
+
+					p {
+						margin-top: 10px;
+						font-size: 15px;
+					}
+				}
+			}
+		}
+
+		.tipCont {
+			position: fixed;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #3A3F4E;
+			line-height: 40px;
+			height: 40px;
+			font-size: 13px;
+			color: #C3C8D8;
+			padding-left: 54px;
+			border-radius: 5px;
+
+			.leftImg {
+				position: absolute;
+				left: 2px;
+				bottom: 2px;
+				width: 48px;
+				height: 48px;
+			}
+
+			.rightImg {
+				position: absolute;
+				right: 0;
+				top: 0;
+				height: 40px;
+			}
+		}
+
+
+
+	}
+</style>

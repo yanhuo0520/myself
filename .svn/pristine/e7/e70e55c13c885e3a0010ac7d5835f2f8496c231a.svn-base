@@ -1,0 +1,616 @@
+<template>
+	<div class="hall">
+		<van-sticky>
+			<div class="header">
+				<van-nav-bar :title="userId ? '【'+userName+'】发布的任务' : '任务大厅'" left-arrow   @click-left="leftBack"/>
+				<div class="search-con">
+					<van-search v-model="searchName" shape="round" background="transparent" placeholder="请输入任务标题" @search="onSearch" @clear="onSearch" clearable/>
+				</div>
+			</div>
+			<div class="dropdown">
+				<van-dropdown-menu :close-on-click-overlay="false" :close-on-click-outside="false"	>
+					<van-dropdown-item v-model="taskType" :options="taskTypeOption" @change="changeTaskType" />
+					<van-dropdown-item  @open="showAddressPopup" ref="addr">
+						<template #title>
+							<span>{{curSelectAddr ? curSelectAddr : '选择地区'}}</span>
+						</template>
+					</van-dropdown-item>
+					<van-dropdown-item title="筛选" ref="filter">
+						<van-cell center title="最新发布" >
+							<template #right-icon>
+								<van-switch v-model="isNewDate" size="24" active-color="#ee0a24" />
+							</template>
+						</van-cell>
+						<van-cell center title="价格由高到低">
+							<template #right-icon>
+								<van-switch v-model="isMaxPrice" size="24" active-color="#ee0a24" />
+							</template>
+						</van-cell>
+						<van-cell center title="人气由高到低">
+							<template #right-icon>
+								<van-switch v-model="isMaxOrder" size="24" active-color="#ee0a24" />
+							</template>
+						</van-cell>
+						<div style="padding: 5px 16px;">
+							<van-button type="danger" block round @click="onFilterConfirm">
+								确认
+							</van-button>
+						</div>
+					</van-dropdown-item>
+				</van-dropdown-menu>
+			</div>
+		</van-sticky>
+        <div class="task-box">
+			<div class="task-group-type">
+				<div class="name-con">
+					<img class="icon" src="https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/tuijian.png" alt="">
+					<span class="desc">任务大厅</span>
+				</div>
+			</div>
+			<van-list v-model="loading" :finished="finished" finished-text="没有更多了" @load="onLoad" >
+				<div class="task-group" v-for="(item, index) in taskList" :key="index" @click="toTaskDetail(item)">
+					<div class="task-tit-con van-hairline--bottom">
+						<div class="tit">{{item.title}}</div>
+						<div class="num">剩余数量: {{item.num - item.stock}}/{{item.num}}</div>
+					</div>
+					<div class="task-con">
+						<div class="task-img-con">
+							<img :src="item.icon ? item.icon : 'https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/sanwei-app-logo.png'" alt="">
+						</div>
+						<div class="task-desc-con">
+							<div class="task-tag-con">
+								<div class="tag">{{item.type_name}}</div>
+								<template v-if="item.name">
+									<div class="tag name" >{{item.name}}</div>
+								</template>
+							</div>
+							<div class="task-desc-con">{{item.note}}</div>
+						</div>
+						<div class="task-price-con">
+							<div class="tip">奖励金额</div>
+							<div class="price">{{item.price}}</div>
+							<div class="btn-con">
+								<div class="btn-item">查看</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</van-list>
+		</div>
+		<!-- 请选择任务地区 -->
+		<van-popup v-model="isShowAddrPopup" round position="bottom">
+			<van-cascader v-model="selectCode" :closeable="false" ref="addrSelect" :options="addrOptions" active-color="#1989fa" @close="isShowAddrPopup = false" @change="onSelectAddrChange" @finish="onSelectAddrFinish" >
+				<template #title>
+					<div class="slect-tit-con">
+						<div class="text cancle" @click="selectAddrCancle">全部地区</div>
+						<div class="tit">
+							<template v-if="changeAddrTit">
+								<span class="masker">{{changeAddrTit}}</span>
+							</template>
+							<template v-else>
+								<span class="masker">请选择任务地区</span>
+							</template>
+						</div>
+						<div class="text confirm" @click="selectAddrConfirm">确定</div>
+					</div>
+				</template>
+			</van-cascader>
+		</van-popup>
+	</div>
+</template>
+<script>
+	export default {
+		name: "hall",
+		data() {
+			return {
+				isShowAddrPopup: false,
+				changeAddrTit: '',
+				curSelectAddr: '',
+				optionId1: 0,
+				optionId2: 0,
+				addrOptions: [],
+				selectCode: '',
+				province_id: '',
+				city_id: '',
+				area_id:'',
+				searchName: '',
+                taskType: '',
+                taskTypeOption: [{
+						text: "全部类型",
+                        icon: require("../../images/indexZhgj.png"),
+                        value: ''
+					},{
+						text: "下载",
+                        icon: require("../../images/indexZhgj.png"),
+                        value: 1
+					},
+					{
+						text: "注册",
+                        icon: require("../../images/indexXyed.png"),
+                        value: 2
+					},
+					{
+						text: "实名",
+                        icon: require("../../images/indexXydk.png"),
+                        value: 3
+					},
+					{
+						text: "高价",
+                        icon: require("../../images/indexZcjk.png"),
+                        value: 4
+					},
+					{
+						text: "关注",
+                        icon: require("../../images/indexZjhz.png"),
+                        value: 5
+					},
+					{
+						text: "浏览",
+                        icon: require("../../images/indexShjf.png"),
+                        value: 6
+					},
+					{
+						text: "投票",
+                        icon: require("../../images/indexBxsc.png"),
+                        value: 7
+					},
+					{
+						text: "其它",
+                        icon: require("../../images/indexBxsc.png"),
+                        value: 8
+					},
+				],
+				isNewDate: true, // 是否最新发布
+				isMaxPrice: false, // 是否最高价格
+				isMaxOrder: false, // 是否最高人气
+				loading: false,
+				finished: false,
+				isErr: false,
+				page: 0,
+				size: 10,
+				taskList: [],
+				userId: '',
+				userName: ''
+			};
+		},
+		mounted() {
+			this.taskType = this.$route.query.type ? Number(this.$route.query.type) : ''
+			this.userId = this.$route.query.userId ? this.$route.query.userId : ''
+			if (this.userId) {
+				this.userName = this.$route.query.userName
+			}
+            this.getAddress(1)
+		},
+		methods: {
+            leftBack() {
+				if (this.userId) {
+					this.$router.go(-1);
+				} else {
+					this.$router.push('/taskIndex');
+				}
+			},
+			onClickRight () {
+				this.$router.push({
+					path: '/addTask',
+					query: {}
+				})
+			},
+			// 显示地区筛选框
+			showAddressPopup () {
+				this.isShowAddrPopup = true
+				setTimeout(() =>{
+					this.$refs.addr.toggle(false)
+				})
+			},
+			// 选择合作社地址
+			getAddress(level, code) {
+				this.$api.addresss({
+					level: level,
+					code: code,
+					type: 1
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						for (let i = 0; i < res.data.length; i++) {
+							res.data[i].id = i
+							res.data[i].value = res.data[i].code
+							res.data[i].text = res.data[i].name
+							res.data[i].level = level
+							res.data[i].children = []
+						}
+						this.addrOptions = res.data
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			// 地区选择改变
+			onSelectAddrChange({value, selectedOptions, tabIndex}) {
+				if (tabIndex == 0) {
+					this.optionId1 = selectedOptions[0].id
+				} else if (tabIndex == 1) {
+					this.optionId2 = selectedOptions[1].id
+				}
+				this.changeAddrTit = selectedOptions.map((option) => option.text).join('/');
+				if (tabIndex > 1) {
+					return
+				}
+				this.$api.addresss({
+					level: tabIndex + 2,
+					code: value,
+					type: this.seltype
+				}).then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						if (res.data.length > 0) {
+							for (let i = 0; i < res.data.length; i++) {
+								res.data[i].id = i
+								res.data[i].value = res.data[i].code
+								res.data[i].text = res.data[i].name
+								res.data[i].level = tabIndex + 2
+								if (tabIndex < 1) {
+									res.data[i].children = []
+								}
+							}
+						} else {
+							let array = {}
+							array.id = 0
+							array.code = ''
+							array.value = '暂无'
+							array.text = '暂无'
+							array.name = '暂无'
+							array.level = tabIndex + 2
+							res.data.push(array)
+						}
+
+						this.$nextTick(() => {
+							if (tabIndex == 0) {
+								this.addrOptions[this.optionId1].children = res.data;
+							} else if (tabIndex == 1) {
+								let children1 = this.addrOptions[this.optionId1].children
+								children1[this.optionId2].children = res.data;
+							}
+						})
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			// 地区选择完成
+			onSelectAddrFinish({selectedOptions}) {
+				this.isShowAddrPopup = false;
+				this.province_id = selectedOptions[0].value
+				this.city_id = selectedOptions[1].value
+				this.area_id = selectedOptions[2].value
+				this.curSelectAddr = selectedOptions.map((option) => option.text).join('/');
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 地区确认完成
+			selectAddrConfirm () {
+				if (!this.$refs.addrSelect.value) {
+					this.$toast('请先选择地区')
+					return
+				}
+				let selectedOptions = this.$refs.addrSelect.getSelectedOptionsByValue(this.$refs.addrSelect.options,this.$refs.addrSelect.value)
+				let activeTab = this.$refs.addrSelect.activeTab
+				if (activeTab == 1) {
+					this.province_id = selectedOptions[0].value
+				} else if (activeTab == 2) {
+					this.city_id = selectedOptions[1].value
+				} else if (activeTab == 3) {
+					this.area_id = selectedOptions[2].value
+				}
+				this.curSelectAddr = selectedOptions.map((option) => option.text).join('/')
+				this.$refs.addrSelect.onClose()
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 地区取消
+			selectAddrCancle () {
+				this.curSelectAddr = ''
+                this.province_id = ''
+                this.city_id = ''
+                this.area_id = ''
+                this.selectCode = ''
+                this.changeAddrTit = ''
+				this.$refs.addrSelect.onClose()
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 确认筛选
+			onFilterConfirm () {
+				this.$refs.filter.toggle();
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 获取任务列表
+			onLoad() {
+				this.finished = false
+				let page = this.page + 1
+				this.loading = true
+				let order = ''
+				if (this.isNewDate) {
+					order+='a.add_time desc'
+				}
+				if (this.isMaxPrice) {
+					if (order) {
+						order+=',a.price desc'
+					} else {
+						order+='a.price desc'
+					}
+				}
+				if (this.isNewDate) {
+					if (order) {
+						order+=',renqi desc'
+					} else {
+						order+='renqi desc'
+					}
+				}
+				this.$api.rewardLists({
+					page: this.page,
+					size: this.size,
+					order: order,
+					title: this.searchName,
+					provinceCode: this.province_id,
+					cityCode: this.city_id,
+					areaCode: this.area_id,
+					type_id: this.taskType,
+					user_id: this.userId
+				}).then(res => {
+					this.loading = false
+					if (res.errno == 0) {
+						let data = res.data.data
+						if (data && data.length > 0) {
+							if (page == 1) {
+								this.taskList = data
+							} else {
+								this.taskList = this.taskList.concat(data)
+							}
+						}
+						this.page = page
+						if (this.page >= res.data.total) {
+							this.finished = true
+						} else {
+							this.finished = false
+						}
+					} else {
+						this.$toast(res.errmsg)	
+						this.finished = true
+						this.page = 0
+					}
+				}).catch(err=>{
+					this.$toast('服务异常,请稍后重试')
+					this.loading = false
+					this.finished = true
+					this.page = 0
+					this.isErr = true
+				})
+			},
+			// 搜索
+			onSearch () {
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 改变任务类型
+			changeTaskType () {
+				this.page = 0
+				this.taskList = []
+				this.onLoad()
+			},
+			// 前往任务详情
+			toTaskDetail (item) {
+				this.$router.push({
+					path: '/taskDetail',
+					query: {
+						id: item.reward_id,
+						lastPath: '/taskHall'
+					}
+				})
+			}
+		}
+	};
+</script>
+<style lang="less">
+	.hall {
+		min-height: 100%;
+		background: #f0f6fc;
+        position: relative;
+        .van-nav-bar {
+            background: transparent;
+			.van-icon {
+				color: #222222;
+			}
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.header {
+			background: url(../../images/bgHeader1.png) no-repeat;
+			background-size: 100% 100%;
+			width: 100%;
+			height: 105px;
+			.search-con {
+				display: flex;
+				justify-content: space-between;
+                align-items: center;
+                padding: 0 10px;
+                .van-search {
+                    width: 100%;
+                    .van-search__content--round {
+                        background: #fff;
+                    }
+                }
+			}
+		}
+		.task-box {
+			.task-group-type {
+				display: flex;
+				align-items: center;
+				padding: 6px 10px;
+				.name-con {
+					display: flex;
+					align-items: center;
+					.icon {
+						width: 0.7rem;
+					}
+					.desc {
+						font-weight: bold;
+						font-size: 14px;
+					}
+				}
+			}
+			.task-group {
+				margin: 0 10px;
+				background: #fff;
+				border-radius: 10px;
+				margin-bottom: 15px;
+				box-shadow: 5px 5px 10px #ccc;
+				.task-tit-con {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 10px;
+					.tit {
+						font-weight: bold;
+						font-size: 14px;
+					}
+					.num {
+						color: #333
+					}
+				}
+				.task-con {
+					display: flex;
+					align-items: center;
+					padding: 10px;
+					.task-img-con {
+						width: 50px;
+						height: 50px;
+						border-radius: 50%;
+						margin-right: 8px;
+						img {
+							width: 100%;
+							height: 100%;
+						}
+					}
+					.task-desc-con {
+						flex: 1;
+						display: flex;
+						flex-direction: column;
+						overflow: hidden;
+						.task-tag-con {
+							display: flex;
+							margin-bottom: 6px;
+							.tag {
+								padding: 4px 6px;
+								background: rgb(161, 122, 255);
+								// background: rgb(219, 204, 255);
+								// color: rgb(161, 122, 255);
+								color: #fff;
+								border-radius: 100px;
+								font-weight: normal;
+								font-size: 0.3rem
+							}
+							.name {
+								margin-left: 10px;
+								background: #1989fa;
+								color: #fff;
+							}
+							.sale {
+								margin-left: 10px;
+								background: #F56C6C;
+								color: #fff;
+							}
+							.isShow {
+								background: #67C23A;
+								color: #fff;
+							}
+						}
+						.task-desc-con {
+							display: block;
+							width: 100%;
+							color: #666;
+							overflow: hidden; 
+							text-overflow: ellipsis;
+							white-space: nowrap; 
+						}
+					}
+				}
+				.task-price-con {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					.price {
+						font-weight: bold;
+						font-size: 14px;
+						color: #F85E23;
+						padding: 6px 0;
+					}
+					.btn-con {
+						display: flex;
+						align-items: center;
+						margin-left: 8px;
+						.btn-item {
+							padding: 6px 12px;
+							background: linear-gradient(90deg,#9672f7,#7045f2);
+							color: #fff;
+							border-radius: 1000px;
+						}
+					}
+				}
+			}
+		}
+		.slect-tit-con {
+			display: flex;
+			align-items: center;
+			justify-items: center;
+			.text {
+				width: 50px;
+				height: 50px;
+				color: #7045f2;
+            }
+            .cancle {
+                width: 70px!important;
+            }
+			.tit {
+				flex: 1;
+				display: block;
+				overflow: hidden; 
+				text-overflow: ellipsis;
+				white-space: nowrap; 
+			}
+		}
+		.van-cascader__title {
+			width: 100%;
+			height: 100%;
+			line-height: normal;
+			.slect-tit-con {
+				width: 100%;
+				height: 100%;
+				.text {
+					width: 50px;
+					height: 100%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+				.tit {
+					text-align: center;
+					.masker {
+						font-weight: bold;
+					}
+				}
+			}
+		}
+	}
+</style>

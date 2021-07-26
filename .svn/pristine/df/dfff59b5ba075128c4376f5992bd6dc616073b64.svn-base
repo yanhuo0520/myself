@@ -1,0 +1,110 @@
+<template>
+  <div class="taskBottom">
+    <van-tabbar
+        active-color="#0a79ea"
+        inactive-color="#333"
+        router
+        fixed
+    >
+        <van-tabbar-item v-for="(item,index) of items" @click="toRouter(item.name, item.push)" :key="index">
+            <span :style="{color: index == idx ? '#30B39C' : '#99A1AE'}">{{item.name}}</span>
+            <template #icon>
+                <div :class="{'icon-con': index == 1}">
+                  <img class="icon" :src="index === idx ?item.iconSelect: item.icon" >
+                  <!-- <div class="icon-absolute"></div> -->
+                </div>
+            </template>
+            
+            <!-- <img
+                slot="icon"
+                slot-scope="props"
+                :src="index === idx ?item.iconSelect: item.icon"
+            > -->
+        </van-tabbar-item>
+    </van-tabbar>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "taskBottom",
+  props: ["idx"],
+  data() {
+    return {
+      items: [{
+          name: "首页",
+          push: "/taskIndex",
+          icon: require("../images/tab/hzjj.png"),
+          iconSelect: require("../images/tab/hzjj-h.png")
+        },
+        {
+          name: "发布",
+          push: "/addTask",
+          icon: 'https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/fabu.png',
+          iconSelect: 'https://ljj-dom.oss-cn-beijing.aliyuncs.com/xfd/xuanshang/fabu.png'
+        },
+        {
+          name: "任务中心",
+          push: "/taskCenter",
+          icon: require("../images/tab/hzjj.png"),
+          iconSelect: require("../images/tab/hzjj-h.png")
+        }
+      ]
+    };
+  },
+  methods: {
+    toRouter(name, path) {
+		this.$router.push(path);
+    }
+  }
+};
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style lang="less">
+.taskBottom {
+  height: 50px;
+  .van-tabbar {
+    // box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    height: 50px;
+    background-size: 100% 100%;
+    .van-tabbar-item {
+      justify-content: flex-end;
+      padding-bottom: 5px;
+      position: relative;
+    }
+    .van-tabbar-item:nth-of-type(2) {
+      .icon-con {
+        position: absolute;
+        top:0;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        width: 50px;
+        padding: 6px;
+        height: 50px;
+        box-sizing: border-box;
+        border-radius: 50%;
+        box-shadow: 0 -2px 6px 0px #ccc;
+        .icon {
+          width: 100%;
+          height: 100%;
+        }
+      }
+      .van-tabbar-item__icon {
+        width: 100%;
+        height: 100%;
+      }
+    }
+    .van-tabbar-item--active {
+      background: transparent;
+    }
+  }
+  .van-hairline--top-bottom::after,
+  .van-hairline-unset--top-bottom::after {
+    border-width: 0;
+  }
+}
+</style>
+

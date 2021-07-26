@@ -1,0 +1,142 @@
+<template>
+	<div class="livexpense" :style='{height: deviceHeight + "px"}'>
+		<van-nav-bar title="生活缴费" left-arrow fixed @click-left="leftBack" />
+		<van-swipe class="my-swipe" :autoplay="3000" indicator-color="white">
+			<van-swipe-item><img src="../../images/card3.jpg" alt="" /> </van-swipe-item>
+			<van-swipe-item><img src="../../images/CMB.png" alt="" /> </van-swipe-item>
+			<van-swipe-item><img src="../../images/CMB.png" alt="" /></van-swipe-item>
+			<van-swipe-item><img src="../../images/CMB.png" alt="" /></van-swipe-item>
+		</van-swipe>
+		<van-grid class="grid" :column-num="3" :border="false">
+			<van-grid-item v-for="(item, index) in grid" :key="index" @click="goGridItem(item.path)">
+				<img :src="item.icon" alt="" />
+				{{ item.name }}
+			</van-grid-item>
+		</van-grid>
+		<van-cell-group>
+			<van-cell title="生活缴费记录" is-link >
+				<template #icon>
+					<img class="img-icon" src="../../images/person4.png" />
+				</template>
+			</van-cell>
+			<van-cell title="手机充值记录" is-link >
+				<template #icon>
+					<img class="img-icon" src="../../images/phone.png" />
+				</template>
+			</van-cell>
+		</van-cell-group>
+		
+	</div>
+</template>
+<script>
+	export default {
+		name: "livexpense",
+		data() {
+			return {
+				deviceHeight: document.body.clientHeight - 46,
+				grid: [{
+						name: "水费",
+						icon: require("../../images/indexZhgj.png"),
+						path: "/accountIndex",
+					},
+					{
+						name: "电费",
+						icon: require("../../images/indexXyed.png"),
+					},
+					{
+						name: "燃气费",
+						icon: require("../../images/indexXydk.png"),
+					},
+					{
+						name: "话费充值",
+						icon: require("../../images/indexZcjk.png"),
+					},
+					{
+						name: "固话宽带",
+						icon: require("../../images/indexZjhz.png"),
+					},
+				],
+			};
+		},
+		mounted() {
+
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			
+		}
+	}
+</script>
+<style lang="less">
+	.livexpense {
+		padding-top: 46px;
+		background: #F0F6FC;
+		overflow: auto;
+		.van-nav-bar {
+			background: #F0F6FC;
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+		.van-hairline--bottom::after{
+			border-bottom-width: 0
+		}
+		.my-swipe .van-swipe-item {
+			height: 150px;
+			text-align: center;
+			img{
+				max-width: 100%;
+				max-height: 100%;
+			}
+		}
+		.grid {
+			width: calc(100% - 20px);
+			margin: 0 10px;
+			padding: 20px 0 10px 0;
+			background: #fff;
+			border-radius: 0 0 15px 15px;
+
+			.van-grid-item {
+				width: 33.3333%;
+			}
+
+			.van-grid-item__content {
+				padding: 6px 8px;
+
+				img {
+					width: 57px;
+					height: 57px;
+				}
+			}
+		}
+		.van-cell-group{
+			border-radius: 10px;
+			margin: 10px;
+			.van-cell{
+				&:first-child{
+					border-top-left-radius: 10px;
+					border-top-right-radius: 10px;
+				}
+				&:last-child{
+					border-bottom-left-radius: 10px;
+					border-bottom-right-radius: 10px;
+				}
+			}
+			.img-icon{
+				height: 15px;
+    		margin: 4px 5px 0 0;
+			}
+		}
+
+
+
+	}
+</style>

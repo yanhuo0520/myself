@@ -1,0 +1,237 @@
+<template>
+	<div class="payPass">
+		<van-nav-bar :title="title" left-arrow fixed @click-left="leftBack" />
+		<p class="m-title">请<span>牢记</span>支付密码,切勿将密码告诉他人</p>
+		<div class="content">
+			<van-field v-model="phone" readonly type="number" label="手机号" :left-icon="require('../../images/phone.png')" placeholder="请输入手机号" />
+			
+			<van-field v-model="phoneCode" type="number" clearable label="手机验证码" :left-icon="require('../../images/msg.png')" placeholder="请输入验证码">
+				<template v-if="showCodeBtn" #right-icon>
+					<p @click="getCode">发送验证码</p>
+				</template>
+				<template v-else #right-icon>
+					<p>{{times}}秒</p>
+				</template>
+			</van-field>
+			
+			<van-field v-model="password1" readonly type="password" label="新密码" @touchstart.native.stop="keyword1 = true, keyword2 = false" :left-icon="require('../../images/passw.png')" placeholder="请输入新密码" />
+			<van-number-keyboard
+				:show="keyword1"
+				v-model="password1"
+				maxlength="6"
+				@blur="keyword1 = false, keyword2 = false"
+				/>
+			<van-field v-model="password2" readonly type="password" label="确认新密码" @touchstart.native.stop="keyword2 = true, keyword1 = false" :left-icon="require('../../images/passw.png')" placeholder="请再次输入新密码" />
+			<van-number-keyboard
+				:show="keyword2"
+				v-model="password2"
+				maxlength="6"
+				@blur="keyword2 = false, keyword1 = false"
+				/>			
+		</div>
+		<van-button :icon= 'require("../../images/dui2.png")'  type="info" block class="addBtn" @click="goSet()" v-if="hidshowFooter">
+			立即提交
+		</van-button>
+	</div>
+</template>
+<script>
+	export default {
+		name: "payPass",
+		data() {
+			return {
+				title: '修改支付密码',
+				phone: '',
+				times: 180,
+				showCodeBtn: true,
+				phoneCode: '',
+				password1: '',
+				keyword1: false,
+				password2: '',
+				keyword2: false,
+
+				docmHeight: document.documentElement.clientHeight, //默认屏幕高度
+				showHeight: "0", //实时屏幕高度
+				hidshowFooter: true, //显示或者隐藏footer,
+			}
+		},
+		mounted() {
+			window.leftBack = this.leftBack;
+			if(typeof android != 'undefined'){
+				this.phone = android.load("phone")
+			}else{
+				this.phone = localStorage.getItem('phone')
+			}
+			window.onresize = () => { // 实时屏幕高度
+				this.showHeight = document.body.clientHeight;
+			};
+			// 判断之前没有没有密码
+			this.$api.user_check_pay_pwd().then(res=>{
+				// 0 之前有密码
+				// 1 用户不存在
+				// 2 没有设置过密码
+				if(res.errno == 0){
+					this.title = '修改支付密码'
+				}else if(res.errno == 2){
+					this.title = '设置支付密码'
+				}else{
+					this.$toast(res.errmsg)
+				}
+			}).catch(err => {
+				
+			})
+			
+		},
+		methods: {
+			leftBack() {
+				this.$router.go(-1);
+			},
+			// 发送验证码
+			getCode() {
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				this.$api.get_code({
+					phone: this.phone
+				}).then(res => {
+					if (res.errno == 0) { // 启用倒计时
+						this.showCodeBtn = false
+						this.timer = setInterval(() => {
+							this.times--
+							if (this.times === 0) {
+								this.times = 180
+								this.showCodeBtn = true
+								clearInterval(this.timer)
+							}
+						}, 1000)
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			goSet(){
+				if (this.$validatePhone(this.phone) != true) {
+					this.$toast(this.$validatePhone(this.phone))
+					return
+				}
+				if (this.phoneCode.trim().length == 0) {
+					this.$toast("请输入验证码")
+					return
+				}
+				if (this.$validatePassword(this.password1) != true) {
+					this.$toast(this.$validatePassword(this.password1))
+					return
+				}
+				if (this.$validatePassword(this.password2) != true) {
+					this.$toast(this.$validatePassword(this.password2))
+					return
+				}
+				let data = {}
+				data.code = this.phoneCode
+				data.pay_pwd = this.$md5(this.password1)
+				data.confirm_pay_pwd = this.$md5(this.password2)
+				this.$toast.loading({
+					message: '提交中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				this.$api.user_update_pay_pwd_bycode(data).then(res=>{
+					this.$toast.clear()
+					this.$toast(res.errmsg)
+					if(res.errno == 0){
+						setTimeout(()=>{
+							this.$router.go(-1);
+						}, 1000)
+					}
+				}).catch(res=>{
+					this.$toast.clear()
+				})
+				
+				
+			}
+
+		},
+		watch: {
+			showHeight: function() {
+				if (this.docmHeight > this.showHeight) {
+					this.hidshowFooter = false;
+				} else {
+					this.hidshowFooter = true;
+				}
+			}
+		}
+	}
+</script>
+<style lang="less">
+	.payPass {
+		padding-top: 46px;
+		background: #f0f6fc url(../../images/applyBg.png) no-repeat right 46px;
+				background-size: auto 36px;
+		height: calc(100% - 46px);
+
+		.van-nav-bar {
+			z-index: 10;
+			background: #F0F6FC;
+
+
+			.van-icon {
+				color: #222222;
+			}
+
+			.van-nav-bar__title {
+				font-size: 16px;
+				font-weight: bold;
+			}
+		}
+
+		.van-hairline--bottom::after {
+			border-bottom-width: 0
+		}
+		.m-title {
+			margin: 0 10px;
+			padding-top: 10px;
+		
+			span {
+				color: #3B6AF1;
+			}
+		}
+
+
+		.content {
+			background: #ffffff;
+			margin-top: 10px;
+			border-radius: 10px 10px 0 0;
+			height: calc(100% - 32px);
+			.van-cell{
+				&:first-child{
+					border-radius: 10px 10px 0 0;
+				}
+				.van-field__label{
+					width: 5.2em;
+				}
+				.van-field__right-icon {
+					color: #3B6AF1;
+
+					img {
+						width: 22px;
+						vertical-align: middle;
+					}
+				}
+				.van-field__control{
+					text-align: right;
+				}
+			}
+		}
+		.addBtn{
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			font-size: 15px;
+			border-radius: 0;
+			background: #3B6AF1;
+			border: 1px solid #3B6AF1;
+		}
+	}
+</style>

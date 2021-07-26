@@ -1,0 +1,27 @@
+<template>
+	<div class="accouInSuccessRedirect">
+		<!-- 支付支付 - 成功跳转重定向地址 -->
+	</div>
+</template>
+<script>
+	export default {
+		name: "accouInSuccessRedirect",
+		data() {
+			return {
+				
+			};
+		},
+		mounted(){
+			this.$router.replace({
+				path: '/accouInResult',
+				query: {
+					w_code: this.$route.query.w_code
+				}
+			})
+		},
+		
+	}
+</script>
+<style lang="less">
+
+</style>

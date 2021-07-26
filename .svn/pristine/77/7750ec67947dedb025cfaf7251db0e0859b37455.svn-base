@@ -1,0 +1,957 @@
+<template>
+	<div class="index">
+		<div class="header">
+			<div class="common">
+				<!-- <div class="left" @click="locGD()">
+					<img src="../images/address.png" alt="" />
+					{{locationAddress}}
+				</div> -->
+				<div class="right" @click="$router.push('/message')">
+					<van-badge :content="accountNum.notify_count" max="99" color="#F45E45" v-if="accountNum.notify_count > 0">
+						<img src="../images/message.png" alt="" />
+					</van-badge>
+					<van-badge max="9" color="#F45E45" v-else>
+						<img src="../images/message.png" alt="" />
+					</van-badge>
+				</div>
+			</div>
+			<div class="common">
+				<img src="../images/logo.png" alt="" class="leftImg" />
+				<img src="../images/qiandao.png" alt="" class="rigImg" />
+			</div>
+		</div>
+		<div class="card">
+			<img src="../images/logoBg.png" alt="" class="logoBg" />
+			<img src="../images/xiexianBg.png" alt="" class="xiexianBg" />
+			<div class="top">
+				<img src="../images/account.png" alt="" />
+				<img src="../images/jiantou.png" alt="" @click="$router.push('/accountIndex')" />
+			</div>
+			<p class="daiMoney" @click.stop="$router.push('/accountIndex')">{{accountNum.wallet ? accountNum.wallet : 0}}</p>
+			<div class="module">
+				<div class="item" @click.stop="$router.push('/creditScore')">
+					<p class="num">{{accountNum.credit_score ? accountNum.credit_score : 0}}</p>
+					<p class="title">信用评分</p>
+				</div>
+				<div class="item" @click="$router.push('/cooperativeAcc')">
+					<p class="num">{{accountNum.coopera_account_num}}</p>
+					<p class="title">合作社账户</p>
+				</div>
+				<!-- 弃用 - 修改成我的账单 -->
+				<!-- <div class="item">
+					<p class="num">{{accountNum.insurance_num}}</p>
+					<p class="title">我的保险</p>
+				</div> -->
+				<div class="item">
+					<p class="num">{{accountNum.all_left}}</p>
+					<p class="title">我的账单</p>
+				</div>
+			</div>
+		</div>
+
+		<van-grid class="grid" :column-num="4" :border="false">
+			<van-grid-item v-for="(item, index) in grid" :key="index" @click="goGridItem(item.path, item.id)">
+				<img :src="item.icon" alt="" />
+				{{ item.name }}
+			</van-grid-item>
+		</van-grid>
+
+
+		<p class="main-title">专属特惠福利</p>
+		<div class="fuli">
+			<!-- 助农小游戏 -->
+			<!-- <div class="left" @click="goGridItem()">
+				<img src="../images/youxiText.png" alt="" class="topImg" />
+				<img src="../images/jiantou2.png" alt="" class="leftImg" />
+				<img src="../images/youxiPic.png" alt="" class="rightImg" />
+			</div> -->
+			<!-- 合作社模块 -->
+		<!-- 	<div class="right" @click="goGridItem()">
+				<img src="../images/huozuosheText.png" alt="" class="topImg" />
+				<img src="../images/jiantou2.png" alt="" class="leftImg" />
+				<img src="../images/hezuoshePic.png" alt="" class="rightImg" />
+			</div> -->
+		</div>
+		<div class="fuli">
+			<!-- 益农宝 -->
+			<div class="left" @click="checkCard()">
+				<img src="../images/yinongText.png" alt="" class="topImg" />
+				<img src="../images/jiantou2.png" alt="" class="leftImg" />
+				<img src="../images/yinongImg.png" alt="" class="rightImg" />
+			</div>
+			<!-- 赏金任务 -->
+			<div class="right" @click="$router.push('/chooseTaskArea')">
+				<img src="../images/shangText.png" alt="" class="topImg" />
+				<img src="../images/jiantou2.png" alt="" class="leftImg" />
+				<img src="../images/shangImg.png" alt="" class="rightImg" />
+			</div>
+		</div>
+
+		<p class="main-title">实惠好物精选</p>
+		<div class="jingxuan">
+			<div class="left" @click="$router.push('/gxShop')">
+				<div class="cont">
+					<img src="../images/gongxiaoText.png" alt="" class="topImg" />
+					<img src="../images/nongziPic.png" alt="" class="bottomImg" />
+				</div>
+			</div>
+			<div class="right">
+				<div class="top" @click="$router.push('/fenxiaoShop')">
+					<img src="../images/fenxiao.png" alt="" class="leftImg" />
+					<img src="../images/xinrenPic.png" alt="" class="rightImg" />
+				</div>
+				<div class="bottom" @click="$router.push('/youzhiShop')">
+					<img src="../images/jingxuanText.png" alt="" class="leftImg" />
+					<img src="../images/jingxuanPic.png" alt="" class="rightImg" />
+				</div>
+			</div>
+		</div>
+
+		<bottom :idx="0"></bottom>
+
+		<!-- 实名认证提醒 -->
+		<van-popup v-model="ifHasReal" class="tipCont">
+			<img src="../images/realTip1.png" class="IMgTop" />
+			<div class="titContIMg">
+				<img src="../images/realTip2.png" class="titleIMg" />
+			</div>
+			<div class="inCont">
+				<p class="tipTitle">本次操作前 <br /> 需进行实名认证</p>
+				<p class="btn" @click.stop="goSetPasswrord()">确定</p>
+			</div>
+
+			<img src="../images/close.png" @click="ifHasReal = false" class="closeIMg" />
+		</van-popup>
+
+		<!-- 绑定身份证 -->
+		<van-popup v-model="cardShow" class="tipCont">
+			<img src="../images/loginTip1.png" class="IMg" />
+			<div class="content">
+				<img src="../images/cardBan.png" class="titleIMg" />
+			</div>
+			<div class="inCont">
+				<p class="m-title">姓名</p>
+				<van-field v-model="name" clearable placeholder="请输入真实姓名" />
+				<p class="m-title">身份证号</p>
+				<van-field v-model="peopleId" clearable class="cardInput" placeholder="请输入或识别身份证号">
+					<template #right-icon>
+						<van-uploader :after-read="afterRead" :max-count="1">
+							<img src="../images/xiangji.png" class="iconRight" />
+						</van-uploader>
+
+					</template>
+				</van-field>
+				<p class="btn" @click="goBang()">立即绑定</p>
+			</div>
+
+			<img src="../images/close.png" @click="cardShow = false" class="closeIMg" />
+		</van-popup>
+
+		<!-- <van-dialog v-model="isDialogShow" title="提示" :showConfirmButton="false" :close-on-click-overlay="true">
+			<div class="dialog-desc">{{locOff ? '定位服务没有开启,是否允许重新定位' : '定位权限没有开启,是否允许重新获取'}}</div>
+		</van-dialog> -->
+		<van-dialog v-model="isDialogShow" title="提示" show-cancel-button class="dialogCont" confirmButtonColor="#3B6AF1" @cancel="cancelDialog" @confirm="confirmDialog">
+			<div class="dialog-desc">{{locOff ? '定位服务没有开启,是否允许重新定位' : '定位权限没有开启,是否允许重新获取'}}</div>
+		</van-dialog>
+
+	</div>
+</template>
+<script>
+	import bottom from "@/components/bottom";
+	import AES from "@/javascript/aes.js";
+	import RAS from "@/javascript/ras.js";
+import { Locale } from 'vant';
+	export default {
+		name: "index",
+		components: {
+			bottom,
+		},
+		data() {
+			return {
+				versionId: this.$Cookies.get('versionId'),
+				token: '',
+				grid: [{
+						name: "账户管家",
+						icon: require("../images/indexZhgj.png"),
+						path: "/accountIndex",
+						id: '',
+					},
+					{
+						name: "信用评分",
+						icon: require("../images/indexXyed.png"),
+						path: "/creditScore",
+						id: ''
+					},
+					{
+						name: "信用贷款",
+						icon: require("../images/indexXydk.png"),
+						id: ''
+					},
+					{
+						name: "众筹借款",
+						icon: require("../images/indexZcjk.png"),
+						id: ''
+					},
+					{
+						name: "资金互助",
+						icon: require("../images/indexZjhz.png"),
+						id: ''
+					},
+					{
+						name: "生活缴费",
+						icon: require("../images/indexShjf.png"),
+						path: "/livexpense",
+						id: ''
+					},
+					// {
+					// 	name: "保险商城",
+					// 	icon: require("../images/indexBxsc.png"),
+					// },
+				],
+				accountNum: {
+					credit_score: 0,
+					credit_line: 0, // 信用额度
+					coopera_account_num: 0, //合作社账户数
+					insurance_num: 0, // 我的保险
+					all_left: 0, // 我的账单
+					notify_count: 0, // 未读消息数
+				},
+				ifHasReal: false,
+				cardShow: false,
+				infoDetail: '',
+				pubKeyFull: '',
+				userName: '',
+				name: '', // 用户姓名
+				userId: '', // 自定义appid，位数没有限制，不推荐太长
+				peopleId: '', // 用户身份证id
+				pubKey: '', // 主参数，公钥后30位
+				aesKey: '', // 主参数，rsa加密的aesKey值
+				code: '', // 主参数，aes加密内容
+				
+				locationAddress: this.$Cookies.get('locAddress'),
+				locPermission: true, //  定位权限是否关闭
+				locOff: false, // 定位服务是否关闭
+				isDialogShow: false, // 获取权限弹框
+			};
+		},
+		mounted() {
+			if(typeof android != 'undefined'){
+				let localHref = window.location.href
+				let localHrefArray = localHref.split('-')
+				let localCode = localHrefArray[1].substring(0, 13)
+				android.save("localCode", localCode);
+			}
+			
+
+			this.userIndex()
+			if((typeof android != 'undefined')){
+				this.token = android.load("token")
+				this.userName = android.load("userName")
+			}else{
+				this.token = localStorage.getItem('token')
+				this.userName = localStorage.getItem('userName')
+			}
+			// if(!this.locationAddress && (typeof android != "undefined")){
+			// 	this.locGD()
+			// }
+			// Android元素返回处理
+			window.leftBack = this.leftBack
+			window.locPermissionError = this.locPermissionError  // 权限不足的时候，用户没赋予权限
+			window. locServerOff = this. locServerOff // 打开位置服务窗口
+			window.locGD = this.locGD
+			window.locationGDAll = this.locationGDAll
+		},
+		methods: {
+			// 主页面返回退出应用
+			leftBack(){
+				let that = this
+				var first = null
+				window.leftBack = function(){
+					if(!first){
+						first = new Date().getTime();
+						that.$toast("再按一次退出应用");
+						setTimeout(function() {
+							first = null;
+						}, 1500);
+					}else{
+						if(new Date().getTime() - first < 1500){
+							android.closeWindow();
+						}
+					}
+				}
+			},
+			// 用户首页个人信息
+			userIndex() {
+				this.$api.user_index({upgrade_id: this.versionId}).then(res => {
+					if (res.errno == 0) {
+						this.accountNum = res.data;
+
+						if(res.version_info){
+							this.$Cookies.set('versionId', res.version_info.id, {expires: 30,path: ''})
+							this.$dialog.confirm({
+								title: '版本更新提醒',
+								message: res.version_info.upgrade_point
+							}).then(()=>{
+								if (typeof android != "undefined"){
+									android.del('token') // 清除token
+								}
+								// 清除所有缓存
+								let cookiesObject = this.$Cookies.get()
+								for(let key  in cookiesObject){ 
+									// 记住密码不清除手机号密码的缓存
+									if(key != 'loginPhone' && key != 'loginPas'){
+										this.$Cookies.remove(key);
+									}
+								}
+								localStorage.clear()
+								this.$router.replace('/login')
+							}).catch(()=>{
+
+							})
+						}
+						
+					} else {
+						this.$toast(res.errmsg)
+					}
+
+				}).catch(err => {
+					this.$toast('服务异常,请稍后重试')
+				})
+			},
+			goGridItem(path, id) {
+				if (path) {
+					if(id == 1002){
+						this.$toast("维护中……")
+						return
+					}
+					this.$router.push(path)
+				} else {
+					this.$toast("暂未开放，敬请期待")
+				}
+			},
+			checkCard() {
+				this.$toast.loading({
+					message: '验证中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				// 验证有没有身份证，没有的话绑定身份证
+				this.$api.check_user_real_info().then(res => {
+					this.$toast.clear()
+					if (res.errno == 0) {
+						this.userId = res.data.user_id
+						this.name = res.data.name
+						this.peopleId = res.data.idcard
+						if(this.name != this.userName){
+							if(typeof android != "undefined"){
+								android.save("userName", this.name);
+							}else{
+								localStorage.setItem('userName', this.name)
+							}
+						}
+						this.goyinNongBao()
+					} else {
+						this.ifHasReal = true
+						this.infoDetail = res.data
+						// this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+			goSetPasswrord() {
+				this.ifHasReal = false
+				this.cardShow = true
+				this.name = this.infoDetail.name ? this.infoDetail.name : ''
+				this.peopleId = this.infoDetail.idcard ? this.infoDetail.idcard : ''
+			},
+			goBang() {
+				if(this.name.trim() == '' || this.name == null || this.name == undefined){
+					this.$toast("请输入姓名")
+					return
+				}
+				if (this.$validateIdCard(this.peopleId) != true) {
+					this.$toast(this.$validateIdCard(this.peopleId))
+					return
+				}
+				let data = {}
+				data.name = this.name
+				data.idcard = this.peopleId
+				this.$api.update_user_real_info(data).then(res => {
+					if (res.errno == 0) {
+						this.cardShow = false
+						this.userId = res.data.user_id
+						this.name = res.data.name
+						this.peopleId = res.data.idcard
+						if(this.name != this.userName){
+							if(typeof android != "undefined"){
+								android.save("userName", this.name);
+							}else{
+								localStorage.setItem('userName', this.name)
+							}
+						}
+						this.goyinNongBao()
+					} else {
+						this.$toast(res.errmsg)
+					}
+				}).catch(err => {
+
+				})
+			},
+			// 身份证头像面
+			afterRead(file) {
+				this.$compreImg(file.content).then(result => {
+					if (result.size > file.file.size){
+						//压缩后比原来更大，则将原图上传
+						this._uploadFile1(file.file, file.file.name);
+					} else {
+						//压缩后比原来小，上传压缩后的
+						this._uploadFile1(result, file.file.name)
+					}
+				})
+			},
+			_uploadFile(){
+				var formdata = new FormData(); //可以通过append()方法来追加数据
+				formdata.append("file", file, filename);
+				formdata.append("token", this.token);
+				const instance = this.$axios.create({
+					//withCredentials:true
+				});
+				this.$toast.loading({
+					message: '识别中...',
+					forbidClick: true,
+					duration: 0,
+				});
+				instance.post("http://coopera.xfd365.com/user/auth/uploadImg", formdata).then(res => {
+					if (res.data.errno === 0) {
+						let zcardIdImg = res.data.data.url
+						this.$api.idcardOcr({
+							'idcard_url': zcardIdImg
+						}).then(res => {
+							this.$toast.clear()
+							if (res.errno == 0) {
+								this.peopleId = res.data.certNumber
+							} else {
+								this.$toast(res.errmsg)
+							}
+						}).catch(err => {
+							this.$toast.clear()
+						})
+					} else {
+						this.$toast(res.errmsg);
+					}
+				});
+			},
+			goyinNongBao() {
+				let pubKeyFull =
+					"MIIBOjANBgkqhkiG9w0BAQEFAAOCAScAMIIBIgKCARkAnz+zpnbVvjFu8Sv/2/nhfOx/akIZ5ZfJ7qUKQfKiU02zW8EWOWoeQxMaFMU/QBA6DI2gDAAjx/fBCbchJBQHiw7Bn8C6CiXf4WWV71KPACIE5pLmleZTVrpO5pp/6pGm0jnbXteylNVYNQof/oozbHyKKXAMyiZIuRpJlyweU1u6VDNd0LlsWgaePEPb3jWkFIGByf3fh6Y2PYOPsLShLhbLRU0l8UbOqvgFvL6ARYnJdjVTEDUPJ8dAa/i12uogeoAJ0takC6zkHAtT8sJfK0U8db5eGDOYc2RRHXEluYJHe2PiWBihfqr760e6SArzw6M1e1PLMOvcKp5fJG4fkGv7tnpVjTUzX3eJdF7GoyFNuTWx2mhHbQIDAQAB"
+				this.pubKey = pubKeyFull.substring(pubKeyFull.length - 30); // 公钥后30位
+
+				// rsa加密的aesKey值
+				this.aesKey = RAS.RSAencrypt('AJQXBhVIrnvASSF/') // AES加密对应的秘钥进行 RAS加密处理
+
+				let codeObject = {}
+				codeObject.peopleId = this.peopleId
+				codeObject.name = this.name
+				codeObject.userId = this.userId
+				// aes加密内容
+				this.code = AES.encrypt(JSON.stringify(codeObject));
+
+				if (!this.userId) {
+					this.$toast.clear()
+					this.$toast("登录过期，请重新登录")
+					this.$router.replace('/login')
+					return
+				} else if (!this.name) {
+					this.$toast.clear()
+					this.$toast("为获取到用户名，无法查看")
+					return
+				} else if (!this.peopleId) {
+					this.$toast.clear()
+					this.$toast("为获取到身份证号，无法查看")
+					return
+				}
+
+				let data = {}
+				data.pubKey = this.pubKey
+				data.aesKey = this.aesKey
+				data.code = this.code
+				data.type = 'aes'
+				this.$api.yiNongUrl(data).then(res => {
+					this.$toast.clear()
+					if (res.status == 1) {
+						this.$router.push({
+               path: '/yinongbao',
+               query: {
+                  url: res.url
+                }
+             })
+						// window.location.href = res.url
+					} else {
+						this.$toast('网络服务异常')
+					}
+
+				}).catch(err => {
+					this.$toast.clear()
+				})
+			},
+        // 执行Android方法未获取定位权限
+        locPermissionError(){
+			this.$toast.clear()
+          this.locPermission = true
+          this.isDialogShow = true
+        },
+			// 执行Android方法定位未开启
+        locServerOff(){
+					this.$toast.clear()
+          this.locOff = true
+          this.isDialogShow = true
+        },
+				// 执行Android方法获取位置
+        locGD() {
+					this.$toast.loading({
+						message: '定位中...',
+						forbidClick: true,
+						duration: 0,
+					});
+          this.locPermission = false;
+          android.requestLocation();
+        },
+				
+			// 执行Android方法获取位置
+			locationGDAll(location){
+				this.$toast.clear()
+				this.locPermission = false;
+				this.locationAddress = location.city + location.district
+				this.$Cookies.set('locAddress', this.locationAddress, {expires: 30,path: ''})
+			},
+			cancelDialog(){
+				this.$toast.clear()
+				this.isDialogShow = false
+				this.locPermission = true
+				this.locOff = false
+			},
+			confirmDialog(){
+				if(this.locOff) {
+				  android.toOpenLocServer();
+				  return
+				} 
+				if(this.locPermission) {
+				  android.openSetApp()
+				  return
+				}
+			},
+
+		},
+	};
+</script>
+<style lang="less">
+	.index {
+		min-height: 100%;
+		background: #f0f6fc;
+		position: relative;
+
+		.header {
+			background: url(../images/bgHeader1.png) no-repeat;
+			background-size: 100% 100%;
+			width: calc(100% - 20px);
+			height: 260px;
+			padding: 10px;
+
+			.common {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+				position: relative;
+				.left {
+					display: flex;
+					align-items: center;
+					color: #444444;
+
+					img {
+						width: 12px;
+						height: 15px;
+						margin-right: 5px;
+					}
+				}
+
+				.right {
+					position: absolute;
+					right: 5px;
+					top: 0;
+					img {
+						width: 15px;
+						height: 15px;
+					}
+				}
+
+				.leftImg {
+					width: 140px;
+					height: 54px;
+				}
+
+				.rigImg {
+					width: 117px;
+					height: 62px;
+				}
+
+			}
+		}
+
+		.card {
+			background: linear-gradient(-35deg, #3b6af1 0%, #5a94ff 100%);
+			box-shadow: 0 8px 8px rgba(90, 148, 255, 0.3);
+			width: calc(100% - 20px);
+			overflow: hidden;
+			border-radius: 10px;
+			height: 140px;
+			position: absolute;
+			left: 10px;
+			top: 125px;
+			z-index: 10;
+			color: #ffffff;
+			text-align: center;
+
+			.logoBg {
+				position: absolute;
+				right: -5px;
+				bottom: -10px;
+				height: 120px;
+				z-index: -1;
+			}
+
+			.xiexianBg {
+				position: absolute;
+				left: 0;
+				width: 100%;
+				max-width: 750px;
+				height: 140px;
+				z-index: -1;
+			}
+
+			.top {
+				display: flex;
+				justify-content: space-between;
+				margin: 20px 5% 15px 5%;
+
+				img:first-child {
+					height: 14px;
+				}
+
+				img:last-child {
+					height: 15px;
+				}
+			}
+
+			.daiMoney {
+				font-family: DIN, DIN-Medium;
+				font-size: 30px;
+				position: relative;
+				display: inline-block;
+
+				&::before {
+					position: absolute;
+					top: -5px;
+					left: calc(100% + 2px);
+					content: '';
+					height: 10px;
+					// 弃用 - 我的账单的单位
+					// width: 48px;
+					// background: url(../images/zhangdan.png) no-repeat;
+					// background-size: auto 10px;
+					width: 14px;
+					background: url(../images/yuan.png) no-repeat;
+					background-size: auto 10px;
+
+				}
+			}
+
+			.module {
+				margin-top: 15px;
+				display: flex;
+				justify-content: space-around;
+
+				.item {
+					position: relative;
+					width: 33.3333%;
+
+					&:last-child {
+						&::after {
+							background: transparent;
+						}
+					}
+
+					&::after {
+						position: absolute;
+						content: '';
+						top: 0;
+						right: 0;
+						width: 1px;
+						height: 30px;
+						background: linear-gradient(0deg, rgba(255, 255, 255, 0.2) 0%, #ffffff 50%, rgba(255, 255, 255, 0.2) 100%);
+					}
+
+					.num {
+						font-size: 15px;
+						position: relative;
+						display: inline;
+
+						&::before {
+							position: absolute;
+							top: -5px;
+							left: calc(100% + 2px);
+							content: '';
+							width: 14px;
+							height: 10px;
+						}
+					}
+
+					.title {
+						margin-top: 5px;
+						color: #B2CAFF;
+					}
+
+					&:nth-child(1) .num::before {
+						background: url(../images/fen.png) no-repeat;
+						background-size: auto 10px;
+					}
+
+					&:nth-child(2) .num::before {
+						background: url(../images/xiang.png) no-repeat;
+						background-size: auto 10px;
+					}
+
+					&:nth-child(3) .num::before {
+						background: url(../images/yuan.png) no-repeat;
+						background-size: auto 10px;
+					}
+				}
+			}
+		}
+
+		.grid {
+			width: calc(100% - 20px);
+			margin: -25px 10px 0 10px;
+			padding: 20px 0 10px 0;
+			background: #fff;
+			border-radius: 0 0 15px 15px;
+
+			.van-grid-item {
+				width: 25%;
+			}
+
+			.van-grid-item__content {
+				padding: 6px 8px;
+
+				img {
+					width: 57px;
+					height: 57px;
+				}
+			}
+		}
+
+		.main-title {
+			margin: 20px 10px;
+			font-size: 15px;
+		}
+
+		.fuli {
+			display: flex;
+			justify-content: space-between;
+			margin: 10px 10px;
+
+			.left,
+			.right {
+				width: calc(50% - 5px);
+				height: 75px;
+				background: #ffffff;
+				padding: 15px;
+				position: relative;
+
+				.topImg {
+					height: 34px;
+				}
+
+				.leftImg {
+					position: absolute;
+					left: 15px;
+					bottom: 15px;
+					height: 15px;
+				}
+
+				.rightImg {
+					position: absolute;
+					right: 5px;
+					bottom: 0;
+					height: 55px;
+				}
+			}
+
+			.right {
+				margin-left: 10px;
+			}
+		}
+
+		.jingxuan {
+			display: flex;
+			justify-content: space-between;
+			margin: 0 10px;
+			margin-bottom: 30px;
+
+			.left {
+				width: calc(50% - 5px);
+				position: relative;
+				background: #d7eafc;
+				height: 140px;
+				padding: 15px;
+				border-radius: 5px;
+
+				.topImg {
+					height: 53px;
+				}
+
+				.bottomImg {
+					position: absolute;
+					right: 10px;
+					bottom: 10px;
+					height: 57px;
+				}
+			}
+
+			.right {
+				width: calc(50% - 5px);
+				margin-left: 10px;
+				height: 170px;
+
+				.top,
+				.bottom {
+					height: 80px;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					padding: 0 10px 0 15px;
+					border-radius: 5px;
+				}
+
+				.leftImg {
+					height: 15px;
+				}
+
+				.rightImg {
+					height: 45px;
+				}
+
+				.top {
+					background: #fcedda;
+				}
+
+				.bottom {
+					margin-top: 10px;
+					background: #d4f0e9;
+				}
+			}
+		}
+
+		.tipCont {
+			width: calc(100% - 100px);
+			max-width: 510px;
+			border-radius: 10px;
+			background: transparent;
+			text-align: center;
+			font-size: 15px;
+			color: #444444;
+
+			// tip1
+			.IMgTop {
+				width: 100%;
+			}
+
+			.titContIMg {
+				margin-top: -3px;
+				background: #ffffff;
+				border-radius: 20px 20px 0 0;
+
+				img {
+					max-width: 100%;
+				}
+			}
+
+			.inCont {
+				padding: 10px 10px 30px 10px;
+				background: #ffffff;
+				margin-top: -1px;
+				border-radius: 0 0 10px 10px;
+
+				.tipTitle {
+					margin-top: 20px;
+					line-height: 20px;
+				}
+				.m-title{
+					color: #9AA8B6;
+					font-size: 12px;
+					text-align: left;
+					margin: 20px 0 0 15px;
+				}
+
+				.van-cell {
+					background-color: #F0F6FC;
+					border-radius: 30px;
+					padding: 5px 16px;
+					margin-top: 8px;
+
+					.van-field__right-icon {
+						line-height: 0;
+					}
+
+					.iconRight {
+						width: 17px;
+						height: 17px;
+					}
+				}
+
+				.btn {
+					margin: 30px 20px 0 20px;
+					border-radius: 40px;
+					font-size: 15px;
+					line-height: 30px;
+					text-align: center;
+					background: #3b6af1;
+					color: #FFFFFF;
+				}
+			}
+
+			// tip2
+
+			.IMg {
+				width: 45px;
+				margin-left: calc(50% + 20px);
+			}
+
+			.content {
+				margin-top: -30px;
+				text-align: center;
+				background: #ffffff;
+				border-radius: 10px 10px 0 0;
+
+				.titleIMg {
+					margin: 50px 0 10px 0;
+					height: 48px;
+				}
+			}
+
+			.closeIMg {
+				margin-top: 30px;
+				padding: 10px 30px;
+				width: 20px;
+			}
+		}
+
+		.dialogCont{
+			.van-dialog__content{
+				padding: 20px;
+				font-size: 15px;
+			}
+		}
+	}
+</style>
