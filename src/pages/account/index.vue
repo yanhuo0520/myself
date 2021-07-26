@@ -28,6 +28,7 @@
 				</div>
 			</div>
 		</div>
+		
 		<div class="cell-cont">
 			<van-cell title="交易明细" is-link  @click="$router.push('/jiaoyiList')">
 				<template #icon>
